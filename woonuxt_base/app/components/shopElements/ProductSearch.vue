@@ -27,7 +27,7 @@ const handleSubmit = () => {
       v-model="searchQuery"
       type="text"
       placeholder="Chercher parmi plus de 1 700 produits"
-      class="w-full h-12 pl-5 pr-12 text-sm text-gray-700 border-2 border-[#ff4f24] rounded-full bg-gray-50 focus:bg-white focus:outline-none placeholder:text-gray-400 transition-all"
+      class="w-full h-12 pl-5 pr-12 text-base text-gray-700 border-2 border-[#ff4f24] rounded-full bg-gray-50 focus:bg-white focus:outline-none placeholder:text-gray-400 transition-all"
     />
     
     <!-- Bouton de recherche (Intégré à droite) -->
