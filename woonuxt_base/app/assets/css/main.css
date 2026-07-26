@@ -22,6 +22,14 @@
   }
   scrollbar-width: none;
 }
+@layer base {
+  /* Empêche le zoom iOS sur tous les champs de saisie */
+  input, 
+  textarea, 
+  select {
+    @apply text-base; /* text-base = 16px, la taille magique pour iOS */
+  }
+}
 
 @layer components {
   .select {
