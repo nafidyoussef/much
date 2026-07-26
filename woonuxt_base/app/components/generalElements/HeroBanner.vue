@@ -4,15 +4,15 @@ const currentSlide = ref(0);
 // Vous pouvez ajouter d'autres images ici si besoin
 const slides = [
   {
-    image: '/images/hero-4.jpg',
+    image: '/images/MS.gif',
     alt: 'Collection Nouveau Année'
   },
    {
-    image: '/images/hero-4.jpg',
+    image: '/images/MS-1.gif',
     alt: 'Collection Nouveau Année'
   },
    {
-    image: '/images/hero-4.jpg',
+    image: '/images/MS-2.gif',
     alt: 'Collection Nouveau Année'
   }
 ];
