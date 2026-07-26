@@ -1,0 +1,30 @@
+query getCategoryWithChildren($slug: [String]) {
+  # 1. Récupérer la catégorie actuelle
+  current: productCategories(where: { slug: $slug }, first: 1) {
+    nodes {
+      databaseId
+      name
+      slug
+      # ✅ Ajout de l'image pour la catégorie actuelle
+      image {
+        sourceUrl
+        altText
+      }
+    }
+  }
+  
+  # 2. Récupérer toutes les catégories (pour trouver les enfants)
+  all: productCategories(first: 200) {
+    nodes {
+      databaseId
+      name
+      slug
+      parentDatabaseId
+      # ✅ Ajout de l'image pour toutes les catégories (y compris les sous-catégories)
+      image {
+        sourceUrl
+        altText
+      }
+    }
+  }
+}

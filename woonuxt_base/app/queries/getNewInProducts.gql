@@ -1,0 +1,71 @@
+query getNewInProducts($category: String) {
+  products(first: 10, where: { category: $category }) {
+    nodes {
+      databaseId
+      id
+      name
+      slug
+      type
+      averageRating
+      reviewCount
+      image {
+        sourceUrl
+        altText
+        title
+      }
+      galleryImages {
+        nodes {
+          sourceUrl
+          altText
+          title
+          databaseId
+        }
+      }
+      
+      ... on SimpleProduct {
+        price
+        regularPrice
+        salePrice
+        stockStatus
+      }
+      ... on VariableProduct {
+        price
+        regularPrice
+        salePrice
+        stockStatus
+        variations(first: 10) {
+          nodes {
+            databaseId
+            slug
+            price
+            regularPrice
+            salePrice
+            stockStatus
+            image {
+              sourceUrl
+              altText
+              title
+            }
+            attributes {
+              nodes {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+      ... on ExternalProduct {
+        price
+        regularPrice
+        salePrice
+        externalUrl
+        buttonText
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

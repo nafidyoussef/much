@@ -1,0 +1,1288 @@
+<script lang="ts" setup>
+import { ProductsOrderByEnum } from '#gql/default';
+import type { Product } from '#types/gql';
+
+const { siteName, description, shortDescription, siteImage } = useAppConfig();
+
+const { data } = await useAsyncGql('getProductCategories', { first: 12 });
+const productCategories = data.value?.productCategories?.nodes || [];
+
+const { data: newInData } = await useAsyncGql('getNewInProducts', { 
+  category: 'gadgets' 
+});
+
+const newInProducts = computed<Product[]>(() => 
+  (newInData.value?.products?.nodes as Product[] | undefined) ?? []
+);
+
+const { data: productData } = await useAsyncGql('getProducts', { first: 10, orderby: ProductsOrderByEnum.Popularity });
+const popularProducts = productData.value?.products?.nodes || [];
+
+useSeoMeta({
+  title: `Home`,
+  ogTitle: siteName,
+  description: description,
+  ogDescription: shortDescription,
+  ogImage: siteImage,
+  twitterCard: `summary_large_image`,
+});
+
+const validCategories = computed(() =>
+  productCategories.filter((cat): cat is typeof cat & { slug: string } => !!cat.slug)
+);
+
+const categorySliderRef = ref<HTMLElement | null>(null);
+const newInSliderRef = ref<HTMLElement | null>(null);
+const scrollNewIn = (direction: 'left' | 'right') => {
+  if (!newInSliderRef.value) return;
+  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
+  newInSliderRef.value.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth',
+  });
+};
+</script>
+
+<template>
+  <main class="min-h-screen">
+    <HeroBanner />
+
+    <!-- Categories Name Slider (Sans ombres latérales) -->
+    <section class="relative py-2 bg-gradient-to-b from-gray-50 to-white border-b border-gray-100">
+      <div class="container">
+        <div class="relative">
+          <div ref="categorySliderRef" class="flex gap-2 overflow-x-auto scroll-smooth py-1 px-1 scrollbar-hide">
+            <NuxtLink
+              v-for="category in validCategories"
+              :key="category.databaseId || category.id"
+              :to="`/product-category/${decodeURIComponent(category.slug)}`"
+              class="flex-shrink-0 flex items-center gap-1 px-0 py-0 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full whitespace-nowrap transition-all duration-300 hover:border-primary hover:text-primary hover:shadow-sm hover:-translate-y-0.5"
+            >
+              <div class="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100">
+                <img 
+                  v-if="category.image?.sourceUrl" 
+                  :src="category.image.sourceUrl" 
+                  :alt="category.image?.altText ?? category.name ?? 'Category'" 
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
+              <span class="mr-2">{{ category.name }}</span>
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+  
+  
+  <section class="container py-8 md:py-12">
+    <!-- Header de la section -->
+    <div class="flex items-center justify-between mb-6 md:mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900">Explorez nos univers</h2>
+      <NuxtLink 
+        to="/categories" 
+        class="text-sm font-medium text-gray-500 hover:text-[#ff4f24] transition-colors"
+      >
+        Toutes les catégories →
+      </NuxtLink>
+    </div>
+
+    <!-- ✅ Grille 4 colonnes sur tous les écrans -->
+    <div class="grid grid-cols-4 gap-3 md:gap-6">
+      
+      <!-- Maison -->
+      <NuxtLink 
+        to="/product-category/maison" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Maison</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Cuisine -->
+      <NuxtLink 
+        to="/product-category/cuisine" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Cuisine</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Tech -->
+      <NuxtLink 
+        to="/product-category/tech" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="8" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Tech</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Beauté -->
+      <NuxtLink 
+        to="/product-category/beaute" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Beauté</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Mode -->
+      <NuxtLink 
+        to="/product-category/mode" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Mode</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Auto -->
+      <NuxtLink 
+        to="/product-category/auto" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Auto</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Kids -->
+      <NuxtLink 
+        to="/product-category/kids" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9" />
+            <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+            <circle cx="9" cy="10" r="1" fill="currentColor" />
+            <circle cx="15" cy="10" r="1" fill="currentColor" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Kids</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+      <!-- Sport -->
+      <NuxtLink 
+        to="/product-category/sport" 
+        class="group flex flex-col items-center text-center gap-2 md:gap-3"
+      >
+        <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+          <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="12" cy="12" r="5" />
+          </svg>
+        </div>
+        <div>
+          <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Sport</strong>
+          <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+        </div>
+      </NuxtLink>
+
+    </div>
+  </section>
+
+
+    
+<section v-if="newInProducts.length" class="container py-8 md:py-10 ml-2 mr-2">
+  <!-- ✅ MODIFICATION : Suppression de 'w-full' et 'border-y', ajout de 'container' et 'border' uniforme -->
+  <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24] rounded-xl">
+    
+    <!-- Éléments décoratifs -->
+    <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+    <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+
+    <!-- Header style "Vente flash" -->
+    <div class=" relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-3 px-2 pt-2 md:px-6 md:pt-6 bg-[#ff4f24]/10">
+      <div class="flex mb-4 items-center gap-1">
+        <!-- Icône de foudre -->
+        <div class="flex-shrink-0 w-7 h-7 bg-[#ff4f24] rounded-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        
+        <!-- Texte + compte à rebours -->
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm md:text-base font-bold text-gray-900">Vente flash</h3>
+          <div class="flex gap-1">
+            <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">02</span>:
+            <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">18</span>:
+            <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">44</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Lien "Voir toutes les offres" -->
+      <NuxtLink
+        class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link"
+        to="/product-category/new-in"
+      >
+        Voir toutes 
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </NuxtLink>
+    </div>
+
+    <!-- Slider -->
+    <div class="relative group/slider">
+      <div 
+        ref="newInSliderRef" 
+        class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-4 md:px-6 scrollbar-hide"
+      >
+        <div 
+          v-for="product in newInProducts" 
+          :key="product.databaseId || product.id"
+          class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start"
+        >
+          <ProductCardMini :node="product" />
+        </div>
+      </div>
+
+      <!-- Boutons de navigation -->
+      <button 
+        @click="scrollNewIn('left')" 
+        class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100"
+        aria-label="Scroll left">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button 
+        @click="scrollNewIn('right')" 
+        class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100"
+        aria-label="Scroll right">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</section>
+    <!-- Features (Compact) -->
+   <section class="container py-4">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+    
+    <!-- Bloc 1 -->
+    <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-primary/20 hover:shadow-md transition-all duration-300">
+      <span class="text-2xl md:text-3xl text-primary">✓</span>
+      <p>
+        <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Paiement à la livraison</strong>
+        <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Payez à la réception</small>
+      </p>
+    </div>
+
+    <!-- Bloc 2 -->
+    <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-primary/20 hover:shadow-md transition-all duration-300">
+      <span class="text-2xl md:text-3xl text-primary">♢</span>
+      <p>
+        <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Livraison nationale</strong>
+        <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Partout au Maroc</small>
+      </p>
+    </div>
+
+    <!-- Bloc 3 -->
+    <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-primary/20 hover:shadow-md transition-all duration-300">
+      <span class="text-2xl md:text-3xl text-primary">↻</span>
+      <p>
+        <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Retours simplifiés</strong>
+        <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Assistance réactive</small>
+      </p>
+    </div>
+
+    <!-- Bloc 4 -->
+    <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-primary/20 hover:shadow-md transition-all duration-300">
+      <span class="text-2xl md:text-3xl text-primary">☎</span>
+      <p>
+        <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Support local</strong>
+        <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Une équipe à votre écoute</small>
+      </p>
+    </div>
+
+  </div>
+</section>
+    <!-- Brand Logos (Compact) -->
+    <!-- Popular Products (Compact) -->
+    <section v-if="popularProducts.length" class="container py-8">
+      <div class="flex items-end justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 md:text-2xl">{{ $t('shop.popularProducts') }}</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Discover our most loved items</p>
+        </div>
+        <NuxtLink
+          class="hidden md:inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+          to="/products"
+        >
+          {{ $t('general.viewAll') }}
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </NuxtLink>
+      </div>
+      <ProductRow :products="popularProducts" class="grid-cols-2 md:grid-cols-4 lg:grid-cols-5" />
+    </section>
+  </main>
+</template>
+
+<style scoped>
+.brand img {
+  max-height: min(5vw, 60px);
+  object-fit: contain;
+  object-position: center;
+  filter: grayscale(100%) opacity(0.5);
+  transition: all 0.3s ease;
+}
+
+.brand img:hover {
+  filter: grayscale(0%) opacity(1);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ✅ FORCE LA SUPPRESSION DE TOUT CALQUE OPAQUE SUR LE HERO BANNER */
+:deep(.hero-overlay),
+:deep(.hero-banner::after),
+:deep([class*="hero"] .overlay),
+:deep([class*="hero"] .gradient) {
+  background: transparent !important;
+  background-image: none !important;
+  display: none !important;
+}
+</style>
+
+-----------------
+
+<script lang="ts" setup>
+import { ProductsOrderByEnum } from '#gql/default';
+import type { Product } from '#types/gql';
+
+const { siteName, description, shortDescription, siteImage } = useAppConfig();
+
+// 1. Récupération des données
+const { data: newInData } = await useAsyncGql('getNewInProducts', { 
+  category: 'new' 
+});
+const newInProducts = computed<Product[]>(() => 
+  (newInData.value?.products?.nodes as Product[] | undefined) ?? []
+);
+
+const { data: productData } = await useAsyncGql('getProducts', { first: 20, orderby: ProductsOrderByEnum.Popularity });
+const popularProducts = (productData.value?.products?.nodes as Product[]) || [];
+
+// 2. Logique des onglets de catégories pour la section "Recommandé pour vous"
+const categories = [
+  { slug: 'all', name: 'Tout' },
+  { slug: 'maison', name: 'Maison' },
+  { slug: 'cuisine', name: 'Cuisine' },
+  { slug: 'tech', name: 'Tech' },
+  { slug: 'beaute', name: 'Beauté' },
+  { slug: 'mode', name: 'Mode' },
+  { slug: 'auto', name: 'Auto' },
+  { slug: 'kids', name: 'Kids' },
+  { slug: 'sport', name: 'Sport' },
+];
+
+const activeCategory = ref('all');
+
+const selectCategory = (slug: string) => {
+  activeCategory.value = slug;
+};
+
+// Filtrage dynamique des produits selon la catégorie active
+const filteredProducts = computed(() => {
+  if (activeCategory.value === 'all') {
+    return popularProducts;
+  }
+  return popularProducts.filter((product: any) => 
+    product.categories?.nodes?.some((cat: any) => cat.slug === activeCategory.value) ||
+    product.productCategories?.nodes?.some((cat: any) => cat.slug === activeCategory.value)
+  );
+});
+
+useSeoMeta({
+  title: `Home`,
+  ogTitle: siteName,
+  description: description,
+  ogDescription: shortDescription,
+  ogImage: siteImage,
+  twitterCard: `summary_large_image`,
+});
+
+// 3. Logique du slider
+const newInSliderRef = ref<HTMLElement | null>(null);
+const scrollNewIn = (direction: 'left' | 'right') => {
+  if (!newInSliderRef.value) return;
+  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
+  newInSliderRef.value.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth',
+  });
+};
+
+//------------
+
+
+</script>
+
+<template>
+  <main class="min-h-screen">
+    <HeroBanner />
+
+    <!-- ========================================== -->
+    <!-- SECTION 1 : Explorez nos univers (Grille)  -->
+    <!-- ========================================== -->
+    <section class="container py-8 md:py-12">
+      <div class="flex items-center justify-between mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-normal text-gray-900">Explorez nos univers</h2>
+        
+      </div>
+
+      <div class="grid grid-cols-4 gap-3 md:gap-6">
+        <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Maison</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Cuisine</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="3" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Tech</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/beaute" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Beauté</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/mode" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Mode</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/auto" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Auto</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9" />
+              <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+              <circle cx="9" cy="10" r="1" fill="currentColor" />
+              <circle cx="15" cy="10" r="1" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Kids</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/sport" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Sport</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2 : Vente Flash (Slider)           -->
+    <!-- ========================================== -->
+    <section v-if="newInProducts.length" class="container py-4 md:py-10">
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24]/20 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+
+        <div class="relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-3 px-4 pt-4 md:px-6 md:pt-6">
+          <div class="flex items-center gap-2">
+            <div class="flex-shrink-0 w-7 h-7 bg-[#ff4f24] rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm md:text-base font-medium text-gray-900">Vente flash</h2>
+              <div class="flex gap-1">
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">02</span>
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">18</span>
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">44</span>
+              </div>
+            </div>
+          </div>
+          
+          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/new-in">
+            Voir toutes les offres
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </NuxtLink>
+        </div>
+
+        <div class="relative group/slider">
+          <div ref="newInSliderRef" class="flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-2 md:px-2 scrollbar-hide">
+            <div v-for="product in newInProducts" :key="product.databaseId || product.id" class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start">
+              <ProductCardMini :node="product" />
+            </div>
+          </div>
+
+          <button @click="scrollNewIn('left')" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll left">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button @click="scrollNewIn('right')" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll right">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3 : Recommandé pour vous (ONGLETS) -->
+    <!-- ========================================== -->
+    <section class="container py-8 bg-gray-50/50 rounded-2xl px-4 md:px-6 mb-8">
+      <div class="mb-6">
+        <p class="text-xs font-bold text-[#ff4f24] uppercase tracking-wide mb-2">RECOMMANDÉ POUR VOUS</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Encore plus de bons plans</h2>
+      </div>
+
+      <!-- Onglets de catégories -->
+        <div class="flex flex-wrap justify-end gap-2 md:gap-2 mb-8">
+          <button
+              v-for="category in categories"
+              :key="category.slug"
+              @click="selectCategory(category.slug)"
+              class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border"
+              :class="activeCategory === category.slug 
+                ? 'bg-[#ff4f24] text-white border-[#ff4f24] shadow-sm shadow-[#ff4f24]/20' 
+                : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff4f24]/30 hover:bg-[#ff4f24]/5'"
+            >
+          {{ category.name }}
+        </button>
+      </div>
+
+      <!-- Grille de produits filtrés -->
+      <div v-if="filteredProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <ProductCard 
+          v-for="product in filteredProducts" 
+          :key="product.databaseId || product.id"
+          :node="product"
+        />
+      </div>
+
+      <!-- État vide si aucune catégorie ne correspond -->
+      <div v-else class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+        <p class="text-gray-500">Aucun produit trouvé dans cette catégorie pour le moment.</p>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4 : Features (Compact)             -->
+    <!-- ========================================== -->
+    <section class="container py-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">✓</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Paiement à la livraison</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Payez à la réception</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">♢</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Livraison nationale</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Partout au Maroc</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">↻</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Retours simplifiés</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Assistance réactive</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">☎</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Support local</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Une équipe à votre écoute</small>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+:deep(.hero-overlay),
+:deep(.hero-banner::after),
+:deep([class*="hero"] .overlay),
+:deep([class*="hero"] .gradient) {
+  background: transparent !important;
+  background-image: none !important;
+  display: none !important;
+}
+</style>
+
+
+
+
+
+------
+
+<script lang="ts" setup>
+import type { Product } from '#types/gql';
+
+const { siteName, description, shortDescription, siteImage } = useAppConfig();
+
+// ==========================================
+// 1. Récupération des données initiales
+// ==========================================
+const { data: newInData } = await useAsyncGql('getNewInProducts', { 
+  category: 'gadgets' 
+});
+const newInProducts = computed<Product[]>(() => 
+  (newInData.value?.products?.nodes as Product[] | undefined) ?? []
+);
+
+// ==========================================
+// 2. Logique des onglets de catégories
+// ==========================================
+const categories = [
+  { slug: 'all', name: 'Tout' },
+  { slug: 'maison', name: 'Maison' },
+  { slug: 'cuisine', name: 'Cuisine' },
+  { slug: 'tech', name: 'Tech' },
+  { slug: 'beaute', name: 'Beauté' },
+  { slug: 'mode', name: 'Mode' },
+  { slug: 'auto', name: 'Auto' },
+  { slug: 'kids', name: 'Kids' },
+  { slug: 'sport', name: 'Sport' },
+];
+
+const activeCategory = ref('all');
+
+// ==========================================
+// 3. Variables pour le bouton "Load More"
+// ==========================================
+const productsPerPage = 20;
+const loading = ref(false);
+const hasMore = ref(true);
+const allProducts = ref<Product[]>([]);
+const endCursor = ref<string | null>(null);
+
+// ==========================================
+// 4. Fonction de chargement avec $fetch
+// ==========================================
+const fetchProducts = async (categoryId: string, append = false) => {
+  if (loading.value) return;
+  
+  loading.value = true;
+  try {
+    // ✅ CORRECTION : Structure correcte pour 'orderby'
+    const args: any = { 
+      first: productsPerPage,
+      where: {
+        category: categoryId,
+        orderby: [{ field: 'POPULARITY', order: 'ASC' }] // Tableau d'objets
+      }
+    };
+    
+    // Ne pas envoyer 'all' à GraphQL
+    if (categoryId === 'all') {
+      delete args.where.category;
+    }
+    
+    if (append && endCursor.value) {
+      args.after = endCursor.value;
+    }
+
+    // Requête GraphQL corrigée (sans fragments)
+    const query = `
+      query GetProducts($first: Int!, $where: ProductsWhereInput, $after: String) {
+        products(first: $first, where: $where, after: $after) {
+          nodes {
+            databaseId
+            id
+            name
+            slug
+            type
+            status
+            featured
+            catalogVisibility
+            description
+            shortDescription
+            sku
+            onSale
+            totalSales
+            averageRating
+            reviewCount
+            image {
+              sourceUrl
+              altText
+              title
+            }
+            galleryImages {
+              nodes {
+                sourceUrl
+                altText
+                title
+              }
+            }
+            productCategories {
+              nodes {
+                databaseId
+                name
+                slug
+              }
+            }
+            productTags {
+              nodes {
+                databaseId
+                name
+                slug
+              }
+            }
+            ... on SimpleProduct {
+              price
+              regularPrice
+              salePrice
+              stockStatus
+              stockQuantity
+            }
+            ... on VariableProduct {
+              price
+              regularPrice
+              salePrice
+              stockStatus
+              variations {
+                nodes {
+                  databaseId
+                  price
+                  regularPrice
+                  salePrice
+                  stockStatus
+                }
+              }
+            }
+            ... on ExternalProduct {
+              price
+              regularPrice
+              salePrice
+              externalUrl
+            }
+            ... on GroupProduct {
+              price
+              regularPrice
+              salePrice
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const response = await $fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      body: {
+        query,
+        variables: args
+      }
+    });
+
+    const data = response as any;
+    const newProducts = data?.data?.products?.nodes || [];
+    const pageInfo = data?.data?.products?.pageInfo;
+    
+    if (append) {
+      allProducts.value = [...allProducts.value, ...newProducts];
+    } else {
+      allProducts.value = newProducts;
+    }
+    
+    endCursor.value = pageInfo?.endCursor || null;
+    hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des produits:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+const loadInitialProducts = () => {
+  endCursor.value = null;
+  hasMore.value = true;
+  fetchProducts(activeCategory.value, false);
+};
+
+const loadMoreProducts = () => {
+  fetchProducts(activeCategory.value, true);
+};
+
+const selectCategory = (slug: string) => {
+  activeCategory.value = slug;
+  loadInitialProducts();
+};
+
+// ==========================================
+// 5. SEO
+// ==========================================
+useSeoMeta({
+  title: `Accueil`,
+  ogTitle: siteName,
+  description: description,
+  ogDescription: shortDescription,
+  ogImage: siteImage,
+  twitterCard: `summary_large_image`,
+});
+
+// ==========================================
+// 6. Logique du slider Vente Flash
+// ==========================================
+const newInSliderRef = ref<HTMLElement | null>(null);
+const scrollNewIn = (direction: 'left' | 'right') => {
+  if (!newInSliderRef.value) return;
+  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
+  newInSliderRef.value.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth',
+  });
+};
+
+// ==========================================
+// 7. Chargement initial
+// ==========================================
+onMounted(() => {
+  loadInitialProducts();
+});
+</script>
+<template>
+  <main class="min-h-screen">
+    <HeroBanner />
+
+    <!-- ========================================== -->
+    <!-- SECTION 1 : Explorez nos univers (Grille)  -->
+    <!-- ========================================== -->
+    <section class="container py-8 md:py-12">
+      <div class="flex items-center justify-between mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold text-gray-900">Explorez nos univers</h2>
+        <NuxtLink to="/categories" class="text-sm font-medium text-gray-500 hover:text-[#ff4f24] transition-colors">
+          Toutes les catégories →
+        </NuxtLink>
+      </div>
+
+      <div class="grid grid-cols-4 gap-3 md:gap-6">
+        <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Maison</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Cuisine</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="3" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Tech</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/beaute" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Beauté</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/mode" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Mode</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/auto" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Auto</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9" />
+              <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+              <circle cx="9" cy="10" r="1" fill="currentColor" />
+              <circle cx="15" cy="10" r="1" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Kids</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink to="/product-category/sport" class="group flex flex-col items-center text-center gap-2 md:gap-3">
+          <div class="w-14 h-14 md:w-24 md:h-24 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+            <svg class="w-6 h-6 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+            </svg>
+          </div>
+          <div>
+            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Sport</strong>
+            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
+          </div>
+        </NuxtLink>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2 : Vente Flash (Slider)           -->
+    <!-- ========================================== -->
+    <section v-if="newInProducts.length" class="container py-8 md:py-10">
+      <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24]/20 rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
+
+        <div class="relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-3 px-4 pt-4 md:px-6 md:pt-6">
+          <div class="flex items-center gap-2">
+            <div class="flex-shrink-0 w-7 h-7 bg-[#ff4f24] rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm md:text-base font-bold text-gray-900">Vente flash</h3>
+              <div class="flex gap-1">
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">02</span>
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">18</span>
+                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">44</span>
+              </div>
+            </div>
+          </div>
+          
+          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/new-in">
+            Voir toutes les offres
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </NuxtLink>
+        </div>
+
+        <div class="relative group/slider">
+          <div ref="newInSliderRef" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-4 md:px-6 scrollbar-hide">
+            <div v-for="product in newInProducts" :key="product.databaseId || product.id" class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start">
+              <ProductCardMini :node="product" />
+            </div>
+          </div>
+
+          <button @click="scrollNewIn('left')" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll left">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button @click="scrollNewIn('right')" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll right">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3 : Recommandé (ONGLETS + LOAD MORE) -->
+    <!-- ========================================== -->
+    <section class="container py-8 bg-gray-50/50 rounded-2xl px-4 md:px-6 mb-8">
+      <div class="mb-6">
+        <p class="text-xs font-bold text-[#ff4f24] uppercase tracking-wide mb-2">RECOMMANDÉ POUR VOUS</p>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Encore plus de bons plans</h2>
+        <p class="text-sm text-gray-500">{{ allProducts.length }} produits disponibles</p>
+      </div>
+
+      <!-- Onglets de catégories -->
+      <div class="flex flex-wrap justify-end gap-2 md:gap-2 mb-8">
+        <button
+          v-for="category in categories"
+          :key="category.slug"
+          @click="selectCategory(category.slug)"
+          :disabled="loading"
+          class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border disabled:opacity-50"
+          :class="activeCategory === category.slug 
+            ? 'bg-[#ff4f24] text-white border-[#ff4f24] shadow-sm shadow-[#ff4f24]/20' 
+            : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff4f24]/30 hover:bg-[#ff4f24]/5'"
+        >
+          {{ category.name }}
+        </button>
+      </div>
+
+      <!-- Grille de produits -->
+      <div v-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <ProductCard 
+          v-for="product in allProducts" 
+          :key="product.databaseId || product.id"
+          :node="product"
+        />
+      </div>
+
+      <!-- État vide -->
+      <div v-else-if="!loading" class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+        <p class="text-gray-500">Aucun produit trouvé dans cette catégorie pour le moment.</p>
+      </div>
+
+      <!-- BOUTON LOAD MORE -->
+      <div v-if="hasMore && allProducts.length > 0" class="flex justify-center mt-10">
+        <button
+          @click="loadMoreProducts"
+          :disabled="loading"
+          class="inline-flex items-center gap-2 px-8 py-3 bg-[#ff4f24] text-white font-semibold rounded-full shadow-lg shadow-[#ff4f24]/20 hover:bg-[#ff4f24]/90 hover:shadow-xl hover:shadow-[#ff4f24]/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <svg v-if="loading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          
+          <span v-if="loading">Chargement...</span>
+          
+          <template v-else>
+            <span>Charger plus de produits</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </template>
+        </button>
+      </div>
+
+      <!-- Message "Tous les produits chargés" -->
+      <div v-else-if="!hasMore && allProducts.length > 0" class="text-center mt-8">
+        <p class="text-sm text-gray-400">Tous les produits ont été chargés</p>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4 : Features (Compact)             -->
+    <!-- ========================================== -->
+    <section class="container py-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">✓</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Paiement à la livraison</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Payez à la réception</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">♢</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Livraison nationale</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Partout au Maroc</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">↻</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Retours simplifiés</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Assistance réactive</small>
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
+          <span class="text-2xl md:text-3xl text-[#ff4f24]">☎</span>
+          <p>
+            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Support local</strong>
+            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Une équipe à votre écoute</small>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+:deep(.hero-overlay),
+:deep(.hero-banner::after),
+:deep([class*="hero"] .overlay),
+:deep([class*="hero"] .gradient) {
+  background: transparent !important;
+  background-image: none !important;
+  display: none !important;
+}
+</style>

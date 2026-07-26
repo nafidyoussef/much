@@ -1,0 +1,43 @@
+query getCategoriesWithProducts {
+  productCategories(first: 20, where: { hideEmpty: true }) {
+    nodes {
+      databaseId
+      id
+      name
+      slug
+      image {
+        sourceUrl
+        altText
+      }
+      products(first: 8, where: { status: "publish" }) {
+        nodes {
+          databaseId
+          id
+          name
+          slug
+          type
+          ... on SimpleProduct {
+            price
+            regularPrice
+            salePrice
+            image {
+              sourceUrl
+              altText
+            }
+            stockStatus
+          }
+          ... on VariableProduct {
+            price
+            regularPrice
+            salePrice
+            image {
+              sourceUrl
+              altText
+            }
+            stockStatus
+          }
+        }
+      }
+    }
+  }
+}
