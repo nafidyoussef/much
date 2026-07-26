@@ -286,7 +286,7 @@ const fetchProducts = async (categoryId: string, append = false) => {
     //const config = useRuntimeConfig();
     //const graphqlEndpoint = config.public.gqlHost || '';
 
-    const response = await $fetch('http://localhost:8080/graphql', {
+    const response = await $fetch('https://bazzaria.ma/graphql', {
       method: 'POST',
       body: {
         query,
