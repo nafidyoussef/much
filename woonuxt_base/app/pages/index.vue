@@ -66,17 +66,27 @@ const fetchProducts = async (categoryId: string, append = false) => {
     }
 
     // Requête GraphQL (inchangée, elle est correcte avec MENU_ORDER et ASC)
-    const query = `query getProducts($after: String, $slug: [String], $first: Int = 24, $orderby: ProductsOrderByEnum = MENU_ORDER) {
+    const query = `query getProducts($after: String, $slug: [String], $first: Int = 24, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC, $onSale: Boolean, $minPrice: Float, $maxPrice: Float, $taxonomyFilter: ProductTaxonomyInput) {
   products(
     first: $first
     after: $after
-    where: {categoryIn: $slug, visibility: VISIBLE, minPrice: 0, orderby: {field: $orderby, order: DESC}, status: "publish"}
+    where: {
+      categoryIn: $slug
+      visibility: VISIBLE
+      status: "publish"
+      onSale: $onSale
+      minPrice: $minPrice
+      maxPrice: $maxPrice
+      orderby: { field: $orderby, order: $order }
+      taxonomyFilter: $taxonomyFilter
+    }
   ) {
     pageInfo {
       hasNextPage
       endCursor
     }
     nodes {
+      __typename
       name
       slug
       type
@@ -103,12 +113,16 @@ fragment ProductCategories on Product {
 }
 
 fragment SimpleProduct on SimpleProduct {
+  __typename
   name
   slug
+  type
   price
   rawPrice: price(format: RAW)
   regularPrice
+  rawRegularPrice: regularPrice(format: RAW)
   salePrice
+  rawSalePrice: salePrice(format: RAW)
   stockStatus
   onSale
   image {
@@ -119,12 +133,16 @@ fragment SimpleProduct on SimpleProduct {
 }
 
 fragment VariableProduct on VariableProduct {
+  __typename
   name
   slug
+  type
   price
   rawPrice: price(format: RAW)
   regularPrice
+  rawRegularPrice: regularPrice(format: RAW)
   salePrice
+  rawSalePrice: salePrice(format: RAW)
   stockStatus
   onSale
   image {
@@ -135,11 +153,18 @@ fragment VariableProduct on VariableProduct {
 }
 
 fragment ExternalProduct on ExternalProduct {
+  __typename
+  name
+  slug
+  type
   externalUrl
   buttonText
   price
   regularPrice
+  rawRegularPrice: regularPrice(format: RAW)
   salePrice
+  rawSalePrice: salePrice(format: RAW)
+  onSale
   image {
     sourceUrl
     altText

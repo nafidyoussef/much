@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 
 const route = useRoute();
 const { productsPerPage } = useHelpers();
 const { products, setProducts } = useProducts();
-const { frontEndUrl } = useHelpers();
+//onst { frontEndUrl } = useHelpers();
 
-const page = ref(1);
 const loading = ref(false);
 const hasMore = ref(true);
 const endCursor = ref<string | null>(null);
 
-// Récupérer le slug de la catégorie si présent
-const categorySlug = route.params.categorySlug as string || null;
+// Récupérer le slug de la catégorie
+const categorySlug = computed(() => {
+  const slug = route.params.slug || route.params.categorySlug;
+  return Array.isArray(slug) ? slug[0] : slug;
+});
 
-// Requête GraphQL allégée pour les listes (optimisée pour 6000+ produits)
+// Requête GraphQL allégée pour les listes
 const getProductsQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 24) {
     products(
@@ -87,7 +89,6 @@ const getProductsQuery = `
   }
 `;
 
-// Fonction pour charger les produits
 const loadProducts = async (append = false) => {
   if (loading.value || !hasMore.value) return;
   
@@ -98,15 +99,18 @@ const loadProducts = async (append = false) => {
       first: productsPerPage || 24
     };
     
-    if (categorySlug) {
-      variables.slug = [categorySlug];
+    if (categorySlug.value) {
+      variables.slug = [categorySlug.value];
     }
     
     if (append && endCursor.value) {
       variables.after = endCursor.value;
     }
 
-    const response = await $fetch('http://localhost:8080/graphql', {
+   // const config = useRuntimeConfig();
+   // const graphqlEndpoint = config.public.gqlHost || 'http://localhost:8080/graphql';
+
+    const response = await $fetch('http://bazzaria/graphql', {
       method: 'POST',
       body: {
         query: getProductsQuery,
@@ -119,17 +123,13 @@ const loadProducts = async (append = false) => {
     const pageInfo = data?.data?.products?.pageInfo;
     
     if (append) {
-      // Ajouter les nouveaux produits à la liste existante
       setProducts([...products.value, ...newProducts]);
     } else {
-      // Remplacer la liste (premier chargement)
       setProducts(newProducts);
     }
     
     endCursor.value = pageInfo?.endCursor || null;
     hasMore.value = pageInfo?.hasNextPage ?? false;
-    
-    page.value++;
   } catch (error) {
     console.error('Erreur lors du chargement des produits:', error);
   } finally {
@@ -137,7 +137,7 @@ const loadProducts = async (append = false) => {
   }
 };
 
-// Intersection Observer pour détecter quand l'utilisateur arrive en bas
+// Intersection Observer
 let observer: IntersectionObserver | null = null;
 const sentinelRef = ref<HTMLElement | null>(null);
 
@@ -146,37 +146,27 @@ const setupObserver = () => {
   
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting && !loading.value && hasMore.value) {
+      if (entries[0]?.isIntersecting && !loading.value && hasMore.value) {
         loadProducts(true);
       }
     },
-    {
-      rootMargin: '200px' // Commencer à charger 200px avant d'atteindre le bas
-    }
+    { rootMargin: '200px' }
   );
   
   observer.observe(sentinelRef.value);
 };
 
 onMounted(() => {
-  // Charger les premiers produits
   loadProducts(false);
-  
-  // Setup l'observer après le premier rendu
-  setTimeout(() => {
-    setupObserver();
-  }, 100);
+  setTimeout(() => setupObserver(), 100);
 });
 
 onUnmounted(() => {
-  if (observer) {
-    observer.disconnect();
-  }
+  if (observer) observer.disconnect();
 });
 
-// Regarder les changements de route pour recharger
-watch(() => route.params.categorySlug, () => {
-  page.value = 1;
+// Recharger quand la catégorie change
+watch(() => route.params.slug || route.params.categorySlug, () => {
   endCursor.value = null;
   hasMore.value = true;
   loadProducts(false);
@@ -184,17 +174,17 @@ watch(() => route.params.categorySlug, () => {
 </script>
 
 <template>
-  <section v-if="!!products.length" class="relative w-full py-0">
-    <TransitionGroup name="shrink" tag="div" class="product-grid">
+  <section v-if="products.length" class="relative w-full py-0">
+    <div class="product-grid">
       <ProductCard 
         v-for="(node, i) in products" 
         :key="node.id || i" 
         :node 
         :index="i" 
       />
-    </TransitionGroup>
+    </div>
     
-    <!-- Loader et sentinel pour l'infinite scroll -->
+    <!-- Loader / Sentinel -->
     <div ref="sentinelRef" class="flex flex-col items-center justify-center py-12">
       <div v-if="loading" class="flex items-center gap-3">
         <div class="w-8 h-8 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin"></div>
@@ -218,37 +208,9 @@ watch(() => route.params.categorySlug, () => {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.product-grid:empty {
-  display: none;
-}
-
 @media (min-width: 768px) {
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   }
-}
-
-.shrink-move {
-  transition: all 400ms;
-}
-
-.shrink-leave-active {
-  transition: transform 300ms;
-  position: absolute;
-  opacity: 0;
-}
-
-.shrink-enter-active {
-  transition:
-    opacity 400ms ease-out 200ms,
-    transform 400ms ease-out;
-  will-change: opacity, transform;
-}
-
-.shrink-enter,
-.shrink-leave-to,
-.shrink-enter-from {
-  opacity: 0;
-  transform: scale(0.75) translateY(25%);
 }
 </style>
