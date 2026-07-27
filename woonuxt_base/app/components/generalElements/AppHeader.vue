@@ -33,13 +33,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-shadow duration-300">
+  <header class="sticky left-1  top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-shadow duration-300">
     <div class="container">
 
       <!-- ========================================== -->
       <!-- 📱 VERSION MOBILE                           -->
       <!-- ========================================== -->
-      <div class="lg:hidden py-3">
+      <div class="lg:hidden py-1">
         
         <!-- Row 1 : Logo, Menu, Compte, Panier (Se rétracte au scroll vers le bas) -->
         <div 
