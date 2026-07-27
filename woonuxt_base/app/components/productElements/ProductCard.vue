@@ -3,7 +3,7 @@ import type { ImageFragment, Product, ProductVariationFragment, VariationAttribu
 
 const route = useRoute();
 useAppConfig();
-const { addToCart, toggleCart } = useCart();
+const { addToCart, toggleCart } = useCart(); // 👈 Import du composable panier
 
 const props = defineProps({
   node: { type: Object as PropType<Product>, required: true },
@@ -25,7 +25,7 @@ const placeholderImage = '/images/placeholder.jpg';
 
 const sliderRef = ref<HTMLElement | null>(null);
 const currentSlide = ref(0);
-const isAdding = ref(false);
+const isAdding = ref(false); // 👈 État de chargement local
 
 const mainImage = computed<string>(() => props.node?.image?.productCardSourceUrl || props.node?.image?.sourceUrl || placeholderImage);
 
@@ -118,6 +118,8 @@ const productLink = computed<string>(() => {
   return baseUrl;
 });
 
+// 👇 Fonction d'ajout au panier
+// 👇 Fonction d'ajout au panier
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -133,7 +135,10 @@ const handleAddToCart = async (event: Event) => {
       productId: props.node.databaseId,
       quantity: 1,
     });
+    
+    // 👇 C'EST ICI QUE LA MAGIE OPÈRE : On ouvre le panier
     toggleCart(true); 
+    
   } catch (error) {
     console.error('Failed to add to cart:', error);
   } finally {
@@ -141,7 +146,9 @@ const handleAddToCart = async (event: Event) => {
   }
 };
 
+// 👇 Détermine si le bouton doit être affiché
 const showAddButton = computed(() => {
+  // Ne pas afficher pour les produits externes ou en rupture
   if (props.node.__typename === 'ExternalProduct') return false;
   if (props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK') return false;
   return true;
@@ -189,26 +196,26 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative group w-full mt-0">
+  <div class="relative group w-full mt-0 px-1">
     
-    <!-- Zone Image : Conteneur strict avec overflow-hidden -->
+    <!-- Zone Image : Conteneur strict pour les badges et le slider -->
     <div class="relative w-full overflow-hidden rounded-xl bg-gray-100">
       
+      <!-- Badge Promo (Z-index élevé pour rester au-dessus) -->
       <SaleBadge :node class="absolute z-20 top-3 right-3" />
 
-      <!-- ✅ 1. overscroll-x-contain empêche le rebond de la page entière -->
+      <!-- Slider : Suppression du gap ici pour un contrôle parfait, on gère le padding autrement si besoin -->
       <div
         ref="sliderRef"
-        class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-x hide-scrollbar overscroll-x-contain"
+        class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-x hide-scrollbar"
         @scroll.passive="updateCurrentSlide"
       >
         <template v-for="(image, slideIndex) in sliderImages" :key="image.key">
           
-          <!-- Cas avec lien -->
-          <!-- ✅ 2. Ajout de la classe 'no-ios-drag' au conteneur du slide -->
+          <!-- ✅ CORRECTION MAJEURE : w-full + shrink-0 + aspect-[8/9] garantissent une taille fixe -->
           <NuxtLink
             v-if="node.slug"
-            class="product-card-slide no-ios-drag relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
+            class="product-card-slide relative block w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
             :data-index="slideIndex"
             :to="productLink"
           >
@@ -222,17 +229,15 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
-                draggable: 'false'
+                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
               }" 
             />
           </NuxtLink>
 
-          <!-- Cas sans lien -->
-          <!-- ✅ 2. Ajout de la classe 'no-ios-drag' au conteneur du slide -->
+          <!-- Fallback si pas de slug (même structure stricte) -->
           <div
             v-else
-            class="product-card-slide no-ios-drag relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
+            class="product-card-slide relative block w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
             :data-index="slideIndex"
           >
             <NuxtPicture
@@ -245,14 +250,14 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
-                draggable: 'false'
+                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
               }" 
             />
           </div>
         </template>
       </div>
 
+      <!-- 👇 BOUTON "+" FLOTTANT (Positionné par rapport au conteneur image strict) -->
       <button
         v-if="showAddButton"
         @click="handleAddToCart"
@@ -274,12 +279,14 @@ onMounted(() => {
         </svg>
       </button>
 
+      <!-- Badge Rupture de stock -->
       <div
         v-if="node.__typename === 'SimpleProduct' && node.stockStatus === 'OUT_OF_STOCK'"
         class="absolute bottom-3 right-3 z-20 px-3 py-1.5 text-xs font-semibold text-white bg-gray-900/80 backdrop-blur-sm rounded-full shadow-sm">
         Rupture de stock
       </div>
 
+      <!-- Indicateurs (Dots) du slider -->
       <div v-if="sliderImages.length > 1" class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10 pointer-events-none">
         <button
           v-for="(image, dotIndex) in sliderImages"
@@ -294,19 +301,22 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Zone Texte : Totalement indépendante de la taille de l'image -->
     <div class="p-1 mt-1">
-      <NuxtLink
-        v-if="node.slug"
-        :to="productLink"
-        :title="node.name || undefined"
-        class="block"
-      >
-        <span
-          class="text-[15px] font-normal leading-tight text-gray-900 line-clamp-2 group-hover:text-primary transition-colors duration-300"
-        >
-          {{ node.name }}
-        </span>
-      </NuxtLink>
+    <!--   <StarRating v-if="storeSettings.showReviews" :rating="node.averageRating ?? undefined" :count="node.reviewCount ?? undefined" class="mb-1.5" /> -->
+      
+    <NuxtLink
+  v-if="node.slug"
+  :to="productLink"
+  :title="node.name || undefined"
+  class="block"
+>
+  <span
+    class="text-[15px] font-normal leading-tight text-gray-900 line-clamp-2 group-hover:text-primary transition-colors duration-300"
+  >
+    {{ node.name }}
+  </span>
+</NuxtLink>
       
       <ProductPrice class="mt-1.5 text-base font-bold text-gray-900" :sale-price="node.salePrice ?? undefined" :regular-price="node.regularPrice ?? undefined" />
     </div>
@@ -315,16 +325,17 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ✅ 3. LA CLÉ POUR iOS : Désactiver le comportement natif de Safari sur les images */
-.no-ios-drag {
-  -webkit-touch-callout: none; /* Empêche le menu "Enregistrer l'image" au touché long */
-  -webkit-user-drag: none;     /* Empêche Safari de penser qu'on veut déplacer l'image */
-  user-select: none;           /* Empêche la sélection de texte/image */
+/* Masque la barre de défilement du slider tout en gardant le fonctionnement tactile/souris */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* S'assurer que l'image à l'intérieur hérite bien du comportement */
-.no-ios-drag :deep(img) {
-  -webkit-user-drag: none;
-  pointer-events: none;
+.item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 </style>
