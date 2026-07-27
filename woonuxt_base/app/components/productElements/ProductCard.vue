@@ -189,22 +189,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- ✅ CORRECTION 1 : Suppression du "px-1" qui faussait le calcul de largeur du slider -->
   <div class="relative group w-full mt-0">
     
-    <!-- Zone Image : Conteneur strict avec overflow-hidden pour couper net tout dépassement -->
+    <!-- Zone Image : Conteneur strict avec overflow-hidden -->
     <div class="relative w-full overflow-hidden rounded-xl bg-gray-100">
       
       <SaleBadge :node class="absolute z-20 top-3 right-3" />
 
+      <!-- ✅ AJOUT 1 : overscroll-x-contain pour empêcher la page entière de bouger à la fin du swipe -->
       <div
         ref="sliderRef"
-        class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-x hide-scrollbar"
+        class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-x hide-scrollbar overscroll-x-contain"
         @scroll.passive="updateCurrentSlide"
       >
         <template v-for="(image, slideIndex) in sliderImages" :key="image.key">
           
-          <!-- ✅ CORRECTION 2 : Ajout de "min-w-full" pour forcer la largeur exacte et éviter le "peek" de l'image suivante -->
+          <!-- Cas avec lien -->
           <NuxtLink
             v-if="node.slug"
             class="product-card-slide relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
@@ -221,11 +221,14 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+                /* ✅ AJOUT 2 : pointer-events-none, select-none et draggable=false sur l'image */
+                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
+                draggable: 'false'
               }" 
             />
           </NuxtLink>
 
+          <!-- Cas sans lien -->
           <div
             v-else
             class="product-card-slide relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
@@ -241,7 +244,9 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+                /* ✅ AJOUT 2 : pointer-events-none, select-none et draggable=false sur l'image */
+                class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
+                draggable: 'false'
               }" 
             />
           </div>
