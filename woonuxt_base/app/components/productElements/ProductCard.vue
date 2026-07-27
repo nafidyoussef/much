@@ -196,7 +196,7 @@ onMounted(() => {
       
       <SaleBadge :node class="absolute z-20 top-3 right-3" />
 
-      <!-- ✅ AJOUT 1 : overscroll-x-contain pour empêcher la page entière de bouger à la fin du swipe -->
+      <!-- ✅ 1. overscroll-x-contain empêche le rebond de la page entière -->
       <div
         ref="sliderRef"
         class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth touch-pan-x hide-scrollbar overscroll-x-contain"
@@ -205,9 +205,10 @@ onMounted(() => {
         <template v-for="(image, slideIndex) in sliderImages" :key="image.key">
           
           <!-- Cas avec lien -->
+          <!-- ✅ 2. Ajout de la classe 'no-ios-drag' au conteneur du slide -->
           <NuxtLink
             v-if="node.slug"
-            class="product-card-slide relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
+            class="product-card-slide no-ios-drag relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
             :data-index="slideIndex"
             :to="productLink"
           >
@@ -221,7 +222,6 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                /* ✅ AJOUT 2 : pointer-events-none, select-none et draggable=false sur l'image */
                 class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
                 draggable: 'false'
               }" 
@@ -229,9 +229,10 @@ onMounted(() => {
           </NuxtLink>
 
           <!-- Cas sans lien -->
+          <!-- ✅ 2. Ajout de la classe 'no-ios-drag' au conteneur du slide -->
           <div
             v-else
-            class="product-card-slide relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
+            class="product-card-slide no-ios-drag relative block min-w-full w-full shrink-0 snap-start snap-always overflow-hidden aspect-[8/9]"
             :data-index="slideIndex"
           >
             <NuxtPicture
@@ -244,7 +245,6 @@ onMounted(() => {
               :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
               class="absolute inset-0 w-full h-full"
               :img-attrs="{ 
-                /* ✅ AJOUT 2 : pointer-events-none, select-none et draggable=false sur l'image */
                 class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 pointer-events-none select-none',
                 draggable: 'false'
               }" 
@@ -315,16 +315,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* ✅ 3. LA CLÉ POUR iOS : Désactiver le comportement natif de Safari sur les images */
+.no-ios-drag {
+  -webkit-touch-callout: none; /* Empêche le menu "Enregistrer l'image" au touché long */
+  -webkit-user-drag: none;     /* Empêche Safari de penser qu'on veut déplacer l'image */
+  user-select: none;           /* Empêche la sélection de texte/image */
 }
 
-.item {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+/* S'assurer que l'image à l'intérieur hérite bien du comportement */
+.no-ios-drag :deep(img) {
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 </style>
