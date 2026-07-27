@@ -668,45 +668,6 @@ onMounted(() => {
         <p class="text-sm text-gray-400">Tous les produits ont été chargés</p>
       </div>
     </section>
-
-    <!-- ========================================== -->
-    <!-- SECTION 4 : Features (Compact)             -->
-    <!-- ========================================== -->
-    <section class="container py-4 mb-8">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
-          <span class="text-2xl md:text-3xl text-[#ff4f24]">✓</span>
-          <p>
-            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Paiement à la livraison</strong>
-            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Payez à la réception</small>
-          </p>
-        </div>
-
-        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
-          <span class="text-2xl md:text-3xl text-[#ff4f24]">♢</span>
-          <p>
-            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Livraison nationale</strong>
-            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Partout au Maroc</small>
-          </p>
-        </div>
-
-        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
-          <span class="text-2xl md:text-3xl text-[#ff4f24]">↻</span>
-          <p>
-            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Retours simplifiés</strong>
-            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Assistance réactive</small>
-          </p>
-        </div>
-
-        <div class="flex flex-col items-center text-center gap-1 p-3 md:p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl hover:border-[#ff4f24]/20 hover:shadow-md transition-all duration-300">
-          <span class="text-2xl md:text-3xl text-[#ff4f24]">☎</span>
-          <p>
-            <strong class="block text-xs md:text-sm font-bold text-gray-900 leading-tight">Support local</strong>
-            <small class="block text-[10px] md:text-xs text-gray-500 mt-0.5">Une équipe à votre écoute</small>
-          </p>
-        </div>
-      </div>
-    </section>
   </main>
 </template>
 
