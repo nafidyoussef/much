@@ -5,7 +5,7 @@ import type { WooNuxtFilter } from '#types/gql';
 const { isFiltersActive } = useFiltering();
 const { removeBodyClass } = useHelpers();
 const runtimeConfig = useRuntimeConfig();
-const { storeSettings } = useAppConfig();
+//const { storeSettings } = useAppConfig();
 
 // hide-categories prop is used to hide the category filter on the product category page
 const { hideCategories } = defineProps({ hideCategories: { type: Boolean, default: false } });
@@ -34,7 +34,7 @@ const attributesWithTerms = globalProductAttributes.map((attr) => ({ ...attr, te
         <GlobalFilter v-else :attribute />
       </div>
       <OnSaleFilter />
-      <LazyStarRatingFilter v-if="storeSettings.showReviews" />
+      <!--<LazyStarRatingFilter v-if="storeSettings.showReviews" />-->
       <LazyResetFiltersButton v-if="isFiltersActive" />
     </div>
   </aside>

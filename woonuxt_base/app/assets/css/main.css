@@ -3,7 +3,14 @@
 
 /* Center container */
 .container {
-  @apply mx-auto px-2 md:px-2 max-w-360;
+  @apply mx-auto max-w-360 px-2;
+}
+
+/* 2. À partir de la taille 'md' (768px), on remet un padding plus large pour le desktop */
+@media (min-width: 768px) {
+  .container {
+    @apply px-8 lg:px-20; /* Ajustez 'px-4' ou 'lg:px-8' selon l'espace que vous voulez sur desktop */
+  }
 }
 @theme {
   /* Primary Color Shades */

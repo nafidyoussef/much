@@ -377,7 +377,7 @@ onMounted(() => {
           </svg>
         </div>
         <div>
-          <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Paiement à la livraison</h3>
+          <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Payez à la livraison</h3>
           <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Payez à la réception</p>
         </div>
       </div>
@@ -427,115 +427,125 @@ onMounted(() => {
     <!-- ========================================== -->
     <!-- SECTION 1 : Explorez nos univers (Grille)  -->
     <!-- ========================================== -->
-    <section class="container py-4 md:py-4">
-      <div class="flex items-center justify-between mb-4 md:mb-6">
-        <h2 class="text-xl md:text-2xl font-medium text-gray-900">Explorez nos univers</h2>
+    <section class="container py-4 md:py-6">
+  <div class="flex items-center justify-between mb-4 md:mb-6">
+    <h2 class="text-xl md:text-2xl font-medium text-gray-900">Explorez nos univers</h2>
+  </div>
+
+  <!-- ✅ GRILLE : 4 colonnes (mobile/tablette), 8 colonnes (desktop) -->
+  <div class="grid grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4 lg:gap-2">
+    
+    <!-- 1. Maison -->
+    <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
       </div>
-
-      <div class="grid grid-cols-4 gap-3 md:gap-6">
-        <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Maison</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Cuisine</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <circle cx="12" cy="12" r="8" />
-              <circle cx="12" cy="12" r="3" fill="currentColor" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Tech</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/beaute" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Beauté</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/mode" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Mode</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/auto" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Auto</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <circle cx="12" cy="12" r="9" />
-              <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
-              <circle cx="9" cy="10" r="1" fill="currentColor" />
-              <circle cx="15" cy="10" r="1" fill="currentColor" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Kids</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-
-        <NuxtLink to="/product-category/sport" class="group flex flex-col items-center text-center gap-2 md:gap-3">
-          <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="5" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-base font-bold text-gray-900 leading-tight">Sport</strong>
-            <small class="text-[9px] md:text-sm text-gray-500">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Maison</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
       </div>
-    </section>
+    </NuxtLink>
 
+    <!-- 2. Cuisine -->
+    <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Cuisine</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 3. Tech -->
+    <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="8" />
+          <circle cx="12" cy="12" r="3" fill="currentColor" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Tech</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 4. Beauté -->
+    <NuxtLink to="/product-category/beaute" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Beauté</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 5. Mode -->
+    <NuxtLink to="/product-category/mode" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Mode</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 6. Auto -->
+    <NuxtLink to="/product-category/auto" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Auto</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 7. Kids -->
+    <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9" />
+          <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <circle cx="9" cy="10" r="1" fill="currentColor" />
+          <circle cx="15" cy="10" r="1" fill="currentColor" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Kids</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+    <!-- 8. Sport -->
+    <NuxtLink to="/product-category/sport" class="group flex flex-col items-center text-center gap-1.5 lg:gap-2">
+      <div class="w-12 h-12 md:w-14 md:h-14 lg:w-12 lg:h-12 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg class="w-6 h-6 md:w-7 md:h-7 lg:w-6 lg:h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="5" />
+        </svg>
+      </div>
+      <div>
+        <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Sport</strong>
+        <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+      </div>
+    </NuxtLink>
+
+  </div>
+</section>
     <!-- ========================================== -->
     <!-- SECTION 2 : Vente Flash (Slider)           -->
     <!-- ========================================== -->
