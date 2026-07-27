@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppToolBar from './components/generalElements/AppToolBar.vue';
+
 const route = useRoute();
 const { isShowingCart, toggleCart } = useCart();
 const { isShowingMobileMenu, toggleMobileMenu, addBodyClass, removeBodyClass } = useHelpers();
@@ -54,8 +56,10 @@ useHead({
     <Transition name="fade">
       <div v-if="isShowingCart || isShowingMobileMenu" class="bg-black opacity-25 inset-0 z-40 fixed" @click="closeCartAndMenu"></div>
     </Transition>
-
+    
     <AppFooter />
+    <AppToolBar/>
+
   </div>
 </template>
 

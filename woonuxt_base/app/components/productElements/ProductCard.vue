@@ -196,7 +196,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative group w-full mt-0 px-1">
+  <div class="relative group w-full mt-0 px-2">
     
     <!-- Zone Image : Conteneur strict pour les badges et le slider -->
     <div class="relative w-full overflow-hidden rounded-xl bg-gray-100">
