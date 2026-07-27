@@ -66,220 +66,86 @@ const fetchProducts = async (categoryId: string, append = false) => {
     }
 
     // Requête GraphQL (inchangée, elle est correcte avec MENU_ORDER et ASC)
-    const query = `query getProducts($after: String, $slug: [String], $first: Int = 9999, $orderby: ProductsOrderByEnum = MENU_ORDER) {
-      products(
-        first: $first
-        after: $after
-        where: {categoryIn: $slug, visibility: VISIBLE, minPrice: 0, orderby: {field: $orderby, order: DESC}, status: "publish"}
-      ) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        nodes {
-          name
-          slug
-          type
-          databaseId
-          id
-          averageRating
-          reviewCount
-          ...Terms
-          ...ProductCategories
-          ...SimpleProduct
-          ...VariableProduct
-          ...ExternalProduct
-        }
-      }
+    const query = `query getProducts($after: String, $slug: [String], $first: Int = 24, $orderby: ProductsOrderByEnum = MENU_ORDER) {
+  products(
+    first: $first
+    after: $after
+    where: {categoryIn: $slug, visibility: VISIBLE, minPrice: 0, orderby: {field: $orderby, order: DESC}, status: "publish"}
+  ) {
+    pageInfo {
+      hasNextPage
+      endCursor
     }
-    
-    fragment Terms on Product {
-      terms(first: 100) {
-        nodes {
-          taxonomyName
-          slug
-        }
-      }
-    }
-    
-    fragment ProductCategories on Product {
-      productCategories {
-        nodes {
-          databaseId
-          slug
-          name
-          count
-        }
-      }
-    }
-    
-    fragment SimpleProduct on SimpleProduct {
+    nodes {
       name
       slug
-      price
-      rawPrice: price(format: RAW)
-      date
-      regularPrice
-      rawRegularPrice: regularPrice(format: RAW)
-      salePrice
-      rawSalePrice: salePrice(format: RAW)
-      stockStatus
-      stockQuantity
-      lowStockAmount
-      onSale
-      averageRating
-      weight
-      length
-      width
-      height
-      reviewCount
-      virtual
-      image {
-        sourceUrl
-        altText
-        title
-        databaseId
-        cartSourceUrl: sourceUrl(size: THUMBNAIL)
-        productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
-      }
-      galleryImages(first: 20) {
-        nodes {
-          ...Image
-          databaseId
-        }
-      }
-    }
-    
-    fragment Image on MediaItem {
-      sourceUrl
-      altText
-      title
+      type
       databaseId
-    }
-    
-    fragment VariableProduct on VariableProduct {
-      name
-      slug
-      price
-      rawPrice: price(format: RAW)
-      date
-      regularPrice
-      rawRegularPrice: regularPrice(format: RAW)
-      salePrice
-      rawSalePrice: salePrice(format: RAW)
-      stockStatus
-      stockQuantity
-      lowStockAmount
-      onSale
-      weight
-      length
-      width
-      height
-      image {
-        sourceUrl
-        altText
-        title
-        databaseId
-        cartSourceUrl: sourceUrl(size: THUMBNAIL)
-        productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
-      }
+      id
       averageRating
       reviewCount
-      totalSales
-      defaultAttributes {
-        nodes {
-          ...VariationAttribute
-        }
-      }
-      variations(first: 100) {
-        nodes {
-          ...ProductVariation
-        }
-      }
-      galleryImages(first: 20) {
-        nodes {
-          ...Image
-          databaseId
-        }
-      }
+      ...ProductCategories
+      ...SimpleProduct
+      ...VariableProduct
+      ...ExternalProduct
     }
-    
-    fragment VariationAttribute on VariationAttribute {
-      name
-      attributeId
-      value
-      label
-    }
-    
-    fragment ProductVariation on ProductVariation {
-      name
+  }
+}
+
+fragment ProductCategories on Product {
+  productCategories(first: 2) {
+    nodes {
       databaseId
-      price
-      regularPrice
-      salePrice
-      rawSalePrice: salePrice(format: RAW)
       slug
-      stockQuantity
-      stockStatus
-      hasAttributes
-      image {
-        sourceUrl
-        altText
-        title
-        databaseId
-        cartSourceUrl: sourceUrl(size: THUMBNAIL)
-        productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
-      }
-      attributes {
-        nodes {
-          ...VariationAttribute
-        }
-      }
+      name
     }
-    
-    fragment ExternalProduct on ExternalProduct {
-      externalUrl
-      buttonText
-      ...ProductPricing
-      image {
-        sourceUrl
-        altText
-        title
-        databaseId
-        cartSourceUrl: sourceUrl(size: THUMBNAIL)
-        productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
-      }
-      galleryImages(first: 20) {
-        nodes {
-          ...Image
-          databaseId
-        }
-      }
-    }
-    
-    fragment ProductPricing on ProductWithPricing {
-      price
-      rawPrice: price(format: RAW)
-      regularPrice
-      rawRegularPrice: regularPrice(format: RAW)
-      salePrice
-      rawSalePrice: salePrice(format: RAW)
-      ... on SimpleProduct {
-        onSale
-      }
-      ... on VariableProduct {
-        onSale
-      }
-      ... on ExternalProduct {
-        onSale
-      }
-      ... on GroupProduct {
-        onSale
-      }
-      ... on ProductVariation {
-        onSale
-      }
-    }`;
+  }
+}
+
+fragment SimpleProduct on SimpleProduct {
+  name
+  slug
+  price
+  rawPrice: price(format: RAW)
+  regularPrice
+  salePrice
+  stockStatus
+  onSale
+  image {
+    sourceUrl
+    altText
+    productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+  }
+}
+
+fragment VariableProduct on VariableProduct {
+  name
+  slug
+  price
+  rawPrice: price(format: RAW)
+  regularPrice
+  salePrice
+  stockStatus
+  onSale
+  image {
+    sourceUrl
+    altText
+    productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+  }
+}
+
+fragment ExternalProduct on ExternalProduct {
+  externalUrl
+  buttonText
+  price
+  regularPrice
+  salePrice
+  image {
+    sourceUrl
+    altText
+    productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+  }
+}`;
 
     // ✅ Envoi avec $fetch
     // 💡 Astuce : Pensez à utiliser useRuntimeConfig().public.gqlHost au lieu de l'URL en dur
