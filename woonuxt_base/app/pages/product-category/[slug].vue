@@ -24,7 +24,6 @@ const sentinelRef = ref<HTMLElement | null>(null);
 let currentCategoryId: number | null = null;
 let allCategories: any[] = [];
 
-// Récupération des sous-catégories (rapide et nécessaire pour le slider)
 if (slug) {
   const { data: categoryData } = await useAsyncGql('getCategoryWithChildren', { slug });
   currentCategoryId = categoryData.value?.current?.nodes?.[0]?.databaseId || null;
@@ -226,8 +225,6 @@ const filterProductsByPrice = (productsList: Product[]) => {
 
 // ✅ 2. Fonction de Fetch avec Gestion du Cache
 const fetchProducts = async (append = false) => {
-  // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
-   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
   if (!append && isValid.value) {
     products.value = cache.value.products;
     allFetchedProducts.value = cache.value.products;
@@ -235,14 +232,13 @@ const fetchProducts = async (append = false) => {
     hasNextPage.value = cache.value.hasNextPage;
     loading.value = false;
     
-    // ✅ CORRECTION : Restaurer le scroll uniquement côté client
     await nextTick();
     if (import.meta.client) {
       window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
     }
     
     setupObserver();
-    return; // On arrête ici, PAS de requête réseau !
+    return;
   }
 
   if (loading.value || loadingMore.value) return;
@@ -274,7 +270,6 @@ const fetchProducts = async (append = false) => {
     endCursor.value = pageInfo?.endCursor || null;
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
 
-    // ✅ Sauvegarder l'état dans le cache après un chargement réussi
     save(products.value, endCursor.value, hasNextPage.value);
 
   } catch (err) {
@@ -325,14 +320,13 @@ onUnmounted(() => {
   if (observer) observer.disconnect();
 });
 
-// ✅ 3. Watcher intelligent : Le cache gère automatiquement les retours en arrière
+// ✅ 3. Watcher intelligent
 watch(
   () => route.fullPath,
   async (newPath, oldPath) => {
     if (route.path === '/products') return;
     if (checkAndRedirectSearch()) return;
 
-    // Si l'URL change (ex: nouveau filtre), on vide l'ancien cache pour forcer un nouveau chargement
     if (newPath !== oldPath) {
       clear();
     }
@@ -356,10 +350,51 @@ useHead({
 
 <template>
   <main>
-    <div v-if="loading && products.length === 0" class="container flex items-center justify-center min-h-96">
-      <LoadingIcon size="32" stroke="3" />
+    <!-- 🔄 1. SPINNER INITIAL (Premier chargement absolu, cache vide) -->
+    <div v-if="loading && products.length === 0" class="container flex flex-col items-center justify-center min-h-[60vh]">
+      <div class="w-12 h-12 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 font-medium animate-pulse">Chargement des produits...</p>
     </div>
 
+    <!-- 🦴 2. SKELETON LOADER (Pendant le rechargement / changement de filtre) -->
+    <div v-else-if="loading" class="container">
+      <!-- On garde le slider des sous-catégories visible pour que l'utilisateur ne perde pas le contexte -->
+      <div v-if="subcategories.length" class="bg-white/95 backdrop-blur-md border-b border-gray-100 -mx-1 px-2 md:mx-0 md:px-0 py-3 md:py-4 mb-1">
+        <div class="relative">
+          <div class="flex gap-3 overflow-x-auto scroll-smooth scrollbar-hide px-1 md:px-4">
+            <div v-for="i in 4" :key="i" class="flex-shrink-0 flex items-center gap-2 px-1.5 py-1.5 pr-4 bg-white border border-gray-200 rounded-full animate-pulse">
+              <div class="w-8 h-8 rounded-full bg-gray-200"></div>
+              <div class="w-16 h-4 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-10 mt-4">
+        <!-- Faux Sidebar -->
+        <div class="hidden lg:block w-64 shrink-0 space-y-4">
+          <div class="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+          <div class="h-32 bg-gray-200 rounded animate-pulse"></div>
+          <div class="h-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+
+        <div class="w-full">
+          <!-- Faux En-tête -->
+          <div class="h-8 bg-gray-200 rounded w-1/3 mb-8 animate-pulse"></div>
+          
+          <!-- Fausse Grille de produits (8 cartes squelettes) -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div v-for="i in 8" :key="i" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
+              <div class="aspect-square bg-gray-200 rounded-lg mb-3"></div>
+              <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ 3. CONTENU RÉEL (Quand les données sont prêtes et chargées) -->
     <div v-else class="container">
       <div v-if="subcategories.length" class="bg-white/95 backdrop-blur-md border-b border-gray-100 -mx-1 px-2 md:mx-0 md:px-0 py-3 md:py-4 mb-1 group">
         <div class="relative">
@@ -373,10 +408,7 @@ useHead({
             </svg>
           </button>
 
-          <div
-            ref="categorySliderRef"
-            class="flex gap-3 overflow-x-auto scroll-smooth scrollbar-hide px-1 md:px-4"
-          >
+          <div ref="categorySliderRef" class="flex gap-3 overflow-x-auto scroll-smooth scrollbar-hide px-1 md:px-4">
             <NuxtLink
               v-for="cat in subcategories"
               :key="cat.databaseId"
@@ -442,9 +474,15 @@ useHead({
             </div>
           </div>
 
-          <NoProductsFound v-if="!loading && products.length === 0">
-            No products found. Please try adjusting your filters or check back later.
-          </NoProductsFound>
+          <div v-if="!loading && products.length === 0" class="text-center py-16">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <p class="text-xl text-gray-600 font-medium">Aucun produit trouvé dans cette catégorie.</p>
+            <p class="text-gray-400 mt-2">Veuillez ajuster vos filtres ou revenir plus tard.</p>
+          </div>
         </div>
       </div>
     </div>
