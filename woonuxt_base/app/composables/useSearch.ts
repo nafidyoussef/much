@@ -1,58 +1,52 @@
-// Example: ?search=shirt
-import type { Product } from '#types/gql';
-
 export function useSearching() {
   const route = useRoute();
   const router = useRouter();
 
   const isShowingSearch = useState<boolean>('isShowingSearch', () => false);
-  const searchQuery = useState<string>('searchQuery', () => '');
+  
+  // Synchronise l'état avec l'URL au chargement
+  const searchQuery = useState<string>('searchQuery', () => (route.query.search as string) || '');
   const isSearchActive = computed<boolean>(() => !!searchQuery.value);
 
-  searchQuery.value = route.query.search as string;
+  // Garde le state synchronisé si l'URL change (ex: via les filtres)
+  watch(
+    () => route.query.search,
+    (newVal) => {
+      searchQuery.value = (newVal as string) || '';
+    }
+  );
 
   function getSearchQuery(): string {
-    return route.query.search as string;
+    return (route.query.search as string) || '';
   }
 
   async function setSearchQuery(search: string): Promise<void> {
-    const { updateProductList } = useProducts();
     searchQuery.value = search;
-    await router.push({ query: { ...route.query, search: search || undefined } });
-    await updateProductList();
+    // Force la redirection vers la page globale des produits pour une recherche backend complète
+    await router.push({ 
+      path: '/products', 
+      query: { search: search || undefined } 
+    });
   }
 
   function clearSearchQuery(): void {
-    setSearchQuery('');
+    searchQuery.value = '';
+    // Retire le paramètre search de l'URL sans changer de page
+    const currentQuery = { ...route.query };
+    delete currentQuery.search;
+    router.push({ path: route.path, query: currentQuery });
   }
 
   const toggleSearch = (): void => {
     isShowingSearch.value = !isShowingSearch.value;
   };
 
-  // Named predicate function for product search filtering
-  function productMatchesSearch(product: Product, searchQuery: string): boolean {
-    const name = product.name?.toLowerCase();
-    const description = product.description ? product.description.toLowerCase() : null;
-    const shortDescription = product.shortDescription ? product.shortDescription.toLowerCase() : null;
-    const query = searchQuery.toLowerCase();
-    return !!(name?.includes(query) || description?.includes(query) || shortDescription?.includes(query));
-  }
-
-  function searchProducts(products: Product[]): Product[] {
-    
-    const search = getSearchQuery();
-
-    /**
-     * If we are on a category page, we need to add the category slug to the
-     * route, otherwise every search will redirect to the products page.
-     */
-   
-    router.push({ name: 'products', query: { ...route.query, search } });
-   
-
-    return search ? products.filter((product: Product) => productMatchesSearch(product, search)) : products;
-  }
-
-  return { getSearchQuery, setSearchQuery, clearSearchQuery, searchProducts, isSearchActive, isShowingSearch, toggleSearch };
+  return { 
+    getSearchQuery, 
+    setSearchQuery, 
+    clearSearchQuery, 
+    isSearchActive, 
+    isShowingSearch, 
+    toggleSearch 
+  };
 }
