@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
-import { useRouter } from 'vue-router'; // ✅ 1. Import du routeur
+import { useRouter } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter(); // ✅ 2. Initialisation du routeur
+const router = useRouter();
 const { storeSettings } = useAppConfig();
 
+// ✅ 1. Initialisation du Cache Intelligent
+const { cache, save, isValid, clear } = useProductCache();
 
 const routeSlug = route.params.slug ?? route.params.categorySlug;
 const slug = Array.isArray(routeSlug) ? routeSlug[0] : routeSlug;
 
 const products = ref<Product[]>([]);
-const allFetchedProducts = ref<Product[]>([]); // Tous les produits récupérés (avant filtre client)
+const allFetchedProducts = ref<Product[]>([]);
 const loading = ref(false);
 const loadingMore = ref(false);
 const hasNextPage = ref(true);
@@ -22,6 +24,7 @@ const sentinelRef = ref<HTMLElement | null>(null);
 let currentCategoryId: number | null = null;
 let allCategories: any[] = [];
 
+// Récupération des sous-catégories (rapide et nécessaire pour le slider)
 if (slug) {
   const { data: categoryData } = await useAsyncGql('getCategoryWithChildren', { slug });
   currentCategoryId = categoryData.value?.current?.nodes?.[0]?.databaseId || null;
@@ -198,11 +201,9 @@ const buildVariables = (afterCursor: string | null = null, first: number = 50) =
   }
 
   if (route.query.on_sale === 'true') variables.onSale = true;
-
   return variables;
 };
 
-// ✅ Fonction pour filtrer les produits côté client (car WPGraphQL ne filtre pas bien par prix)
 const filterProductsByPrice = (productsList: Product[]) => {
   const filterString = route.query.filter ? String(route.query.filter) : '';
   const priceMatch = /price\[([^\]]+)\]/.exec(filterString);
@@ -223,18 +224,32 @@ const filterProductsByPrice = (productsList: Product[]) => {
   });
 };
 
+// ✅ 2. Fonction de Fetch avec Gestion du Cache
 const fetchProducts = async (append = false) => {
+  // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
+  if (!append && isValid.value) {
+    products.value = cache.value.products;
+    allFetchedProducts.value = cache.value.products;
+    endCursor.value = cache.value.endCursor;
+    hasNextPage.value = cache.value.hasNextPage;
+    loading.value = false;
+    
+    // Restauration instantanée de la position du scroll
+    await nextTick();
+    window.scrollTo({ top: cache.value.scrollY, behavior: 'instant' as ScrollBehavior });
+    
+    setupObserver();
+    return; // On arrête ici, PAS de requête réseau !
+  }
+
   if (loading.value || loadingMore.value) return;
   
   if (append) loadingMore.value = true;
   else loading.value = true;
 
   try {
-   // const config = useRuntimeConfig();
-   // const graphqlEndpoint = config.public.gqlHost || 'http://localhost:8080/graphql';
-    
     const cursor = append ? endCursor.value : null;
-    const variables = buildVariables(cursor, 50); // On demande 50 produits pour compenser le filtre client
+    const variables = buildVariables(cursor, 50);
 
     const response = await $fetch<any>('https://bazzaria.ma/graphql', {
       method: 'POST',
@@ -250,12 +265,15 @@ const fetchProducts = async (append = false) => {
       allFetchedProducts.value = newProducts;
     }
     
-    // ✅ Filtrer côté client par prix
     const filteredProducts = filterProductsByPrice(allFetchedProducts.value);
     products.value = filteredProducts;
     
     endCursor.value = pageInfo?.endCursor || null;
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
+
+    // ✅ Sauvegarder l'état dans le cache après un chargement réussi
+    save(products.value, endCursor.value, hasNextPage.value);
+
   } catch (err) {
     console.error('Erreur chargement produits:', err);
   } finally {
@@ -284,20 +302,17 @@ const setupObserver = () => {
 
 const checkAndRedirectSearch = () => {
   if (route.query.search) {
-    // router.replace est meilleur que push ici pour ne pas garder l'URL "cassée" dans l'historique
     router.replace({
       path: '/products',
       query: { search: route.query.search }
     });
-    return true; // Indique qu'une redirection a eu lieu
+    return true;
   }
   return false;
 };
 
 onMounted(async () => {
-  // ✅ Si on doit rediriger, on arrête tout de suite l'exécution
   if (checkAndRedirectSearch()) return;
-
   await fetchProducts(false);
   await nextTick();
   setupObserver();
@@ -306,16 +321,19 @@ onMounted(async () => {
 onUnmounted(() => {
   if (observer) observer.disconnect();
 });
+
+// ✅ 3. Watcher intelligent : Le cache gère automatiquement les retours en arrière
 watch(
   () => route.fullPath,
-  async () => {
-    // ✅ Si on est déjà sur /products, on ne fait rien (évite les boucles infinies)
+  async (newPath, oldPath) => {
     if (route.path === '/products') return;
-
-    // ✅ Si une recherche apparaît dans l'URL, on redirige et on annule le chargement catégorie
     if (checkAndRedirectSearch()) return;
 
-    // Sinon, on recharge normalement les produits de la catégorie (pour les filtres prix, tri, etc.)
+    // Si l'URL change (ex: nouveau filtre), on vide l'ancien cache pour forcer un nouveau chargement
+    if (newPath !== oldPath) {
+      clear();
+    }
+
     endCursor.value = null;
     hasNextPage.value = true;
     products.value = [];
@@ -334,7 +352,6 @@ useHead({
 </script>
 
 <template>
-  <!-- ✅ CORRECTION NUXT_E4004 : Un seul élément racine -->
   <main>
     <div v-if="loading && products.length === 0" class="container flex items-center justify-center min-h-96">
       <LoadingIcon size="32" stroke="3" />

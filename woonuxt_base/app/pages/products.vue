@@ -6,6 +6,9 @@ import { ProductsOrderByEnum } from '#gql/default';
 const route = useRoute();
 const { storeSettings } = useAppConfig();
 
+// ✅ 1. Initialisation du Cache Intelligent
+const { cache, save, isValid, clear } = useProductCache();
+
 const products = ref<any[]>([]);
 const loading = ref(false);
 const loadingMore = ref(false);
@@ -13,7 +16,6 @@ const hasNextPage = ref(false);
 const endCursor = ref<string | null>(null);
 const sentinelRef = ref<HTMLElement | null>(null);
 const hasSearched = ref(false);
-
 
 const currentSearch = computed(() => (route.query.search as string) || '');
 const isSearchMode = computed(() => !!currentSearch.value);
@@ -63,7 +65,7 @@ const productsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 
@@ -108,15 +110,31 @@ const productsQuery = `
   }
 `;
 
-// ✅ Fonction de chargement (recherche ou liste normale)
+// ✅ 2. Fonction de chargement avec Gestion du Cache
 const fetchProducts = async (append = false) => {
+  // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
+  if (!append && isValid.value) {
+    products.value = cache.value.products;
+    endCursor.value = cache.value.endCursor;
+    hasNextPage.value = cache.value.hasNextPage;
+    hasSearched.value = true;
+    loading.value = false;
+    
+    // Restauration instantanée de la position du scroll
+    await nextTick();
+    window.scrollTo(0, cache.value.scrollY);
+    
+    setupObserver();
+    return; // On arrête ici, PAS de requête réseau !
+  }
+
   if (loading.value || loadingMore.value) return;
 
   if (append) loadingMore.value = true;
   else loading.value = true;
 
   try {
-    const graphqlEndpoint = 'https://bazzaria.ma/graphql';
+    const graphqlEndpoint = 'https://bazzaria.ma/graphql'; // Ou votre URL de prod
 
     const response = await $fetch<any>(graphqlEndpoint, {
       method: 'POST',
@@ -126,7 +144,7 @@ const fetchProducts = async (append = false) => {
           search: isSearchMode.value ? currentSearch.value : undefined,
           first: 24,
           after: append ? endCursor.value : null,
-          orderby: isSearchMode.value ? ProductsOrderByEnum.MenuOrder : ProductsOrderByEnum.MenuOrder,
+          orderby: ProductsOrderByEnum.MenuOrder,
           order: 'DESC'
         }
       }
@@ -144,6 +162,10 @@ const fetchProducts = async (append = false) => {
     endCursor.value = pageInfo?.endCursor || null;
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
     hasSearched.value = true;
+
+    // ✅ Sauvegarder l'état dans le cache après un chargement réussi
+    save(products.value, endCursor.value, hasNextPage.value);
+
   } catch (error) {
     console.error('Erreur chargement produits:', error);
     if (!append) products.value = [];
@@ -172,10 +194,15 @@ const setupObserver = () => {
   }
 };
 
-// ✅ Déclencher le chargement quand l'URL change
+// ✅ 3. Watcher intelligent : Le cache gère automatiquement les retours en arrière
 watch(
   () => route.fullPath,
-  async () => {
+  async (newPath, oldPath) => {
+    // Si l'URL change (ex: nouvelle recherche ou effacement de la recherche), on vide l'ancien cache
+    if (newPath !== oldPath) {
+      clear();
+    }
+
     endCursor.value = null;
     hasNextPage.value = false;
     products.value = [];
@@ -225,7 +252,7 @@ useHead({
           <ShowFilterTrigger v-if="storeSettings.showFilters && !isSearchMode" class="md:hidden" />
         </div>
 
-        <!-- ✅ Grille de produits (ProductCard DIRECT, plus de ProductGrid) -->
+        <!-- ✅ Grille de produits (ProductCard DIRECT) -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-6">
           <ProductCard 
             v-for="node in products" 
