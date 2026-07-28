@@ -7,7 +7,7 @@ const route = useRoute();
 const { storeSettings } = useAppConfig();
 
 // ✅ 1. Initialisation du Cache Intelligent
-const { cache, save, isValid, clear } = useProductCache();
+const { cache, save, isValid } = useProductCache();
 
 const products = ref<any[]>([]);
 const loading = ref(false);
@@ -20,7 +20,6 @@ const hasSearched = ref(false);
 const currentSearch = computed(() => (route.query.search as string) || '');
 const isSearchMode = computed(() => !!currentSearch.value);
 
-// ✅ Requête GraphQL unifiée (recherche + liste normale)
 const productsQuery = `
   query getProducts($search: String, $first: Int, $after: String, $orderby: ProductsOrderByEnum!, $order: OrderEnum) {
     products(
@@ -110,10 +109,9 @@ const productsQuery = `
   }
 `;
 
-// ✅ 2. Fonction de chargement avec Gestion du Cache
+// ✅ 2. Fonction de chargement avec Gestion du Cache (CORRIGÉE)
 const fetchProducts = async (append = false) => {
   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
-    // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
   if (!append && isValid.value) {
     products.value = cache.value.products;
     endCursor.value = cache.value.endCursor;
@@ -121,7 +119,7 @@ const fetchProducts = async (append = false) => {
     hasSearched.value = true;
     loading.value = false;
     
-    // ✅ CORRECTION : Restaurer le scroll uniquement côté client
+    // ✅ Restauration instantanée de la position du scroll (uniquement côté client)
     await nextTick();
     if (import.meta.client) {
       window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
@@ -137,7 +135,7 @@ const fetchProducts = async (append = false) => {
   else loading.value = true;
 
   try {
-    const graphqlEndpoint = 'https://bazzaria.ma/graphql'; // Ou votre URL de prod
+    const graphqlEndpoint = 'https://bazzaria.ma/graphql';
 
     const response = await $fetch<any>(graphqlEndpoint, {
       method: 'POST',
@@ -197,20 +195,18 @@ const setupObserver = () => {
   }
 };
 
-// ✅ 3. Watcher intelligent : Le cache gère automatiquement les retours en arrière
+// ✅ 3. Watcher CORIGÉ : On ne clear PLUS le cache manuellement ici !
+// On laisse fetchProducts vérifier isValid. 
+// Si l'URL change (nouvelle recherche), isValid sera false et une nouvelle requête sera faite automatiquement.
+// ✅ Watcher CORRIGÉ : On ne met PLUS loading à true ici
+// C'est fetchProducts qui gère le loading correctement
+// ✅ Watcher PROTÉGÉ : Ne s'exécute QUE si on est sur la page /products
 watch(
   () => route.fullPath,
-  async (newPath, oldPath) => {
-    // Si l'URL change (ex: nouvelle recherche ou effacement de la recherche), on vide l'ancien cache
-    if (newPath !== oldPath) {
-      clear();
-    }
-
-    endCursor.value = null;
-    hasNextPage.value = false;
-    products.value = [];
-    hasSearched.value = false;
-
+  async () => {
+    // ✅ IMPORTANT : Si on a quitté la page /products, on ne fait RIEN
+    if (route.name !== 'products') return;
+    
     await fetchProducts(false);
     await nextTick();
     setupObserver();
@@ -226,7 +222,6 @@ useHead({
   title: isSearchMode.value ? `Recherche : ${currentSearch.value}` : 'Tous les produits',
 });
 </script>
-
 <template>
   <main>
     <!-- État de chargement initial -->
