@@ -1,7 +1,4 @@
 <script setup>
-import { useRouter } from 'vue-router'; // ✅ 1. Importer le routeur
-
-const router = useRouter();
 const { getSearchQuery, setSearchQuery, clearSearchQuery } = useSearching();
 const searchQuery = ref(getSearchQuery());
 
@@ -18,17 +15,7 @@ watch(
 );
 
 const handleSubmit = () => {
-  // ✅ 2. Empêcher la recherche si le champ est vide ou ne contient que des espaces
-  if (!searchQuery.value.trim()) return;
-
-  // 3. Mettre à jour l'état global (pour la cohérence avec le reste de l'app)
   setSearchQuery(searchQuery.value);
-
-  // ✅ 4. FORCER la redirection vers la page globale des produits
-  router.push({
-    path: '/products',
-    query: { search: searchQuery.value.trim() }
-  });
 };
 </script>
 

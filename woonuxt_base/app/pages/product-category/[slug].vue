@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
+import { useRouter } from 'vue-router'; // ✅ 1. Import du routeur
 
 const route = useRoute();
+const router = useRouter(); // ✅ 2. Initialisation du routeur
 const { storeSettings } = useAppConfig();
+
 
 const routeSlug = route.params.slug ?? route.params.categorySlug;
 const slug = Array.isArray(routeSlug) ? routeSlug[0] : routeSlug;
@@ -279,7 +282,22 @@ const setupObserver = () => {
   }
 };
 
+const checkAndRedirectSearch = () => {
+  if (route.query.search) {
+    // router.replace est meilleur que push ici pour ne pas garder l'URL "cassée" dans l'historique
+    router.replace({
+      path: '/products',
+      query: { search: route.query.search }
+    });
+    return true; // Indique qu'une redirection a eu lieu
+  }
+  return false;
+};
+
 onMounted(async () => {
+  // ✅ Si on doit rediriger, on arrête tout de suite l'exécution
+  if (checkAndRedirectSearch()) return;
+
   await fetchProducts(false);
   await nextTick();
   setupObserver();
@@ -288,10 +306,16 @@ onMounted(async () => {
 onUnmounted(() => {
   if (observer) observer.disconnect();
 });
-
 watch(
   () => route.fullPath,
   async () => {
+    // ✅ Si on est déjà sur /products, on ne fait rien (évite les boucles infinies)
+    if (route.path === '/products') return;
+
+    // ✅ Si une recherche apparaît dans l'URL, on redirige et on annule le chargement catégorie
+    if (checkAndRedirectSearch()) return;
+
+    // Sinon, on recharge normalement les produits de la catégorie (pour les filtres prix, tri, etc.)
     endCursor.value = null;
     hasNextPage.value = true;
     products.value = [];
