@@ -83,7 +83,7 @@ const productsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 
@@ -103,7 +103,7 @@ const productsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 `;

@@ -105,7 +105,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 
@@ -124,7 +124,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 
@@ -144,7 +144,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: MEDIUM)
+      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 `;
