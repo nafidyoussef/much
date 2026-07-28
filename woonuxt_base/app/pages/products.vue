@@ -113,6 +113,7 @@ const productsQuery = `
 // ✅ 2. Fonction de chargement avec Gestion du Cache
 const fetchProducts = async (append = false) => {
   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
+    // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
   if (!append && isValid.value) {
     products.value = cache.value.products;
     endCursor.value = cache.value.endCursor;
@@ -120,9 +121,11 @@ const fetchProducts = async (append = false) => {
     hasSearched.value = true;
     loading.value = false;
     
-    // Restauration instantanée de la position du scroll
+    // ✅ CORRECTION : Restaurer le scroll uniquement côté client
     await nextTick();
-    window.scrollTo(0, cache.value.scrollY);
+    if (import.meta.client) {
+      window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
+    }
     
     setupObserver();
     return; // On arrête ici, PAS de requête réseau !
