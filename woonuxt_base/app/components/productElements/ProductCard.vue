@@ -9,22 +9,22 @@ const props = defineProps({
   index: { type: Number, default: 1 },
 });
 
+// ✅ Dimensions et qualité d'image conservées à l'identique
 const imgWidth = 280;
-const imgHeight = Math.round(imgWidth * 1.125);
+const imgHeight = Math.round(imgWidth * 1.125); // 315px
 const placeholderImage = '/images/placeholder.jpg';
 
 const isAdding = ref(false);
 
-// ✅ 1. Logique d'image ultra-simple : Image principale ou placeholder
+// ✅ Logique d'image simplifiée : une seule image (principale ou variation si filtrée)
 const productImage = computed(() => {
   return props.node?.image?.productCardSourceUrl || props.node?.image?.sourceUrl || placeholderImage;
 });
 
 const productAlt = computed(() => props.node?.image?.altText || props.node?.name || 'Product image');
-
 const productLink = computed(() => `/product/${decodeURIComponent(props.node.slug || '')}`);
 
-// ✅ 2. Fonction d'ajout au panier (inchangée, fonctionne parfaitement)
+// ✅ Fonction d'ajout au panier (inchangée)
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -45,7 +45,7 @@ const handleAddToCart = async (event: Event) => {
   }
 };
 
-// ✅ 3. Affichage conditionnel du bouton
+// ✅ Affichage conditionnel du bouton
 const showAddButton = computed(() => {
   if (props.node.__typename === 'ExternalProduct') return false;
   if (props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK') return false;
@@ -56,39 +56,47 @@ const showAddButton = computed(() => {
 <template>
   <div class="relative group w-full mt-0 px-2">
     
-    <!-- Zone Image : Conteneur strict, simple et sans scroll -->
+    <!-- Zone Image : Conteneur strict avec les mêmes proportions (aspect-[8/9]) -->
     <div class="relative w-full overflow-hidden rounded-xl bg-gray-100 aspect-[8/9]">
       
       <!-- Badge Promo -->
       <SaleBadge :node class="absolute z-20 top-3 right-3" />
 
-      <!-- ✅ Image Unique (Lien vers le produit) -->
+      <!-- ✅ Image Unique (Lien vers le produit) avec les EXACTS mêmes attributs de qualité -->
       <NuxtLink
         v-if="node.slug"
         :to="productLink"
-        class="block w-full h-full overflow-hidden"
+        class="relative block w-full h-full overflow-hidden"
       >
         <NuxtPicture
           :width="imgWidth"
           :height="imgHeight"
           :src="productImage"
           :alt="productAlt"
+          :title="productAlt"
           :loading="index <= 3 ? 'eager' : 'lazy'"
           :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
-          class="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+          class="absolute inset-0 w-full h-full"
+          :img-attrs="{ 
+            class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+          }" 
         />
       </NuxtLink>
 
-      <!-- Fallback si pas de slug -->
-      <div v-else class="block w-full h-full overflow-hidden">
+      <!-- Fallback si pas de slug (mêmes attributs) -->
+      <div v-else class="relative block w-full h-full overflow-hidden">
         <NuxtPicture
           :width="imgWidth"
           :height="imgHeight"
           :src="productImage"
           :alt="productAlt"
+          :title="productAlt"
           :loading="index <= 3 ? 'eager' : 'lazy'"
           :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
-          class="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+          class="absolute inset-0 w-full h-full"
+          :img-attrs="{ 
+            class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+          }" 
         />
       </div>
 
@@ -100,18 +108,15 @@ const showAddButton = computed(() => {
         class="absolute bottom-3 right-3 z-20 flex items-center justify-center w-10 h-10 text-white bg-primary rounded-full shadow-lg shadow-primary/30 transition-all duration-300 hover:bg-primary-dark hover:scale-110 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
         :aria-label="node.type === 'VARIABLE' || node.type === 'GROUPED' ? 'Voir les options' : 'Ajouter au panier'"
       >
-        <!-- Loader si ajout en cours -->
         <svg v-if="isAdding" class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
         </svg>
         
-        <!-- Icône Plus pour produit simple -->
         <svg v-else-if="node.type === 'SIMPLE'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
 
-        <!-- Icône Flèche pour produit variable/groupé -->
         <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
