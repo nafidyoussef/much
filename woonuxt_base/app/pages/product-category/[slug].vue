@@ -105,7 +105,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 
@@ -124,7 +124,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 
@@ -144,7 +144,7 @@ const getProductsQuery = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 `;

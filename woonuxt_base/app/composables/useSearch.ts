@@ -3,12 +3,10 @@ export function useSearching() {
   const router = useRouter();
 
   const isShowingSearch = useState<boolean>('isShowingSearch', () => false);
-  
-  // Synchronise l'état avec l'URL au chargement
   const searchQuery = useState<string>('searchQuery', () => (route.query.search as string) || '');
   const isSearchActive = computed<boolean>(() => !!searchQuery.value);
 
-  // Garde le state synchronisé si l'URL change (ex: via les filtres)
+  // Synchronise l'état local avec l'URL
   watch(
     () => route.query.search,
     (newVal) => {
@@ -22,7 +20,7 @@ export function useSearching() {
 
   async function setSearchQuery(search: string): Promise<void> {
     searchQuery.value = search;
-    // Force la redirection vers la page globale des produits pour une recherche backend complète
+    // Force la redirection vers la page /products avec le paramètre de recherche
     await router.push({ 
       path: '/products', 
       query: { search: search || undefined } 
@@ -31,7 +29,6 @@ export function useSearching() {
 
   function clearSearchQuery(): void {
     searchQuery.value = '';
-    // Retire le paramètre search de l'URL sans changer de page
     const currentQuery = { ...route.query };
     delete currentQuery.search;
     router.push({ path: route.path, query: currentQuery });
@@ -40,6 +37,9 @@ export function useSearching() {
   const toggleSearch = (): void => {
     isShowingSearch.value = !isShowingSearch.value;
   };
+
+  // ❌ SUPPRIMÉ : productMatchesSearch et searchProducts
+  // La recherche est maintenant 100% gérée par le backend via le $fetch dynamique.
 
   return { 
     getSearchQuery, 
