@@ -1,36 +1,36 @@
 <script setup lang="ts">
 import { ref, watch, computed, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
+import { ProductsOrderByEnum } from '#gql/default';
 
 const route = useRoute();
-
 const { storeSettings } = useAppConfig();
 
 const products = ref<any[]>([]);
 const loading = ref(false);
 const loadingMore = ref(false);
-const hasSearched = ref(false);
 const hasNextPage = ref(false);
 const endCursor = ref<string | null>(null);
 const sentinelRef = ref<HTMLElement | null>(null);
+const hasSearched = ref(false);
+
 
 const currentSearch = computed(() => (route.query.search as string) || '');
+const isSearchMode = computed(() => !!currentSearch.value);
 
-// ✅ Requête GraphQL avec support de la pagination (after cursor)
-const searchQueryGql = `
-  query SearchProducts($search: String, $first: Int, $after: String) {
+// ✅ Requête GraphQL unifiée (recherche + liste normale)
+const productsQuery = `
+  query getProducts($search: String, $first: Int, $after: String, $orderby: ProductsOrderByEnum!, $order: OrderEnum) {
     products(
       first: $first
       after: $after
       where: { 
         search: $search
         visibility: VISIBLE
+        orderby: { field: $orderby, order: $order }
       }
     ) {
-      pageInfo { 
-        hasNextPage 
-        endCursor 
-      }
+      pageInfo { hasNextPage endCursor }
       nodes {
         __typename
         name
@@ -63,7 +63,7 @@ const searchQueryGql = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 
@@ -83,7 +83,7 @@ const searchQueryGql = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 
@@ -103,18 +103,14 @@ const searchQueryGql = `
     image {
       sourceUrl
       altText
-      productCardSourceUrl: sourceUrl(size: WOOCOMMERCE_THUMBNAIL)
+      productCardSourceUrl: sourceUrl(size: MEDIUM)
     }
   }
 `;
 
-// ✅ Fonction de recherche avec pagination
-const performBackendSearch = async (searchTerm: string, append = false) => {
-  if (!searchTerm) {
-    products.value = [];
-    hasSearched.value = false;
-    return;
-  }
+// ✅ Fonction de chargement (recherche ou liste normale)
+const fetchProducts = async (append = false) => {
+  if (loading.value || loadingMore.value) return;
 
   if (append) loadingMore.value = true;
   else loading.value = true;
@@ -125,11 +121,13 @@ const performBackendSearch = async (searchTerm: string, append = false) => {
     const response = await $fetch<any>(graphqlEndpoint, {
       method: 'POST',
       body: {
-        query: searchQueryGql,
+        query: productsQuery,
         variables: {
-          search: searchTerm,
-          first: 24, // ✅ 24 produits par "page"
-          after: append ? endCursor.value : null
+          search: isSearchMode.value ? currentSearch.value : undefined,
+          first: 24,
+          after: append ? endCursor.value : null,
+          orderby: isSearchMode.value ? ProductsOrderByEnum.MenuOrder : ProductsOrderByEnum.MenuOrder,
+          order: 'DESC'
         }
       }
     });
@@ -147,7 +145,7 @@ const performBackendSearch = async (searchTerm: string, append = false) => {
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
     hasSearched.value = true;
   } catch (error) {
-    console.error('Erreur de recherche backend:', error);
+    console.error('Erreur chargement produits:', error);
     if (!append) products.value = [];
   } finally {
     loading.value = false;
@@ -161,11 +159,11 @@ let observer: IntersectionObserver | null = null;
 const setupObserver = () => {
   if (import.meta.client && sentinelRef.value) {
     if (observer) observer.disconnect();
-    
+
     observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && !loadingMore.value && hasNextPage.value && !loading.value) {
-          performBackendSearch(currentSearch.value, true);
+          fetchProducts(true);
         }
       },
       { rootMargin: '500px' }
@@ -174,23 +172,18 @@ const setupObserver = () => {
   }
 };
 
-// Debounce pour la recherche
-let searchTimeout: NodeJS.Timeout;
-
+// ✅ Déclencher le chargement quand l'URL change
 watch(
-  () => currentSearch.value,
-  (newSearch) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      // Réinitialiser la pagination quand la recherche change
-      endCursor.value = null;
-      hasNextPage.value = false;
-      products.value = [];
-      
-      performBackendSearch(newSearch, false).then(() => {
-        nextTick(() => setupObserver());
-      });
-    }, 400);
+  () => route.fullPath,
+  async () => {
+    endCursor.value = null;
+    hasNextPage.value = false;
+    products.value = [];
+    hasSearched.value = false;
+
+    await fetchProducts(false);
+    await nextTick();
+    setupObserver();
   },
   { immediate: true }
 );
@@ -200,31 +193,40 @@ onUnmounted(() => {
 });
 
 useHead({
-  title: currentSearch.value ? `Recherche : ${currentSearch.value}` : 'Tous les produits',
+  title: isSearchMode.value ? `Recherche : ${currentSearch.value}` : 'Tous les produits',
 });
 </script>
 
 <template>
-  <main class="container py-8">
+  <main>
     <!-- État de chargement initial -->
-    <div v-if="loading && products.length === 0" class="flex items-center justify-center min-h-64">
+    <div v-if="loading && products.length === 0" class="container flex items-center justify-center min-h-96">
       <div class="w-10 h-10 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin"></div>
     </div>
 
-    <!-- Résultats de recherche -->
-    <div v-else-if="hasSearched && products.length > 0" class="flex items-start gap-16">
+    <!-- ✅ Contenu principal (recherche OU liste normale) -->
+    <div v-else-if="products.length > 0" class="container flex items-start gap-10">
+      
+      <!-- Filtres (uniquement en mode liste, pas en mode recherche) -->
+      <Filters v-if="!isSearchMode && storeSettings.showFilters" />
+
       <div class="w-full">
-        <div class="mb-6">
-          <h1 class="text-2xl font-bold text-gray-900">
-            Résultats pour "{{ currentSearch }}"
-          </h1>
-          <p class="text-gray-500 mt-1">
-            {{ products.length }} produit(s) affiché(s)
-            <span v-if="hasNextPage" class="text-xs">• Plus de résultats disponibles ↓</span>
-          </p>
+        <!-- En-tête -->
+        <div class="flex items-center justify-between w-full gap-4 mt-8 md:gap-8">
+          <div v-if="isSearchMode" class="text-lg font-semibold text-gray-800">
+            Résultats pour "{{ currentSearch }}" 
+            <span class="text-gray-500 font-normal text-sm">({{ products.length }} produits)</span>
+          </div>
+          <div v-else class="text-sm text-gray-500">
+            <span class="font-semibold text-gray-900">{{ products.length }}</span> produits affichés
+          </div>
+
+          <OrderByDropdown v-if="storeSettings.showOrderByDropdown && !isSearchMode" class="hidden md:inline-flex" />
+          <ShowFilterTrigger v-if="storeSettings.showFilters && !isSearchMode" class="md:hidden" />
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <!-- ✅ Grille de produits (ProductCard DIRECT, plus de ProductGrid) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-6">
           <ProductCard 
             v-for="node in products" 
             :key="node.id" 
@@ -236,27 +238,24 @@ useHead({
         <div ref="sentinelRef" class="flex flex-col items-center justify-center py-12 mt-8">
           <div v-if="loadingMore" class="flex items-center gap-3">
             <div class="w-8 h-8 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin"></div>
-            <span class="text-gray-500 text-sm font-medium">Chargement de plus de produits...</span>
+            <span class="text-gray-500 text-sm font-medium">Chargement...</span>
           </div>
-          <div v-else-if="!hasNextPage" class="text-center">
-            <p class="text-gray-400 text-sm">Tous les produits correspondants ont été chargés</p>
+          <div v-else-if="!hasNextPage && products.length > 0" class="text-center">
+            <p class="text-gray-400 text-sm">Tous les produits ont été chargés</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Aucun résultat -->
-    <div v-else-if="hasSearched && products.length === 0" class="text-center py-16">
+    <!-- Aucun résultat de recherche -->
+    <div v-else-if="hasSearched && isSearchMode && products.length === 0" class="container text-center py-16">
       <p class="text-xl text-gray-600 font-medium">Aucun produit ne correspond à "{{ currentSearch }}"</p>
       <p class="text-gray-400 mt-2">Essayez avec d'autres mots-clés ou vérifiez l'orthographe.</p>
     </div>
 
-    <!-- Page produits par défaut -->
-    <div v-else class="flex items-start gap-16">
-      <Filters v-if="storeSettings.showFilters" />
-      <div class="w-full">
-        <ProductGrid />
-      </div>
-    </div>
+    <!-- Aucun produit (liste normale) -->
+    <NoProductsFound v-else-if="!loading && !isSearchMode">
+      Aucun produit trouvé. Veuillez ajuster vos filtres ou revenir plus tard.
+    </NoProductsFound>
   </main>
 </template>
