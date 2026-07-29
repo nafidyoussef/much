@@ -81,7 +81,7 @@ const isButtonDisabled = computed(() => {
 </script>
 
 <template>
-  <div class="relative group w-full mt-0 px-2 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow duration-300">
+  <div class="relative group w-full mt-0 px-0 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow duration-300">
     
     <!-- Zone Image -->
     <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100 aspect-[8/9]">
