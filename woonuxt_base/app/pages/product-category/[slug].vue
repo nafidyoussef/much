@@ -250,7 +250,7 @@ const fetchProducts = async (append = false) => {
     const cursor = append ? endCursor.value : null;
     const variables = buildVariables(cursor, 50);
 
-    const response = await $fetch<any>('https://api.bazzaria.ma/graphql', {
+    const response = await $fetch<any>('https://bazzaria.ma/graphql', {
       method: 'POST',
       body: { query: getProductsQuery, variables }
     });
