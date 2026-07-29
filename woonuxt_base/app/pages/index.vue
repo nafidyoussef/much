@@ -162,7 +162,7 @@ fragment ExternalProduct on ExternalProduct {
   }
 }`;
 
-    const response = await $fetch('https://bazzaria.ma/graphql', {
+    const response = await $fetch('https://api.bazzaria.ma/graphql', {
       method: 'POST',
       body: {
         query,

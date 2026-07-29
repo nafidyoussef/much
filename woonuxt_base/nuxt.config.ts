@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 const { resolve } = createResolver(import.meta.url);
 
 // Environment variables with fallbacks
-const GQL_HOST = process.env.GQL_HOST || 'https://bazzaria.ma/graphql';
+const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
 const APP_HOST = process.env.APP_HOST || 'http://localhost:3000';
 //const imageProvider = (process.env.NETLIFY ? 'netlify' : process.env.NUXT_IMAGE_PROVIDER || 'ipx').trim().toLowerCase();
 

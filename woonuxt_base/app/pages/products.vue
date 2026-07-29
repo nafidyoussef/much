@@ -135,7 +135,7 @@ const fetchProducts = async (append = false) => {
   else loading.value = true;
 
   try {
-    const graphqlEndpoint = 'https://bazzaria.ma/graphql';
+    const graphqlEndpoint = 'https://api.bazzaria.ma/graphql';
 
     const response = await $fetch<any>(graphqlEndpoint, {
       method: 'POST',
