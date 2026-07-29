@@ -1,15 +1,21 @@
 export default defineNuxtPlugin((nuxtApp) => {
+  // On exécute ce plugin uniquement côté client (navigateur)
   if (import.meta.server) return;
 
-  const { storeSettings } = useAppConfig();
   const { clearAllCookies, getDomain, getErrorContext } = useHelpers();
   const { clearActiveAuthToken, refreshAuthToken } = useAuthTokens();
-  const { refreshCart, refreshCartSummary } = useCart();
+  const { refreshCart } = useCart();
+
+  // 1. Récupérer et appliquer le token de session existant
   const sessionToken = useCookie('woocommerce-session', { domain: getDomain(window.location.href), path: '/' });
   const fallbackSessionToken = useCookie('woocommerce-session', { path: '/' });
   const wooSessionToken = sessionToken.value || fallbackSessionToken.value;
-  if (wooSessionToken) useGqlHeaders({ 'woocommerce-session': `Session ${wooSessionToken}` });
+  
+  if (wooSessionToken) {
+    useGqlHeaders({ 'woocommerce-session': `Session ${wooSessionToken}` });
+  }
 
+  // 2. Nettoyage du Service Worker en mode développement (optionnel mais recommandé)
   if (import.meta.dev && 'serviceWorker' in navigator) {
     void navigator.serviceWorker.getRegistrations().then(async (registrations) => {
       if (!registrations.length) return;
@@ -21,19 +27,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     });
   }
 
-  const clearAuthOnly = (): void => {
-    clearActiveAuthToken();
-    useGqlHeaders({ Authorization: '' });
-  };
-
-  const hasKnownSession = (): boolean => {
-    const authToken = useCookie('auth-token', { path: '/' });
-    const refreshToken = useCookie('auth-refresh-token', { path: '/' });
-    const legacyGqlToken = useCookie('gql:default', { path: '/' });
-
-    return !!(wooSessionToken || authToken.value || refreshToken.value || legacyGqlToken.value);
-  };
-
+  // 3. Gestionnaire d'erreurs d'authentification
   let authErrorHandlerRegistered = false;
   const registerAuthErrorHandler = (): void => {
     if (authErrorHandlerRegistered) return;
@@ -43,9 +37,6 @@ export default defineNuxtPlugin((nuxtApp) => {
       const { isAuthError, message } = getErrorContext(err);
       if (!isAuthError) return;
 
-      // Wrapped with runWithContext because this calls composables (useGqlHeaders via clearAuthOnly,
-      // refreshCart, etc.) after several `await`s, where the ambient Nuxt instance can otherwise be
-      // lost on the client. See NUXT_E1001.
       void nuxtApp.runWithContext(async () => {
         const refreshed = await refreshAuthToken(true);
         if (refreshed) {
@@ -61,55 +52,27 @@ export default defineNuxtPlugin((nuxtApp) => {
           return;
         }
 
-        clearAuthOnly();
+        clearActiveAuthToken();
+        useGqlHeaders({ Authorization: '' });
         await refreshCart();
       });
     });
   };
 
-  async function initFullCart(): Promise<void> {
-    registerAuthErrorHandler();
+  registerAuthErrorHandler();
 
+  // ✅ 4. EXÉCUTION INCONDITIONNELLE DE GETCART (Plus de conditions isDev ou hasKnownSession)
+  async function forceInitFullCart(): Promise<void> {
+    // On force l'appel à refreshCart (qui contient getCart) à chaque chargement de page
     const success: boolean = await refreshCart();
 
-    // If cart refresh failed, clear the Woo session header and retry once
+    // Si ça échoue (ex: session invalide), on nettoie l'en-tête et on réessaie une fois
     if (!success) {
-      // Wrapped with runWithContext: useGqlHeaders is called after an `await`, where the ambient Nuxt
-      // instance can otherwise be lost on the client. See NUXT_E1001.
       nuxtApp.runWithContext(() => useGqlHeaders({ 'woocommerce-session': '' }));
       await refreshCart();
     }
   }
 
-  // If we are in development mode, we want to initialise the store immediately
-  const isDev = import.meta.dev || process.env.NODE_ENV === 'development';
-
-  // Pages that need the full cart payload before the page renders
-  const pagesToInitializeRightAway = ['/checkout', '/my-account', '/order-summary'];
-  const isPathThatRequiresInit = pagesToInitializeRightAway.some((page) => useRoute().path.includes(page));
-
-  // ✅ APRÈS : Force le chargement complet du panier en production si une session existe
-const shouldInitFullCart = isDev || isPathThatRequiresInit || !storeSettings.initStoreOnUserActionToReduceServerLoad || hasKnownSession();
-
-  if (shouldInitFullCart) {
-    void initFullCart();
-    return;
-  }
-
-  registerAuthErrorHandler();
-
-  let summaryLoaded = false;
-  const loadSummaryOnce = (): void => {
-    if (summaryLoaded) return;
-    summaryLoaded = true;
-    void refreshCartSummary();
-  };
-
-  if (hasKnownSession()) {
-    loadSummaryOnce();
-  } else {
-    ['mousedown', 'keydown', 'touchstart', 'click'].forEach((event) => {
-      window.addEventListener(event, loadSummaryOnce, { once: true });
-    });
-  }
+  // On lance l'exécution immédiatement, sans attendre de clic utilisateur
+  void forceInitFullCart();
 });
