@@ -221,15 +221,27 @@ export function useCart() {
   type CartSummaryQueryPayload = Partial<Pick<GetCartSummaryQuery, 'cart' | 'viewer'>>;
 
   const syncWooSession = (token?: string | null): void => {
-    if (!token) return;
-    useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
+  if (!token) return;
+  
+  // Mettre à jour les en-têtes GraphQL globaux
+  useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
-    if (!import.meta.client) return;
-    const domain = getDomain(window.location.href);
-    const cookieOptions = domain ? { domain, path: '/' } : { path: '/' };
-    const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
-    sessionCookie.value = token;
+  if (!import.meta.client) return;
+  
+  // ✅ Forcer le domaine racine pour le partage entre bazzaria.ma et api.bazzaria.ma
+  const cookieOptions = {
+    path: '/',
+    domain: '.bazzaria.ma', // ✅ Le point est OBLIGATOIRE pour le partage cross-origin
+    secure: true,           // ✅ OBLIGATOIRE en HTTPS
+    sameSite: 'none' as const // ✅ OBLIGATOIRE pour le cross-origin (remplace 'lax')
   };
+  
+  const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
+  sessionCookie.value = token;
+  
+  // ✅ Sauvegarder aussi dans le localStorage pour la résilience
+  localStorage.setItem('wc-session-token', token);
+};
 
   const applyCartSnapshot = (payload: CartQueryPayload): void => {
     const { updateCustomer, updateViewer, updateLoginClients } = useAuth();
