@@ -88,7 +88,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   const pagesToInitializeRightAway = ['/checkout', '/my-account', '/order-summary'];
   const isPathThatRequiresInit = pagesToInitializeRightAway.some((page) => useRoute().path.includes(page));
 
-  const shouldInitFullCart = isDev || isPathThatRequiresInit || !storeSettings.initStoreOnUserActionToReduceServerLoad;
+  // ✅ APRÈS : Force le chargement complet du panier en production si une session existe
+const shouldInitFullCart = isDev || isPathThatRequiresInit || !storeSettings.initStoreOnUserActionToReduceServerLoad || hasKnownSession();
 
   if (shouldInitFullCart) {
     void initFullCart();
