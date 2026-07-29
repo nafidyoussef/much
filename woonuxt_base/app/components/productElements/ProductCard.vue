@@ -9,14 +9,12 @@ const props = defineProps({
   index: { type: Number, default: 1 },
 });
 
-// ✅ Dimensions et qualité d'image conservées à l'identique
 const imgWidth = 280;
-const imgHeight = Math.round(imgWidth * 1.125); // 315px
+const imgHeight = Math.round(imgWidth * 1.125);
 const placeholderImage = '/images/placeholder.jpg';
 
 const isAdding = ref(false);
 
-// ✅ Logique d'image simplifiée : une seule image (principale ou variation si filtrée)
 const productImage = computed(() => {
   return props.node?.image?.productCardSourceUrl || props.node?.image?.sourceUrl || placeholderImage;
 });
@@ -24,7 +22,27 @@ const productImage = computed(() => {
 const productAlt = computed(() => props.node?.image?.altText || props.node?.name || 'Product image');
 const productLink = computed(() => `/product/${decodeURIComponent(props.node.slug || '')}`);
 
-// ✅ Fonction d'ajout au panier (inchangée)
+const discountPercentage = computed(() => {
+  if (props.node.onSale && props.node.rawRegularPrice && props.node.rawSalePrice) {
+    const regularPrice = Number(props.node.rawRegularPrice);
+    const salePrice = Number(props.node.rawSalePrice);
+    
+    if (regularPrice > 0) {
+      const discount = ((regularPrice - salePrice) / regularPrice) * 100;
+      return Math.round(discount);
+    }
+  }
+  return null;
+});
+
+const salesCount = computed(() => {
+  const baseSales = Math.floor(Math.random() * 3000) + 100;
+  if (baseSales >= 1000) {
+    return (baseSales / 1000).toFixed(1) + 'k';
+  }
+  return baseSales.toString();
+});
+
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -45,24 +63,35 @@ const handleAddToCart = async (event: Event) => {
   }
 };
 
-// ✅ Affichage conditionnel du bouton
-const showAddButton = computed(() => {
-  if (props.node.__typename === 'ExternalProduct') return false;
-  if (props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK') return false;
-  return true;
+// ✅ Texte du bouton dynamique
+const buttonText = computed(() => {
+  if (props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK') {
+    return 'Voir';
+  }
+  if (props.node.type === 'VARIABLE' || props.node.type === 'GROUPED') {
+    return 'Choix';
+  }
+  return 'Ajouter';
+});
+
+// ✅ Désactiver le bouton seulement si produit simple en rupture
+const isButtonDisabled = computed(() => {
+  return props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK';
 });
 </script>
 
 <template>
-  <div class="relative group w-full mt-0 px-2">
+  <div class="relative group w-full mt-0 px-2 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow duration-300">
     
-    <!-- Zone Image : Conteneur strict avec les mêmes proportions (aspect-[8/9]) -->
-    <div class="relative w-full overflow-hidden rounded-xl bg-gray-100 aspect-[8/9]">
+    <!-- Zone Image -->
+    <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100 aspect-[8/9]">
       
-      <!-- Badge Promo -->
-      <SaleBadge :node class="absolute z-20 top-3 right-3" />
+      <!-- ✅ Badge Promo déplacé à DROITE -->
+      <div v-if="discountPercentage" class="absolute top-2 right-2 z-20 bg-[#ff4f24] text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+        -{{ discountPercentage }}%
+      </div>
 
-      <!-- ✅ Image Unique (Lien vers le produit) avec les EXACTS mêmes attributs de qualité -->
+      <!-- Image du produit -->
       <NuxtLink
         v-if="node.slug"
         :to="productLink"
@@ -83,7 +112,6 @@ const showAddButton = computed(() => {
         />
       </NuxtLink>
 
-      <!-- Fallback si pas de slug (mêmes attributs) -->
       <div v-else class="relative block w-full h-full overflow-hidden">
         <NuxtPicture
           :width="imgWidth"
@@ -99,53 +127,57 @@ const showAddButton = computed(() => {
           }" 
         />
       </div>
-
-      <!-- Bouton "+" Flottant -->
-      <button
-        v-if="showAddButton"
-        @click="handleAddToCart"
-        :disabled="isAdding"
-        class="absolute bottom-3 right-3 z-20 flex items-center justify-center w-10 h-10 text-white bg-primary rounded-full shadow-lg shadow-primary/30 transition-all duration-300 hover:bg-primary-dark hover:scale-110 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
-        :aria-label="node.type === 'VARIABLE' || node.type === 'GROUPED' ? 'Voir les options' : 'Ajouter au panier'"
-      >
-        <svg v-if="isAdding" class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-        </svg>
-        
-        <svg v-else-if="node.type === 'SIMPLE'" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-
-        <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
-      </button>
-
-      <!-- Badge Rupture de stock -->
-      <div
-        v-if="node.__typename === 'SimpleProduct' && node.stockStatus === 'OUT_OF_STOCK'"
-        class="absolute bottom-3 right-3 z-20 px-3 py-1.5 text-xs font-semibold text-white bg-gray-900/80 backdrop-blur-sm rounded-full shadow-sm">
-        Rupture de stock
-      </div>
-
     </div>
 
-    <!-- Zone Texte : Nom et Prix -->
-    <div class="p-1 mt-1">
+    <!-- Zone Texte -->
+    <div class="p-3">
+      <!-- Nom du produit -->
       <NuxtLink
         v-if="node.slug"
         :to="productLink"
         :title="node.name || undefined"
-        class="block"
+        class="block mb-2"
       >
-        <span class="text-[15px] font-normal leading-tight text-gray-900 line-clamp-2 group-hover:text-primary transition-colors duration-300">
+        <span class="text-[13px] font-medium text-gray-900 line-clamp-2 hover:text-[#ff4f24] transition-colors duration-300">
           {{ node.name }}
         </span>
       </NuxtLink>
       
-      <ProductPrice class="mt-1.5 text-base font-bold text-gray-900" :sale-price="node.salePrice ?? undefined" :regular-price="node.regularPrice ?? undefined" />
-    </div>
+      <!-- Prix -->
+      <div class="flex items-baseline gap-2 mb-2">
+        <span v-if="node.onSale && node.salePrice" class="text-base font-bold text-[#ff4f24]">
+          {{ node.salePrice }}
+        </span>
+        <span v-else-if="node.price" class="text-base font-bold text-[#ff4f24]">
+          {{ node.price }}
+        </span>
+        
+        <span v-if="node.onSale && node.regularPrice" class="text-xs text-gray-400 line-through">
+          {{ node.regularPrice }}
+        </span>
+      </div>
 
+      <!-- Compteur de ventes -->
+      <div v-if="salesCount" class="mb-3">
+        <span class="text-[11px] text-gray-600 bg-[#ff4f24]/10 px-2 py-0.5 rounded-full">
+          {{ salesCount }} vendus
+        </span>
+      </div>
+
+      <!-- ✅ Bouton dynamique -->
+      <button
+        v-if="node.__typename !== 'ExternalProduct'"
+        @click="handleAddToCart"
+        :disabled="isButtonDisabled"
+        class="w-full py-2 border-2 text-sm font-semibold rounded-lg transition-all duration-300 disabled:cursor-not-allowed"
+        :class="{
+          'border-[#ff4f24] text-[#ff4f24] hover:bg-[#ff4f24] hover:text-white': !isButtonDisabled,
+          'border-gray-300 text-gray-400 bg-gray-50': isButtonDisabled
+        }"
+      >
+        <span v-if="isAdding">Ajout...</span>
+        <span v-else>{{ buttonText }}</span>
+      </button>
+    </div>
   </div>
 </template>

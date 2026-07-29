@@ -2,6 +2,7 @@
 import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
 import { useRouter } from 'vue-router';
+const hasLoadedOnce = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -229,6 +230,7 @@ const fetchProducts = async (append = false) => {
     endCursor.value = cache.value.endCursor;
     hasNextPage.value = cache.value.hasNextPage;
     loading.value = false;
+    hasLoadedOnce.value = true; // ✅ Marquer comme chargé
     
     await nextTick();
     if (import.meta.client) {
@@ -267,6 +269,7 @@ const fetchProducts = async (append = false) => {
     
     endCursor.value = pageInfo?.endCursor || null;
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
+    hasLoadedOnce.value = true; // ✅ Marquer comme chargé
 
     save(products.value, endCursor.value, hasNextPage.value);
 
@@ -347,8 +350,8 @@ useHead({
 
 <template>
   <main>
-    <!-- 🔄 1. SPINNER INITIAL (Premier chargement absolu, cache vide) -->
-    <div v-if="loading && products.length === 0" class="container flex flex-col items-center justify-center min-h-[60vh]">
+    <!-- 🔄 1. SPINNER INITIAL (Uniquement au TOUT PREMIER chargement) -->
+    <div v-if="loading && !hasLoadedOnce" class="container flex flex-col items-center justify-center min-h-[60vh]">
       <div class="w-12 h-12 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin mb-4"></div>
       <p class="text-gray-500 font-medium animate-pulse">Chargement des produits...</p>
     </div>
@@ -416,8 +419,8 @@ useHead({
             <ShowFilterTrigger v-if="storeSettings.showFilters" class="md:hidden" />
           </div>
           
-          <!-- ✅ NOUVEAU : SKELETON LOADER (Exactement comme sur la page d'accueil) -->
-          <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-6">
+          <!-- ✅ SKELETON LOADER (S'affiche lors des rechargements) -->
+          <div v-if="loading && hasLoadedOnce" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-6">
             <div v-for="i in 8" :key="`skeleton-${i}`" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
               <div class="aspect-[8/9] bg-gray-200 rounded-lg mb-3"></div>
               <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -447,7 +450,7 @@ useHead({
           </div>
 
           <!-- État vide -->
-          <div v-if="!loading && products.length === 0" class="text-center py-16">
+          <div v-if="!loading && hasLoadedOnce && products.length === 0" class="text-center py-16">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -461,7 +464,6 @@ useHead({
     </div>
   </main>
 </template>
-
 <style scoped>
 .scrollbar-hide::-webkit-scrollbar {
   display: none;

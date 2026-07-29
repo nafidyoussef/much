@@ -155,7 +155,7 @@ export const useWooGraphQL = (): Sdk => {
     credentials: clientConfig.fetchOptions?.credentials ?? 'include',
     mode: clientConfig.fetchOptions?.mode ?? 'cors',
     headers: baseHeaders,
-  });
+  })
 
   const wrapper: SdkFunctionWrapper = async (action, _operationName, _operationType, _variables) => {
     try {
