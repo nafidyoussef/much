@@ -6,7 +6,7 @@ let refreshCartInFlight: Promise<boolean> | null = null;
 
 /**
  * @name useCart
- * @description A composable that handles the cart in local storage
+ * @description A composable that handles the cart in local storage and cookies (SSR safe)
  */
 export function useCart() {
   const nuxtApp = useNuxtApp();
@@ -25,6 +25,23 @@ export function useCart() {
   const paymentGateways = useState<PaymentGateways | null>('paymentGateways', () => null);
   const { getDomain, getErrorContext, getErrorMessage } = useHelpers();
   const gql = useWooGraphQL();
+
+  // ✅ AJOUT CRUCIAL 1 : Synchroniser le token au démarrage (Fonctionne en SSR et Client)
+  const getSessionToken = () => {
+    if (import.meta.client) {
+      // Côté client : on vérifie d'abord le localStorage, puis le cookie
+      return localStorage.getItem('wc-session-token') || useCookie<string | null>('woocommerce-session', { path: '/' }).value;
+    }
+    // Côté serveur : on lit uniquement le cookie
+    return useCookie<string | null>('woocommerce-session', { path: '/' }).value;
+  };
+
+  const currentToken = getSessionToken();
+  if (currentToken) {
+    // On injecte le token dans les en-têtes GraphQL globaux AVANT toute requête
+    useGqlHeaders({ 'woocommerce-session': `Session ${currentToken}` });
+  }
+  // ----------------------------------------------------
 
   type CartNode = NonNullable<NonNullable<Cart['contents']>['nodes']>[number];
   type CartItem = CartNode & { key: string };
@@ -49,7 +66,6 @@ export function useCart() {
     }) as unknown as Cart;
 
   const getOptimisticBase = (): Cart => cart.value ?? buildEmptyCart();
-
   const createOptimisticKey = (): string => `optimistic:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 
   const buildOptimisticProductNode = (product: ProductDetail) => ({
@@ -220,16 +236,25 @@ export function useCart() {
   type CartQueryPayload = Partial<Pick<GetCartQuery, 'cart' | 'customer' | 'viewer' | 'paymentGateways' | 'loginClients'>>;
   type CartSummaryQueryPayload = Partial<Pick<GetCartSummaryQuery, 'cart' | 'viewer'>>;
 
+  // ✅ AJOUT CRUCIAL 2 : Améliorer syncWooSession pour écrire à la fois dans le cookie ET le localStorage
   const syncWooSession = (token?: string | null): void => {
     if (!token) return;
+    
+    // 1. Mettre à jour les en-têtes GraphQL globaux
     useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
-    if (!import.meta.client) return;
-    const domain = getDomain(window.location.href);
+    // 2. Sauvegarder dans les cookies (indispensable pour le SSR)
+    const domain = import.meta.client ? getDomain(window.location.href) : undefined;
     const cookieOptions = domain ? { domain, path: '/' } : { path: '/' };
     const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
     sessionCookie.value = token;
+
+    // 3. Sauvegarder dans le localStorage (pour la résilience côté client)
+    if (import.meta.client) {
+      localStorage.setItem('wc-session-token', token);
+    }
   };
+  // ----------------------------------------------------
 
   const applyCartSnapshot = (payload: CartQueryPayload): void => {
     const { updateCustomer, updateViewer, updateLoginClients } = useAuth();
@@ -286,8 +311,6 @@ export function useCart() {
   };
 
   async function refreshCartSummary(): Promise<boolean> {
-    // Wrapped with runWithContext because this reads composables (useAuth) after an `await`, where the
-    // ambient Nuxt instance can otherwise be lost on the client. See NUXT_E1001.
     return nuxtApp.runWithContext(async () => {
       try {
         const payload = await fetchCartSummarySnapshot();
@@ -311,15 +334,9 @@ export function useCart() {
     });
   }
 
-  /** Refesh the cart from the server
-   * @returns {Promise<boolean>} - A promise that resolves
-   * to true if the cart was successfully refreshed
-   */
   async function refreshCart(): Promise<boolean> {
     if (refreshCartInFlight) return refreshCartInFlight;
 
-    // Wrapped with runWithContext because this calls composables (useAuthTokens, useGqlHeaders, useAuth,
-    // useCookie) after several `await`s, where the ambient Nuxt instance can otherwise be lost. See NUXT_E1001.
     refreshCartInFlight = nuxtApp.runWithContext(async () => {
       try {
         const payload = await fetchCartSnapshot();
@@ -392,25 +409,21 @@ export function useCart() {
     paymentGateways.value = payload;
   }
 
-  /** Fetches the full cart from the server only when it is not already loaded. */
   function refreshCartIfNeeded(): void {
     if (cart.value || isUpdatingCart.value) return;
     isUpdatingCart.value = true;
     void refreshCart();
   }
 
-  // toggle the cart visibility
   function toggleCart(state: boolean | undefined = undefined): void {
     const nextState = state ?? !isShowingCart.value;
     isShowingCart.value = nextState;
     if (nextState) refreshCartIfNeeded();
   }
 
-  // add an item to the cart
   async function addToCart(input: AddToCartInput, optimistic?: OptimisticAddPayload): Promise<void> {
     isAddingToCart.value = true;
     const quantity = normalizeQuantity(input.quantity);
-    // cartMode controls whether we update UI immediately or wait for server confirmation.
     const canOptimistic = !!optimistic?.product && isOptimisticCartMode.value;
 
     if (!canOptimistic) {
@@ -436,7 +449,7 @@ export function useCart() {
         const { addToCart } = await gql.addToCart({ input: { ...input, quantity } });
         return addToCart?.cart ?? null;
       }, false);
-      // Auto open the cart when an item is added to the cart if the setting is enabled
+      
       if (!canOptimistic && storeSettings.autoOpenCart && !isShowingCart.value) toggleCart(true);
     } catch (error: unknown) {
       const errorMsg = getErrorMessage(error);
@@ -447,12 +460,10 @@ export function useCart() {
     }
   }
 
-  // remove an item from the cart
   async function removeItem(key: string): Promise<void> {
     await updateItemQuantity(key, 0);
   }
 
-  // update the quantity of an item in the cart
   async function updateItemQuantity(key: string, quantity: number): Promise<void> {
     const canOptimistic = isOptimisticCartMode.value;
 
@@ -480,7 +491,6 @@ export function useCart() {
     }
   }
 
-  // empty the cart
   async function emptyCart(): Promise<void> {
     const canOptimistic = isOptimisticCartMode.value;
 
@@ -508,7 +518,6 @@ export function useCart() {
       updateCart(emptyCart?.cart);
     } catch (error: unknown) {
       const errorMsg = getErrorMessage(error);
-      // Don't log error if cart is already empty
       if (errorMsg && !errorMsg.toLowerCase().includes('cart is empty')) {
         console.error('Error emptying cart:', errorMsg);
       }
@@ -517,7 +526,6 @@ export function useCart() {
     }
   }
 
-  // Update shipping method
   async function updateShippingMethod(shippingMethods: string): Promise<void> {
     isUpdatingCart.value = true;
     try {
@@ -531,7 +539,6 @@ export function useCart() {
     }
   }
 
-  // Apply coupon
   async function applyCoupon(code: string): Promise<ApiResponse<Cart | null>> {
     try {
       isUpdatingCoupon.value = true;
@@ -546,7 +553,6 @@ export function useCart() {
     }
   }
 
-  // Remove coupon
   async function removeCoupon(code: string): Promise<void> {
     try {
       isUpdatingCart.value = true;
@@ -560,23 +566,18 @@ export function useCart() {
     }
   }
 
-  // Stop the loading spinner when the cart is updated
   watch(cart, () => {
     cartItemCount.value = cart.value?.contents?.itemCount ?? 0;
     if (!isUpdatingCart.value) return;
     isUpdatingCart.value = false;
   });
 
-  // Check if all products in the cart are virtual
   const allProductsAreVirtual = computed(() => {
     const nodes = cart.value?.contents?.nodes || [];
     return nodes.length === 0 ? false : nodes.every((node) => (node.product?.node as SimpleProduct)?.virtual === true);
   });
 
-  // Unified cart mutation state for optimistic and non-optimistic flows.
   const isCartMutating = computed(() => isUpdatingCart.value || optimisticPendingMutations.value > 0);
-
-  // Check if the billing address is enabled
   const isBillingAddressEnabled = computed(() => (storeSettings.hideBillingAddressForVirtualProducts ? !allProductsAreVirtual.value : true));
 
   return {
