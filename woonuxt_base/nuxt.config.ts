@@ -83,7 +83,7 @@ export default defineNuxtConfig({
             tokenStorage: false,
             fetchOptions: {
               mode: 'cors',
-              credentials: 'same-origin',
+              credentials: 'include',
             },
           },
         },
