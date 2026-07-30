@@ -35,13 +35,7 @@ const discountPercentage = computed(() => {
   return null;
 });
 
-const salesCount = computed(() => {
-  const baseSales = Math.floor(Math.random() * 3000) + 100;
-  if (baseSales >= 1000) {
-    return (baseSales / 1000).toFixed(1) + 'k';
-  }
-  return baseSales.toString();
-});
+
 
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();

@@ -151,7 +151,7 @@ const getProductsQuery = `
   }
 `;
 
-const buildVariables = (afterCursor: string | null = null, first: number = 50) => {
+const buildVariables = (afterCursor: string | null = null, first: number = 20) => {
   const variables: any = {
     slug: slug ? [slug] : undefined,
     orderby: ProductsOrderByEnum.MenuOrder,

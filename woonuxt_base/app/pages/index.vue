@@ -33,7 +33,7 @@ const activeCategory = ref('all');
 // ==========================================
 // 3. Variables pour le chargement
 // ==========================================
-const productsPerPage = 20;
+const productsPerPage = 10;
 const loading = ref(false);
 const hasMore = ref(true);
 const allProducts = ref<Product[]>([]);
