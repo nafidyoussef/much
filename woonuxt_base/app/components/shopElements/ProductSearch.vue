@@ -27,13 +27,13 @@ const handleSubmit = () => {
       v-model="searchQuery"
       type="text"
       placeholder="Chercher parmi plus de 1 700 produits"
-      class="w-full h-12 pl-5 pr-12 text-base text-gray-700 border-2 border-[#ff4f24] rounded-full bg-gray-50 focus:bg-white focus:outline-none placeholder:text-gray-400 transition-all"
+      class="w-full h-10 pl-5 pr-12 text-base text-gray-700 border-1 border-[#ff4f24] rounded-full bg-gray-50 focus:bg-white focus:outline-none placeholder:text-gray-400 transition-all"
     />
     
     <!-- Bouton de recherche (Intégré à droite) -->
     <button 
       type="submit" 
-      class="absolute right-1.5 flex items-center justify-center w-9 h-9 bg-[#ff4f24] text-white rounded-full hover:bg-[#ff4f24]/90 transition-colors shadow-sm"
+      class="absolute right-0.5 flex items-center justify-center w-9 h-9 bg-[#ff4f24] text-white rounded-full hover:bg-[#ff4f24]/90 transition-colors shadow-sm"
       aria-label="Rechercher"
     >
       <Icon name="ion:search" size="20" />
