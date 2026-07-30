@@ -136,7 +136,7 @@ export default defineNuxtConfig({
       // ... add your other locales back here
     ],
     langDir: 'locales',
-    defaultLocale: 'en_US',
+    defaultLocale: 'fr_FR',
     strategy: 'no_prefix',
   },
 });
