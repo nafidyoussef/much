@@ -33,32 +33,40 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="sticky left-1  top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-shadow duration-300">
-    <div class="container">
+  <!-- ✅ Correction: sticky top-0 left-0 w-full pour un ancrage parfait -->
+  <header class="sticky top-0 left-0 w-full z-40 bg-white border-b border-gray-100 shadow-sm transition-shadow duration-300">
+    <div class="container px-4 md:px-6">
 
       <!-- ========================================== -->
       <!-- 📱 VERSION MOBILE                           -->
       <!-- ========================================== -->
-      <div class="lg:hidden py-1">
+      <div class="lg:hidden">
         
-        <!-- Row 1 : Logo, Menu, Compte, Panier (Se rétracte au scroll vers le bas) -->
+        <!-- Row 1 : Logo et Panier/Compte (Se rétracte au scroll vers le bas) -->
         <div 
           class="flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden"
-          :class="isScrollingDown && isScrolled ? 'max-h-0 opacity-0 mb-0' : 'max-h-24 opacity-100 mb-3'"
+          :class="isScrollingDown && isScrolled ? 'max-h-0 opacity-0 mb-0 py-0' : 'max-h-24 opacity-100 mb-0 py-1'"
         >
-          <div class="flex items-center gap-3">
-            <MenuTrigger />
-            <Logo class="w-32" />
-          </div>
+          <!-- Logo à gauche -->
+          <Logo class="w-28" />
 
+          <!-- Compte et Panier à droite -->
           <div class="flex items-center gap-4">
             <SignInLink />
             <CartTrigger />
           </div>
         </div>
 
-        <!-- Row 2 : Recherche (Toujours visible, devient le seul élément en haut) -->
-        <ProductSearch />
+        <!-- Row 2 : Menu et Recherche (Alignés horizontalement, restent visibles) -->
+        <div class="flex items-center gap-3 py-2">
+          <!-- Icône Menu (ne rétrécit pas) -->
+          <MenuTrigger class="shrink-0" />
+          
+          <!-- Barre de recherche (prend tout l'espace restant) -->
+          <div class="flex-1">
+            <ProductSearch />
+          </div>
+        </div>
         
       </div>
 

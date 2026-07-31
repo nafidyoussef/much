@@ -139,5 +139,5 @@ export default defineNuxtConfig({
     defaultLocale: 'fr_FR',
     strategy: 'no_prefix',
   },
-  
+ 
 });
