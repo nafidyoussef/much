@@ -15,11 +15,11 @@ export default defineAppConfig({
     autoOpenCart: false,
     // cartMode: 'optimistic' updates UI immediately; 'safe' waits for the server response.
     cartMode: 'optimistic',
-    showReviews: true,
+    showReviews: false,
     showFilters: true,
     showOrderByDropdown: true,
     showSKU: true,
-    showRelatedProducts: true,
+    showRelatedProducts: false,
     showProductCategoriesOnSingleProduct: true,
     showBreadcrumbOnSingleProduct: true,
     showMoveToWishlist: true,
