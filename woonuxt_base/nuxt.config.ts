@@ -5,8 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 const { resolve } = createResolver(import.meta.url);
 
 // ✅ 1. Point directly to your backend
-const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
-const APP_HOST = process.env.APP_HOST || 'https://bazzaria.ma';
+//const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
+//const APP_HOST = process.env.APP_HOST || 'https://bazzaria.ma';
 
 const parsedCatalogIsrTtl = Number.parseInt(process.env.CATALOG_ISR_TTL || '3600', 10);
 const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTtl > 0 ? parsedCatalogIsrTtl : 3600;
@@ -21,7 +21,17 @@ export default defineNuxtConfig({
       include: ['@stripe/stripe-js/pure', '@vue/devtools-core', '@vue/devtools-kit', '@vueuse/core', 'graphql-request', 'graphql-tag', 'reka-ui', 'tailwind-merge', 'workbox-window'],
     },
   },
-
+routeRules: {
+    '/graphql': {
+      proxy: 'https://api.bazzaria.ma/graphql',
+      cors: true,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, woocommerce-session'
+      }
+    }
+  },
   app: {
     head: {
       htmlAttrs: { lang: 'en' },
@@ -31,6 +41,26 @@ export default defineNuxtConfig({
       ],
     },
     //pageTransition: { name: 'page', mode: 'default' },
+  },
+  runtimeConfig: {
+    public: {
+      'graphql-client': {
+        clients: {
+          default: {
+            // ✅ Changez l'URL absolue par le chemin relatif
+            host: '/graphql',
+            headers: { 
+              Origin: 'https://bazzaria.ma' 
+            },
+            tokenStorage: false,
+            fetchOptions: {
+              mode: 'cors',
+              credentials: 'same-origin', // ✅ Important pour les cookies
+            },
+          },
+        },
+      },
+    },
   },
 
   plugins: [
@@ -55,24 +85,6 @@ export default defineNuxtConfig({
 
   css: [resolve('./app/assets/css/main.css')],
 
-  runtimeConfig: {
-    public: {
-      'graphql-client': {
-        clients: {
-          default: {
-            host: GQL_HOST,
-            headers: { Origin: APP_HOST },
-            tokenStorage: false,
-            fetchOptions: {
-              mode: 'cors',
-              // ✅ 2. MUST be 'include' for cross-origin cookies to work
-              credentials: 'include', 
-            },
-          },
-        },
-      },
-    },
-  },
 
   alias: {
     '#constants': resolve('./app/constants'),
@@ -139,5 +151,5 @@ export default defineNuxtConfig({
     defaultLocale: 'fr_FR',
     strategy: 'no_prefix',
   },
- 
+
 });
