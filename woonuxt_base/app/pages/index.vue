@@ -60,7 +60,7 @@ const fetchProducts = async (categoryId: string, append = false) => {
       variables.after = endCursor.value;
     }
 
-    const query = `query getProducts($after: String, $slug: [String], $first: Int = 24, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC, $onSale: Boolean, $minPrice: Float, $maxPrice: Float, $taxonomyFilter: ProductTaxonomyInput) {
+    const query = `query getProducts($after: String, $slug: [String], $first: Int = 10, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC, $onSale: Boolean, $minPrice: Float, $maxPrice: Float, $taxonomyFilter: ProductTaxonomyInput) {
   products(
     first: $first
     after: $after

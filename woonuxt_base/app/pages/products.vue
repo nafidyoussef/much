@@ -240,7 +240,7 @@ useHead({
         <div class="flex items-center justify-between w-full gap-4 mt-8 md:gap-8">
           <div v-if="isSearchMode" class="text-lg font-semibold text-gray-800">
             Résultats pour "{{ currentSearch }}" 
-            <span class="text-gray-500 font-normal text-sm">({{ products.length }} produits)</span>
+            
           </div>
           <div v-else class="text-sm text-gray-500">
             <span class="font-semibold text-gray-900">{{ products.length }}</span> produits affichés

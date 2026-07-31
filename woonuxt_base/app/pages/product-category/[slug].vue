@@ -248,7 +248,7 @@ const fetchProducts = async (append = false) => {
 
   try {
     const cursor = append ? endCursor.value : null;
-    const variables = buildVariables(cursor, 50);
+    const variables = buildVariables(cursor, 20);
 
     const response = await $fetch<any>('https://api.bazzaria.ma/graphql', {
       method: 'POST',
@@ -412,9 +412,6 @@ useHead({
 
         <div class="w-full">
           <div class="flex items-center justify-between w-full gap-4 mt-8 md:gap-8">
-            <div class="text-sm text-gray-500">
-              <span class="font-semibold text-gray-900">{{ products.length }}</span> produits affichés
-            </div>
             <OrderByDropdown v-if="storeSettings.showOrderByDropdown" class="hidden md:inline-flex" />
             <ShowFilterTrigger v-if="storeSettings.showFilters" class="md:hidden" />
           </div>
