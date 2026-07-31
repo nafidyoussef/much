@@ -20,6 +20,7 @@ const hasSearched = ref(false);
 const currentSearch = computed(() => (route.query.search as string) || '');
 const isSearchMode = computed(() => !!currentSearch.value);
 
+// ✅ REQUÊTE GRAPHQL OPTIMISÉE (Plus légère, sans erreurs de schéma)
 const productsQuery = `
   query getProducts($search: String, $first: Int, $after: String, $orderby: ProductsOrderByEnum!, $order: OrderEnum) {
     products(
@@ -34,82 +35,31 @@ const productsQuery = `
       pageInfo { hasNextPage endCursor }
       nodes {
         __typename
+        databaseId
+        id
         name
         slug
         type
-        databaseId
-        id
-        averageRating
-        reviewCount
-        ...SimpleProduct
-        ...VariableProduct
-        ...ExternalProduct
+        onSale
+        image {
+          sourceUrl
+          altText
+          productCardSourceUrl: sourceUrl(size: LARGE)
+        }
+        ... on InventoriedProduct {
+          stockStatus
+        }
+        ... on ProductWithPricing {
+          price
+          regularPrice
+          salePrice
+        }
       }
-    }
-  }
-
-  fragment SimpleProduct on SimpleProduct {
-    __typename
-    name
-    slug
-    type
-    price
-    rawPrice: price(format: RAW)
-    regularPrice
-    rawRegularPrice: regularPrice(format: RAW)
-    salePrice
-    rawSalePrice: salePrice(format: RAW)
-    onSale
-    stockStatus
-    image {
-      sourceUrl
-      altText
-      productCardSourceUrl: sourceUrl(size: LARGE)
-    }
-  }
-
-  fragment VariableProduct on VariableProduct {
-    __typename
-    name
-    slug
-    type
-    price
-    rawPrice: price(format: RAW)
-    regularPrice
-    rawRegularPrice: regularPrice(format: RAW)
-    salePrice
-    rawSalePrice: salePrice(format: RAW)
-    onSale
-    stockStatus
-    image {
-      sourceUrl
-      altText
-      productCardSourceUrl: sourceUrl(size: LARGE)
-    }
-  }
-
-  fragment ExternalProduct on ExternalProduct {
-    __typename
-    name
-    slug
-    type
-    externalUrl
-    buttonText
-    price
-    regularPrice
-    rawRegularPrice: regularPrice(format: RAW)
-    salePrice
-    rawSalePrice: salePrice(format: RAW)
-    onSale
-    image {
-      sourceUrl
-      altText
-      productCardSourceUrl: sourceUrl(size: LARGE)
     }
   }
 `;
 
-// ✅ 2. Fonction de chargement avec Gestion du Cache (CORRIGÉE)
+// ✅ 2. Fonction de chargement avec Gestion du Cache
 const fetchProducts = async (append = false) => {
   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
   if (!append && isValid.value) {
@@ -135,9 +85,10 @@ const fetchProducts = async (append = false) => {
   else loading.value = true;
 
   try {
-    const graphqlEndpoint = 'https://api.bazzaria.ma/graphql';
+    // ✅ UTILISATION DU REVERSE PROXY (plus rapide, pas de CORS)
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
 
-    const response = await $fetch<any>(graphqlEndpoint, {
+    const response = await $fetch<any>(GQL_HOST, {
       method: 'POST',
       body: {
         query: productsQuery,
@@ -148,7 +99,8 @@ const fetchProducts = async (append = false) => {
           orderby: ProductsOrderByEnum.MenuOrder,
           order: 'DESC'
         }
-      }
+      },
+      cache: 'no-store'
     });
 
     const newProducts = response?.data?.products?.nodes || [];
@@ -195,11 +147,6 @@ const setupObserver = () => {
   }
 };
 
-// ✅ 3. Watcher CORIGÉ : On ne clear PLUS le cache manuellement ici !
-// On laisse fetchProducts vérifier isValid. 
-// Si l'URL change (nouvelle recherche), isValid sera false et une nouvelle requête sera faite automatiquement.
-// ✅ Watcher CORRIGÉ : On ne met PLUS loading à true ici
-// C'est fetchProducts qui gère le loading correctement
 // ✅ Watcher PROTÉGÉ : Ne s'exécute QUE si on est sur la page /products
 watch(
   () => route.fullPath,

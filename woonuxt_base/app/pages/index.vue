@@ -120,9 +120,9 @@ const query = `query getProducts($after: String, $slug: [String], $first: Int = 
   }
 }`;
 
-    const apiUrl = import.meta.server ? 'https://api.bazzaria.ma/graphql' : '/graphql';
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
 
-    const response = await $fetch(apiUrl, {
+    const response = await $fetch(GQL_HOST, {
       method: 'POST',
       body: { query, variables, operationName: 'getProducts' },
       cache: 'no-store' 
