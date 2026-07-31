@@ -69,7 +69,7 @@ useHead({
 html,
 body {
   @apply  text-gray-900;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 html {
