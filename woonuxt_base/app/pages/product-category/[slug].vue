@@ -151,7 +151,7 @@ const getProductsQuery = `
   }
 `;
 
-const buildVariables = (afterCursor: string | null = null, first: number = 20) => {
+const buildVariables = (afterCursor: string | null = null, first: number = 10) => {
   const variables: any = {
     slug: slug ? [slug] : undefined,
     orderby: ProductsOrderByEnum.MenuOrder,
@@ -248,7 +248,7 @@ const fetchProducts = async (append = false) => {
 
   try {
     const cursor = append ? endCursor.value : null;
-    const variables = buildVariables(cursor, 20);
+    const variables = buildVariables(cursor, 10);
 
     const response = await $fetch<any>('https://api.bazzaria.ma/graphql', {
       method: 'POST',

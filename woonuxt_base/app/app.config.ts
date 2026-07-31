@@ -6,11 +6,9 @@
 export default defineAppConfig({
   siteName: 'Much',
   shortDescription: '',
-  description: `Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nemo voluptate neque in odio officia assumenda nulla cumque. Veniam et tenetur accusantium,
-        fuga pariatur repellendus impedit. Quod sint odio quisquam! Sequi repellendus eum dolorum eveniet, quidem dolor necessitatibus velit sunt esse maiores.
-        Eum odit dolorum mollitia? Adipisci amet hic veniam debitis `,
-  baseUrl: 'https://much-one.vercel.app/',
-  siteImage: 'https://user-images.githubusercontent.com/5116925/218879668-f4c1f9fd-bef4-44b0-bc7f-e87d994aa3a1.png',
+  description: `Much, c'est bien plus qu'une boutique en ligne. C'est votre nouvel univers de découvertes quotidiennes. Nous réunissons le meilleur de la maison, du high-tech, de la mode et du sport pour simplifier votre vie. Navigation intuitive, prix justes et livraison fiable : tout est pensé pour votre satisfaction. Vivez le shopping moderne`,
+  baseUrl: 'https://much.ma/',
+  siteImage: '',
   storeSettings: {
     autoOpenCart: false,
     // cartMode: 'optimistic' updates UI immediately; 'safe' waits for the server response.
