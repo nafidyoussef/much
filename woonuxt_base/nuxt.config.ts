@@ -30,7 +30,7 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
       ],
     },
-    pageTransition: { name: 'page', mode: 'default' },
+    //pageTransition: { name: 'page', mode: 'default' },
   },
 
   plugins: [
