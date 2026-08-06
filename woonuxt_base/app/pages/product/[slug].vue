@@ -136,6 +136,22 @@ const handleAddToCart = async (): Promise<void> => {
   toggleCart(true);
 };
 
+
+// ✅ NOUVEAU : Fonction pour l'achat immédiat
+const handleBuyNow = async (): Promise<void> => {
+  if (!product.value) return;
+  
+  try {
+    // 1. On ajoute le produit au panier (en attendant que ce soit fini)
+    await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
+    
+    // 2. Une fois ajouté avec succès, on redirige vers le checkout
+    await navigateTo('/checkout');
+  } catch (error) {
+    console.error('Erreur lors de l\'achat immédiat:', error);
+  }
+};
+
 const updateSelectedVariations = (variations: VariationAttribute[]): void => {
   if (!product.value?.variations) return;
   attrValues.value = variations.map((el) => ({ attributeName: el.name || '', attributeValue: el.value }));
@@ -195,7 +211,8 @@ const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : is
 // ==========================================
 // ✅ MODIFIÉ : Deep Link pour ouverture DIRECTE de l'app mobile
 // ==========================================
-const whatsappNumber = '212664612098'; // Format international sans le '+'
+const whatsappNumber = process.env.WTSP_PHONE; // Format international sans le '+'
+
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 
@@ -290,8 +307,20 @@ const whatsappLink = computed(() =>
                 {{ $t('shop.addToCart') }}
               </button>
             </div>
+            <button 
+                type="button" 
+                @click.prevent="handleBuyNow"
+                :disabled="disabledAddToCart"
+                class="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20bd5a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#25D366]/30"
+              >
+                <span v-if="addToCartLoading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <!-- Icône Panier -->
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {{ $t('shop.buyNow') || 'Acheter maintenant' }}
+            </button>
             
-            <!-- ✅ L'ANCIEN BOUTON WHATSAPP A ÉTÉ SUPPRIMÉ D'ICI -->
           </form>
 
           <div v-if="storeSettings.showProductCategoriesOnSingleProduct && product.productCategories" class="mt-8">
@@ -340,7 +369,7 @@ const whatsappLink = computed(() =>
       :href="whatsappLink"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-20 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
+      class="fixed bottom-30 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
       aria-label="Commander sur WhatsApp"
     >
       <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

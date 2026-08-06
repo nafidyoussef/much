@@ -81,6 +81,7 @@
     "failed": "Échec de la mise à jour"
   },
   "shop": {
+    "buyNow" : "Acheter Maintenant",
     "shopByCategory": "Acheter par catégorie",
     "popularProducts": "Produits populaires",
     "availability": "Disponibilité",
