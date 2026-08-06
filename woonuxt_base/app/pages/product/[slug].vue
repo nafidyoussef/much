@@ -275,10 +275,10 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
             <div class="flex-1">
-              <h1 class="flex flex-wrap items-center gap-2 mb-2 text-2xl font-bold text-gray-900">
+              <h2 class="flex flex-wrap items-center gap-2 mb-2 font-bold text-gray-900">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
-              </h1>
+              </h2>
               <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" />
             </div>
             
@@ -413,7 +413,7 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
       :href="whatsappLink"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-6 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
+      class="fixed bottom-24 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
       aria-label="Commander sur WhatsApp"
     >
       <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
