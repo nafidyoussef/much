@@ -218,7 +218,7 @@ const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product
 
 // Le schéma "whatsapp://" dit au téléphone d'ouvrir l'application directement
 const whatsappLink = computed(() => 
-  `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(whatsappMessage)}`
+  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
 );
 </script>
 
