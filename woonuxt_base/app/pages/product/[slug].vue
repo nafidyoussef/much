@@ -1,6 +1,6 @@
 <script lang="ts" setup> 
 import { StockStatusEnum, ProductTypesEnum, type AddToCartInput, type ProductAttributeInput } from '#gql/default';
-import type {ProductDetail, Variation, VariationAttribute } from '#types/gql';
+import type { ProductDetail, Variation, VariationAttribute } from '#types/gql';
 
 const route = useRoute();
 const { storeSettings } = useAppConfig();
@@ -19,13 +19,16 @@ const attrValues = ref<ProductAttributeInput[]>([]);
 
 const productLoadError = error.value ? getErrorMessage(error.value) || `Unable to load product "${slug}" from WordPress` : t('shop.productNotFound');
 
-// ... (Gardez toute la logique de gestion des variations existante ici, elle est parfaite) ...
+// ==========================================
+// Logique de gestion des variations
+// ==========================================
 const normalizeMatchToken = (value?: string | null): string => (value ?? '').toString().trim().toLowerCase().replace(/[\s-_]+/g, '');
 const stripPaPrefix = (value?: string | null): string => (value ?? '').toString().replace(/^pa[_-]/i, '');
 const normalizeMatchKey = (value?: string | null): string => normalizeMatchToken(stripPaPrefix(value));
 const normalizeMatchValue = (value?: string | null): string => normalizeMatchToken(value);
 type VariationSelection = Pick<VariationAttribute, 'name' | 'value'>;
 const toSelectionName = (name?: string | null): string => { if (!name) return ''; return name.charAt(0).toLowerCase() + name.slice(1); };
+
 const normalizedVariations = computed(() => {
   const nodes = product.value?.variations?.nodes ?? [];
   return nodes.map((node: Variation) => {
@@ -39,6 +42,7 @@ const normalizedVariations = computed(() => {
     return { variation: node, attrs, specificity };
   });
 });
+
 const findMatchingVariation = (selected: VariationSelection[]): Variation | null => {
   if (!selected?.length) return null;
   const selectedMap: Record<string, string> = {};
@@ -66,6 +70,7 @@ const findMatchingVariation = (selected: VariationSelection[]): Variation | null
   }
   return bestMatch?.variation ?? null;
 };
+
 const queryParams = route.query;
 const findVariationById = (value?: string | number | null): Variation | null => {
   if (!value || !product.value?.variations?.nodes?.length) return null;
@@ -73,6 +78,7 @@ const findVariationById = (value?: string | number | null): Variation | null => 
   if (!parsed || Number.isNaN(parsed)) return null;
   return product.value?.variations?.nodes?.find((node: Variation) => node.databaseId === parsed) ?? null;
 };
+
 const buildQuerySelections = (): VariationSelection[] => {
   if (!product.value?.attributes?.nodes?.length) return [];
   const selections: VariationSelection[] = [];
@@ -90,8 +96,10 @@ const buildQuerySelections = (): VariationSelection[] => {
   }
   return selections;
 };
+
 const queryVariationId = queryParams.variationId ?? queryParams.variation;
 const variationFromQuery = findVariationById(Array.isArray(queryVariationId) ? queryVariationId[0] : queryVariationId);
+
 if (variationFromQuery?.attributes?.nodes?.length) {
   variation.value = variationFromQuery.attributes.nodes.map((attr: VariationAttribute) => ({ name: attr.name || '', value: attr.value || '', attributeId: attr.attributeId ?? null, label: attr.label ?? attr.name ?? '' }));
   activeVariation.value = variationFromQuery;
@@ -107,6 +115,7 @@ if (variationFromQuery?.attributes?.nodes?.length) {
     }
   }
 }
+
 const defaultAttributes = computed<{ nodes: VariationAttribute[] } | null>(() => {
   if (variation.value.length > 0) return { nodes: variation.value };
   return product.value?.defaultAttributes ? { nodes: product.value.defaultAttributes.nodes ?? [] } : null;
@@ -136,16 +145,10 @@ const handleAddToCart = async (): Promise<void> => {
   toggleCart(true);
 };
 
-
-// ✅ NOUVEAU : Fonction pour l'achat immédiat
 const handleBuyNow = async (): Promise<void> => {
   if (!product.value) return;
-  
   try {
-    // 1. On ajoute le produit au panier (en attendant que ce soit fini)
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-    
-    // 2. Une fois ajouté avec succès, on redirige vers le checkout
     await navigateTo('/checkout');
   } catch (error) {
     console.error('Erreur lors de l\'achat immédiat:', error);
@@ -206,17 +209,31 @@ const disabledAddToCart = computed(() => {
 const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
 
 // ==========================================
-// ✅ MODIFIÉ : Deep Link pour ouverture DIRECTE de l'app mobile
+// ✅ CALCUL DE L'ÉCONOMIE (Badge promotion)
 // ==========================================
-const whatsappNumber = process.env.WTSP_PHONE || '212664612098' ; // Format international sans le '+'
+const savingsAmount = computed(() => {
+  // On cast en 'any' pour éviter l'erreur TypeScript stricte sur le type Variation
+  // qui ne déclare pas toujours explicitement ces champs, bien qu'ils soient 
+  // bel et bien renvoyés par le backend GraphQL.
+  const target = priceTarget.value as any;
+  
+  if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
+    return 0;
+  }
+  
+  const regular = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
+  const sale = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
+  
+  return Math.max(0, regular - sale);
+});
 
+// ==========================================
+// Lien WhatsApp
+// ==========================================
+const whatsappNumber = process.env.WTSP_PHONE || '212664612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-
-// Le schéma "whatsapp://" dit au téléphone d'ouvrir l'application directement
-const whatsappLink = computed(() => 
-  `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
-);
+const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
 </script>
 
 <template>
@@ -226,25 +243,37 @@ const whatsappLink = computed(() =>
       <Breadcrumb v-if="storeSettings.showBreadcrumbOnSingleProduct" :product class="mb-6" />
 
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
-        <!-- Galerie d'images -->
-        <ProductImageGallery
-          v-if="productImage"
-          class="relative w-full min-w-0"
-          :main-image="productImage"
-          :gallery="productGallery"
-          :node="displayProduct"
-          :active-variation="activeVariation" />
-        <NuxtImg
-          v-else
-          class="relative aspect-square w-full min-w-0 rounded-xl object-contain skeleton"
-          src="/images/placeholder.jpg"
-          :alt="product?.name || 'Product'" />
+        
+        <!-- ✅ GALERIE D'IMAGES (Swipeable sur mobile) -->
+        <div class="relative w-full min-w-0 overflow-x-auto snap-x snap-mandatory flex md:block scrollbar-hide">
+          <ProductImageGallery
+            v-if="productImage"
+            class="relative w-full min-w-0 flex-shrink-0 snap-center md:snap-none md:w-auto"
+            :main-image="productImage"
+            :gallery="productGallery"
+            :node="displayProduct"
+            :active-variation="activeVariation" 
+          />
+          <NuxtImg
+            v-else
+            class="relative aspect-square w-full min-w-0 flex-shrink-0 snap-center md:snap-none rounded-xl object-contain skeleton"
+            src="/images/placeholder.jpg"
+            :alt="product?.name || 'Product'" 
+          />
+          
+          <!-- Indicateur visuel de swipe pour mobile -->
+          <div class="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+            <div class="w-1.5 h-1.5 rounded-full bg-white/80 shadow-sm"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+          </div>
+        </div>
 
         <!-- Détails du produit -->
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
             <div class="flex-1">
               <h1 class="flex flex-wrap items-center gap-2 mb-2 text-2xl font-bold text-gray-900">
                 {{ displayProduct.name }}
@@ -252,7 +281,25 @@ const whatsappLink = computed(() =>
               </h1>
               <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" />
             </div>
-            <ProductPrice class="text-4xl font-bold text-[#ff4f24]" :sale-price="priceTarget?.salePrice" :regular-price="priceTarget?.regularPrice" />
+            
+            <!-- ✅ PRIX AGRANDI + BADGE D'ÉCONOMIE -->
+          <div class="flex flex-col items-end gap-2">
+  <ProductPriceMax
+    class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24]" 
+    :sale-price="priceTarget?.salePrice" 
+    :regular-price="priceTarget?.regularPrice" 
+  />
+  
+  <!-- Badge d'économie (s'affiche uniquement si > 0) -->
+  <div v-if="savingsAmount > 0" class="flex items-center gap-1.5 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full shadow-sm">
+    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span class="text-sm font-bold text-green-700">
+      Économisez {{ Math.round(savingsAmount) }} DH
+    </span>
+  </div>
+</div>
           </div>
 
           <HookOutlet name="product.summary.afterPrice" :ctx="{ product: displayProduct }" as="div" />
@@ -273,7 +320,7 @@ const whatsappLink = computed(() =>
           <hr class="border-gray-200 my-6" />
 
           <!-- Formulaire d'achat -->
-           <form @submit.prevent="handleAddToCart" class="space-y-4">
+          <form @submit.prevent="handleAddToCart" class="space-y-4">
             <AttributeSelections
               v-if="isVariableProduct && product?.attributes?.nodes?.length && product?.variations"
               class="mt-4 mb-6"
@@ -304,20 +351,20 @@ const whatsappLink = computed(() =>
                 {{ $t('shop.addToCart') }}
               </button>
             </div>
+
+            <!-- Bouton Acheter Maintenant (Vert WhatsApp + Icône Panier) -->
             <button 
-                type="button" 
-                @click.prevent="handleBuyNow"
-                :disabled="disabledAddToCart"
-                class="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20bd5a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#25D366]/30"
-              >
-                <span v-if="addToCartLoading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
-                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <!-- Icône Panier -->
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {{ $t('shop.buyNow') || 'Acheter maintenant' }}
+              type="button" 
+              @click.prevent="handleBuyNow"
+              :disabled="disabledAddToCart"
+              class="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20bd5a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#25D366]/30"
+            >
+              <span v-if="addToCartLoading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+              <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {{ $t('shop.buyNow') || 'Acheter maintenant' }}
             </button>
-            
           </form>
 
           <div v-if="storeSettings.showProductCategoriesOnSingleProduct && product.productCategories" class="mt-8">
@@ -361,12 +408,12 @@ const whatsappLink = computed(() =>
       {{ productLoadError }}
     </div>
 
-    <!-- ✅ NOUVEAU : BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
+    <!-- ✅ BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
     <a
       :href="whatsappLink"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-30 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
+      class="fixed bottom-6 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
       aria-label="Commander sur WhatsApp"
     >
       <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -385,5 +432,14 @@ input[type='number']::-webkit-outer-spin-button {
 }
 input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* ✅ Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
