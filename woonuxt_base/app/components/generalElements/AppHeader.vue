@@ -87,7 +87,6 @@ onUnmounted(() => {
           <Logo class="w-28" />
           <div class="flex items-center gap-4">
             <SignInLink />
-            <CartTrigger />
           </div>
         </div>
 

@@ -5,7 +5,7 @@ const route = useRoute()
 const { t } = useI18n()
 const { query } = route
 const { cart, paymentGateways } = useCart()
-const { customer, viewer, navigateToLogin } = useAuth()
+const { customer, viewer } = useAuth()
 const { orderInput, isProcessingOrder, processCheckout, checkoutError, resolvePaymentMethodId } = useCheckout()
 const { setActiveGateway, isActiveGatewayReady, processActiveGatewayPayment, getActiveGatewayDisabledMessage, resetActiveGateway } = usePaymentGateways()
 
@@ -19,83 +19,42 @@ const isInvalidPhone = ref<boolean>(false)
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const phoneRegex = /^(?:\+?212|0)[5-7]\d{8}$/
 
-// --- État Local du Formulaire (Isolé du cache GQL) ---
-// --- État Local du Formulaire (Isolé du cache GQL) ---
+// --- État Local du Formulaire (Modifié : Nom complet au lieu de prénom/nom) ---
 const formData = reactive({
   billing: {
     email: '',
     phone: '',
-    firstName: '',
-    lastName: '',
+    fullName: '', // ✅ Remplace firstName et lastName
     address1: '',
     city: '',
-    country: 'MA' as any, // CORRECTION : Cast en 'any' pour satisfaire CountriesEnum
+    country: 'MA' as any,
     postcode: '10000'
   },
   shipping: {
-    firstName: '',
-    lastName: '',
+    fullName: '', // ✅ Remplace firstName et lastName
     address1: '',
     city: '',
-    country: 'MA' as any, //  CORRECTION : Cast en 'any' pour satisfaire CountriesEnum
+    country: 'MA' as any,
     postcode: '10000'
   }
 })
 
-// --- Villes du Maroc (Triées pour une meilleure UX) ---
+// --- Villes du Maroc ---
 const MOROCCAN_CITIES = [
-   'Agadir - أكادير',
-  'Al Hoceima - الحسيمة',
-  'Azrou - أزرو',
-  'Beni Ansar - بني أنصار',
-  'Beni Mellal - بني ملال',
-  'Berkane - بركان',
-  'Berrechid - برشيد',
-  'Boujdour - بوجدور',
-  'Casablanca - الدار البيضاء',
-  'Chefchaouen - شفشاون',
-  'Dakhla - الداخلة',
-  'El Jadida - الجديدة',
-  'Errachidia - الرشيدية',
-  'Essaouira - الصويرة',
-  'Fès - فاس',
-  'Guelmim - كلميم',
-  'Ifrane - إفران',
-  'Inezgane - إنزكان',
-  'Kénitra - القنيطرة',
-  'Khemisset - الخميسات',
-  'Khenifra - خنيفرة',
-  'Khouribga - خريبكة',
-  'Laâyoune - العيون',
-  'Larache - العرائش',
-  'Marrakech - مراكش',
-  'Meknès - مكناس',
-  'Midelt - ميدلت',
-  'Mohammedia - المحمدية',
-  'Nador - الناضور',
-  'Ouarzazate - ورزازات',
-  'Ouezzane - وزان',
-  'Oujda - وجدة',
-  'Oulad Teima - أولاد تايمة',
-  'Rabat - الرباط',
-  'Safi - آسفي',
-  'Sefrou - صفرو',
-  'Settat - سطات',
-  'Sidi Ifni - سيدي إفني',
-  'Sidi Kacem - سيدي قاسم',
-  'Sidi Slimane - سيدي سليمان',
-  'Smara - السمارة',
-  'Taourirt - تاوريرت',
-  'Tanger - طنجة',
-  'Taroudant - تارودانت',
-  'Taza - تازة',
-  'Temsia - تمسية',
-  'Tétouan - تطوان',
-  'Tinghir - تنغير',
-  'Tiznit - تيزنيت',
-  'Youssoufia - اليوسفية',
-  'Zagora - زاكورة'
-].sort((a, b) => a.localeCompare(b, 'fr')) // Tri alphabétique pour faciliter la recherche
+  'Agadir - أكادير', 'Al Hoceima - الحسيمة', 'Azrou - أزرو', 'Beni Ansar - بني أنصار',
+  'Beni Mellal - بني ملال', 'Berkane - بركان', 'Berrechid - برشيد', 'Boujdour - بوجدور',
+  'Casablanca - الدار البيضاء', 'Chefchaouen - شفشاون', 'Dakhla - الداخلة', 'El Jadida - الجديدة',
+  'Errachidia - الرشيدية', 'Essaouira - الصويرة', 'Fès - فاس', 'Guelmim - كلميم',
+  'Ifrane - إفران', 'Inezgane - إنزكان', 'Kénitra - القنيطرة', 'Khemisset - الخميسات',
+  'Khenifra - خنيفرة', 'Khouribga - خريبكة', 'Laâyoune - العيون', 'Larache - العرائش',
+  'Marrakech - مراكش', 'Meknès - مكناس', 'Midelt - ميدلت', 'Mohammedia - المحمدية',
+  'Nador - الناضور', 'Ouarzazate - ورزازات', 'Ouezzane - وزان', 'Oujda - وجدة',
+  'Oulad Teima - أولاد تايمة', 'Rabat - الرباط', 'Safi - آسفي', 'Sefrou - صفرو',
+  'Settat - سطات', 'Sidi Ifni - سيدي إفني', 'Sidi Kacem - سيدي قاسم', 'Sidi Slimane - سيدي سليمان',
+  'Smara - السمارة', 'Taourirt - تاوريرت', 'Tanger - طنجة', 'Taroudant - تارودانت',
+  'Taza - تازة', 'Temsia - تمسية', 'Tétouan - تطوان', 'Tinghir - تنغير', 'Tiznit - تيزنيت',
+  'Youssoufia - اليوسفية', 'Zagora - زاكورة'
+].sort((a, b) => a.localeCompare(b, 'fr'))
 
 // --- Logique de Recherche de Ville ---
 const citySearch = ref('')
@@ -112,13 +71,8 @@ const filteredCities = computed(() => {
   return MOROCCAN_CITIES.filter((city) => city.toLowerCase().includes(q))
 })
 
-const filteredShippingCities = computed(() => {
-  const q = shippingCitySearch.value.toLowerCase().trim()
-  if (!q) return MOROCCAN_CITIES
-  return MOROCCAN_CITIES.filter((city) => city.toLowerCase().includes(q))
-})
 
-// ✅ Remplit le champ de recherche ET la donnée du formulaire
+
 const selectCity = (city: string, isShipping = false) => {
   if (isShipping) {
     formData.shipping.city = city
@@ -131,7 +85,6 @@ const selectCity = (city: string, isShipping = false) => {
   }
 }
 
-// Réinitialise la ville choisie si l'utilisateur modifie le texte manuellement
 const handleCityInput = (isShipping = false) => {
   if (isShipping) {
     formData.shipping.city = ''
@@ -152,25 +105,24 @@ type CheckoutViewerSummary = {
 const viewerSummary = computed<CheckoutViewerSummary | null>(() => viewer.value as CheckoutViewerSummary | null)
 const viewerEmail = computed<string>(() => customer.value?.billing?.email || viewerSummary.value?.email || '')
 
-// --- Initialisation Sécurisée et Type-Safe ---
+// --- Initialisation ---
 onBeforeMount(() => {
   if (query.cancel_order && typeof window !== 'undefined') window.close()
   
   const billing = customer.value?.billing
-  if (billing && (billing.email || billing.firstName) && !formData.billing.email) {
+  if (billing && !formData.billing.fullName) {
     formData.billing.email = billing.email || viewerEmail.value || ''
     formData.billing.phone = billing.phone || ''
-    formData.billing.firstName = billing.firstName || ''
-    formData.billing.lastName = billing.lastName || ''
+    // ✅ Combine prénom et nom en un seul champ
+    formData.billing.fullName = `${billing.firstName || ''} ${billing.lastName || ''}`.trim()
     formData.billing.address1 = billing.address1 || ''
     formData.billing.city = billing.city || ''
     
-    // Sync des champs de recherche avec les données pré-remplies
     citySearch.value = formData.billing.city
     shippingCitySearch.value = formData.billing.city
   }
   
-  if (!formData.shipping.firstName && formData.billing.firstName) {
+  if (!formData.shipping.fullName && formData.billing.fullName) {
     formData.shipping = { ...formData.billing }
   }
 })
@@ -217,16 +169,17 @@ const shouldShowShippingFlow = computed<boolean>(() => {
   return ((cart.value as any).chosenShippingMethods?.length ?? 0) > 0
 })
 
-// --- Validation ---
+// --- Validation (Modifiée : Email retiré des champs obligatoires) ---
 const isCheckoutDisabled = computed<boolean>(() => {
   if (isProcessingOrder.value || !selectedPaymentMethodId.value) return true
   const b = formData.billing
-  if (!b.email || !b.phone || !b.firstName || !b.address1 || !b.city) return true
+  // ✅ Email retiré, fullName ajouté
+  if (!b.phone || !b.fullName || !b.address1 || !b.city) return true
   if (isInvalidEmail.value || isInvalidPhone.value) return true
 
   if (shipToDifferentAddress.value) {
     const s = formData.shipping
-    if (!s.firstName || !s.address1 || !s.city) return true
+    if (!s.fullName || !s.address1 || !s.city) return true
   }
   return !isActiveGatewayReady.value
 })
@@ -244,12 +197,16 @@ const handleGatewaySelect = (gateway: PaymentGateway): void => {
   void setActiveGateway(gateway)
 }
 
+// ✅ Validation Email modifiée pour autoriser le champ vide
 const checkEmailOnBlur = () => {
-  isInvalidEmail.value = !emailRegex.test(formData.billing.email)
+  isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email)
 }
 const checkEmailOnInput = () => {
-  if (isInvalidEmail.value) isInvalidEmail.value = !emailRegex.test(formData.billing.email)
+  if (isInvalidEmail.value) {
+    isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email)
+  }
 }
+
 const checkPhoneOnBlur = () => {
   const clean = formData.billing.phone.replace(/\s+/g, '')
   isInvalidPhone.value = !phoneRegex.test(clean)
@@ -262,11 +219,11 @@ const checkPhoneOnInput = () => {
 }
 
 // --- Soumission du Formulaire ---
+// --- Soumission du Formulaire ---
 const payNow = async () => {
   buttonText.value = t('general.processing')
   checkoutError.value = null
 
-  // Injection forcée des données pour contourner les watchers internes de WooNuxt
   if (!orderInput.value) orderInput.value = {} as any
   if (!orderInput.value.billing) orderInput.value.billing = {} as any
   if (!orderInput.value.shipping) orderInput.value.shipping = {} as any
@@ -274,10 +231,29 @@ const payNow = async () => {
   if (!customer.value.billing) customer.value.billing = {} as any
   if (!customer.value.shipping) customer.value.shipping = {} as any
 
-  orderInput.value.billing = { ...formData.billing }
-  orderInput.value.shipping = { ...formData.shipping }
-  customer.value.billing = { ...formData.billing }
-  customer.value.shipping = { ...formData.shipping }
+  // ✅ CORRECTION CRUCIALE : 
+  // On extrait 'fullName' de l'objet pour qu'il ne soit PAS envoyé à GraphQL.
+  // 'validBillingData' ne contiendra QUE les champs autorisés (email, phone, address1, city, etc.)
+  const { fullName: billingFullName, ...validBillingData } = formData.billing
+  const { fullName: shippingFullName, ...validShippingData } = formData.shipping
+
+  // On reconstruit l'objet pour l'API avec firstName = nom complet, et lastName vide
+  const billingPayload = {
+    ...validBillingData,
+    firstName: billingFullName,
+    lastName: '' // Chaîne vide (plus propre qu'un espace pour WooCommerce)
+  }
+
+  const shippingPayload = {
+    ...validShippingData,
+    firstName: shippingFullName,
+    lastName: ''
+  }
+
+  orderInput.value.billing = billingPayload
+  orderInput.value.shipping = shippingPayload
+  customer.value.billing = billingPayload
+  customer.value.shipping = shippingPayload
 
   await setActiveGateway(orderInput.value.paymentMethod)
   resetActiveGateway()
@@ -306,8 +282,8 @@ const payNow = async () => {
 
   // Vérification de dernière seconde
   if (!orderInput.value.billing || !orderInput.value.billing.email) {
-    orderInput.value.billing = { ...formData.billing }
-    orderInput.value.shipping = { ...formData.shipping }
+    orderInput.value.billing = billingPayload
+    orderInput.value.shipping = shippingPayload
   }
 
   await processCheckout(paymentResult.isPaid)
@@ -344,26 +320,21 @@ useSeoMeta({ title: t('shop.checkout') })
       <!-- Formulaire de Checkout -->
       <form v-else class="container max-w-6xl mx-auto px-4 py-8 lg:py-12" @submit.prevent="payNow">
         
-        <!-- ✅ NOUVEAU : Indicateur d'étapes (Stepper) -->
+        <!-- Indicateur d'étapes (Stepper) -->
         <div class="flex items-center justify-center mb-10">
           <div class="flex items-center w-full max-w-2xl">
-            <!-- Étape 1 -->
             <div class="flex flex-col items-center flex-1">
               <div class="w-10 h-10 rounded-full bg-[#ff4f24] text-white flex items-center justify-center font-bold text-lg shadow-md shadow-[#ff4f24]/30">1</div>
               <span class="mt-2 text-sm font-semibold text-[#ff4f24] hidden sm:block">Coordonnées</span>
             </div>
-            <!-- Ligne de connexion -->
             <div class="flex-1 h-1 bg-gray-200 mx-2 rounded-full relative">
               <div class="absolute inset-y-0 left-0 w-1/2 bg-[#ff4f24] rounded-full"></div>
             </div>
-            <!-- Étape 2 -->
             <div class="flex flex-col items-center flex-1">
               <div class="w-10 h-10 rounded-full bg-[#ff4f24] text-white flex items-center justify-center font-bold text-lg shadow-md shadow-[#ff4f24]/30">2</div>
               <span class="mt-2 text-sm font-semibold text-[#ff4f24] hidden sm:block">Livraison</span>
             </div>
-            <!-- Ligne de connexion -->
             <div class="flex-1 h-1 bg-gray-200 mx-2 rounded-full"></div>
-            <!-- Étape 3 -->
             <div class="flex flex-col items-center flex-1">
               <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-lg border-2 border-gray-300">3</div>
               <span class="mt-2 text-sm font-medium text-gray-500 hidden sm:block">Paiement</span>
@@ -376,51 +347,35 @@ useSeoMeta({ title: t('shop.checkout') })
           <!-- Colonne Gauche : Formulaire -->
           <div class="lg:col-span-2 space-y-6">
             
-            <!-- Section: Bienvenue / Connexion -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <div v-if="viewer" class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-                  <Icon name="ion:person" class="text-[#ff4f24]" size="24" />
-                </div>
-                <div>
-                  <h1 class="text-lg font-bold text-gray-900">Bon retour, {{ viewerSummary?.firstName || 'Client' }}</h1>
-                  <p v-if="viewerEmail" class="text-sm text-gray-500 mt-0.5">{{ viewerEmail }}</p>
-                </div>
+            <!-- ✅ NOUVEAU : Message d'accueil simplifié (Remplace le bloc de connexion) -->
+            <div class="bg-blue-50/50 rounded-2xl border border-blue-100 p-5 flex items-start gap-4">
+              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <Icon name="ion:checkmark-circle" class="text-blue-600" size="24" />
               </div>
-
-              <div v-else class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                <div>
-                  <h1 class="text-base font-semibold text-gray-900">Paiement en tant qu'invité</h1>
-                  <p class="text-sm text-gray-600 mt-1">Connectez-vous pour utiliser vos informations enregistrées.</p>
-                </div>
-                <Button type="button" size="sm" variant="outline" class="shrink-0 border-blue-200 text-blue-700 hover:bg-blue-100" @click="navigateToLogin(route.fullPath)">
-                  Se connecter
-                </Button>
+              <div>
+                <h3 class="text-base font-bold text-gray-900">Finaliser votre commande</h3>
+                <p class="text-sm text-gray-600 mt-1">Aucun compte nécessaire. Nous confirmerons votre commande par téléphone.</p>
               </div>
             </div>
 
             <!-- Section: Détails de facturation -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <Icon name="ion:receipt" class="text-[#ff4f24]" />
                 {{ $t('billing.billingDetails') }}
               </h3>
               
               <div class="space-y-5">
+                  <!-- ✅ Champ unique "Nom complet" -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.email') }} <span class="text-[#ff4f24]">*</span></label>
-                  <input v-model="formData.billing.email" type="email" required 
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" 
-                    :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500/10': isInvalidEmail }" 
-                    @blur="checkEmailOnBlur" @input="checkEmailOnInput" />
-                  <p v-if="isInvalidEmail" class="mt-1.5 text-sm text-red-500 flex items-center gap-1">
-                    <Icon name="ion:alert-circle" size="14" /> Email invalide
-                  </p>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom complet <span class="text-[#ff4f24]">*</span></label>
+                  <input v-model="formData.billing.fullName" type="text"  required 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
                 </div>
 
-                <div>
+                  <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">Téléphone <span class="text-[#ff4f24]">*</span></label>
-                  <input v-model="formData.billing.phone" type="tel" placeholder="06 12 34 56 78" required 
+                  <input v-model="formData.billing.phone" type="tel" required 
                     class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" 
                     :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500/10': isInvalidPhone }" 
                     @blur="checkPhoneOnBlur" @input="checkPhoneOnInput" />
@@ -429,25 +384,24 @@ useSeoMeta({ title: t('shop.checkout') })
                   </p>
                 </div>
 
-                <div class="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.firstName') }} <span class="text-[#ff4f24]">*</span></label>
-                    <input v-model="formData.billing.firstName" type="text" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.lastName') }} <span class="text-[#ff4f24]">*</span></label>
-                    <input v-model="formData.billing.lastName" type="text" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                  </div>
+                <!-- ✅ Email rendu facultatif -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    {{ $t('billing.email') }} <span class="text-gray-400 text-xs font-normal">(Facultatif)</span>
+                  </label>
+                  <input v-model="formData.billing.email" type="email" 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" 
+                    :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500/10': isInvalidEmail }" 
+                    @blur="checkEmailOnBlur" @input="checkEmailOnInput" />
+                  <p v-if="isInvalidEmail" class="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+                    <Icon name="ion:alert-circle" size="14" /> Email invalide
+                  </p>
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.address1') }} <span class="text-[#ff4f24]">*</span></label>
-                  <input v-model="formData.billing.address1" type="text" placeholder="Ex: 123 Rue Hassan II" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                </div>
-                
-                <!-- City Dropdown -->
+             
+              <!-- City Dropdown -->
                 <div ref="cityInputRef" class="relative">
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.city') }} <span class="text-[#ff4f24]">*</span></label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Ville <span class="text-[#ff4f24]">*</span></label>
                   <div class="relative">
                     <input v-model="citySearch" type="text" placeholder="Rechercher votre ville..." 
                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white pr-12" 
@@ -466,6 +420,15 @@ useSeoMeta({ title: t('shop.checkout') })
                   </div>
                 </div>
 
+                <!-- ✅ "Adresse 1" renommé en "Quartier" -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Quartier <span class="text-[#ff4f24]">*</span></label>
+                  <input v-model="formData.billing.address1" type="text" placeholder="Ex: Hay Riad ..." required 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
+                </div>
+                
+                
+
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">Pays</label>
                   <div class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed select-none flex items-center gap-3">
@@ -475,63 +438,6 @@ useSeoMeta({ title: t('shop.checkout') })
                 </div>
               </div>
               
-              <div v-if="shouldShowShippingFlow" class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-100">
-                <input id="ship-to-different-address" v-model="shipToDifferentAddress" type="checkbox" class="w-5 h-5 text-[#ff4f24] rounded-md focus:ring-[#ff4f24] border-gray-300 cursor-pointer" />
-                <label for="ship-to-different-address" class="text-sm font-medium text-gray-700 cursor-pointer select-none">{{ $t('billing.differentAddress') }}</label>
-              </div>
-            </div>
-
-            <!-- Section: Livraison (Conditionnelle) -->
-            <div v-if="shipToDifferentAddress" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-fade-in">
-              <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Icon name="ion:location" class="text-[#ff4f24]" />
-                {{ $t('general.shippingAddress') }}
-              </h3>
-              <div class="space-y-5">
-                <div class="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.firstName') }} <span class="text-[#ff4f24]">*</span></label>
-                    <input v-model="formData.shipping.firstName" type="text" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.lastName') }} <span class="text-[#ff4f24]">*</span></label>
-                    <input v-model="formData.shipping.lastName" type="text" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.address1') }} <span class="text-[#ff4f24]">*</span></label>
-                  <input v-model="formData.shipping.address1" type="text" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
-                </div>
-                
-                <!-- Shipping City Dropdown -->
-                <div ref="shippingCityInputRef" class="relative">
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('billing.city') }} <span class="text-[#ff4f24]">*</span></label>
-                  <div class="relative">
-                    <input v-model="shippingCitySearch" type="text" placeholder="Rechercher votre ville..." 
-                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white pr-12" 
-                      @focus="showShippingCityDropdown = true" @input="handleCityInput(true)" />
-                    <Icon v-if="formData.shipping.city" name="ion:checkmark-circle" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" size="20" />
-                    <Icon v-else name="ion:search-outline" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size="20" />
-
-                    <div v-if="showShippingCityDropdown && filteredShippingCities.length > 0" class="absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
-                      <button v-for="city in filteredShippingCities" :key="city" type="button" 
-                        class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#ff4f24]/5 hover:text-[#ff4f24] transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
-                        @click="selectCity(city, true)">
-                        <span class="font-medium">{{ city }}</span>
-                        <Icon v-if="formData.shipping.city === city" name="ion:checkmark" class="text-[#ff4f24]" size="16" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Pays</label>
-                  <div class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed select-none flex items-center gap-3">
-                    <span class="text-2xl">🇲🇦</span> 
-                    <span class="font-semibold">Maroc</span>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <!-- Section: Méthodes de livraison -->
@@ -563,7 +469,7 @@ useSeoMeta({ title: t('shop.checkout') })
               </h3>
               <textarea v-model="orderInput.customerNote" rows="3" 
                 class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white resize-none" 
-                :placeholder="$t('shop.orderNotePlaceholder')"></textarea>
+                ></textarea>
             </div>
           </div>
 
@@ -605,6 +511,7 @@ useSeoMeta({ title: t('shop.checkout') })
     <LoadingIcon v-else class="m-auto min-h-screen flex items-center justify-center" />
   </div>
 </template>
+
 <style>
 @reference "#tailwind";
 
@@ -622,7 +529,6 @@ useSeoMeta({ title: t('shop.checkout') })
   @apply border-red-500 focus:ring-red-500 bg-red-50; 
 }
 
-/* Scrollbar personnalisée pour la liste des villes */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
