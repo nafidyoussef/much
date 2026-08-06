@@ -82,36 +82,36 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
 
 <template>
   <div :class="galleryRootClasses">
-    <div class="relative group aspect-square w-full min-w-0 overflow-hidden rounded-xl bg-gray-100">
-      <SaleBadge :node class="absolute text-base top-4 right-4" />
-      <NuxtPicture
-        :width="imgWidth"
-        :height="imgWidth"
-        sizes="412px:100vw sm:100vw md:50vw lg:50vw xl:640px"
-        :alt="imageToShow.altText || node.name"
-        :title="imageToShow.title || node.name"
-        :src="imageToShow.sourceUrl || FALLBACK_IMG"
-        :preload="{ fetchPriority: 'high' }"
-        :img-attrs="{ class: 'h-full w-full object-contain' }" />
+  <div class="relative group aspect-square w-full min-w-0 overflow-hidden rounded-xl bg-gray-100">
+  <SaleBadge :node class="absolute text-base top-4 right-4" />
+  <NuxtPicture
+    :width="imgWidth"
+    :height="imgWidth"
+    sizes="412px:100vw sm:100vw md:50vw lg:50vw xl:640px"
+    :alt="imageToShow.altText || node.name"
+    :title="imageToShow.title || node.name"
+    :src="imageToShow.sourceUrl || FALLBACK_IMG"
+    :preload="{ fetchPriority: 'high' }"
+    :img-attrs="{ class: 'h-full w-full object-contain' }" />
 
-      <button
-        v-if="galleryImages.length > 1"
-        class="absolute left-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/25 text-gray-900 opacity-0 shadow-md transition-[opacity,background-color,box-shadow] ease-in hover:bg-white/70 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary group-hover:opacity-100"
-        type="button"
-        :aria-label="`Previous image for ${node.name}`"
-        @click="changeImageByOffset(-1)">
-        <Icon name="ion:chevron-back-outline" size="24" />
-      </button>
+  <button
+    v-if="galleryImages.length > 1"
+    class="absolute left-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    type="button"
+    :aria-label="`Previous image for ${node.name}`"
+    @click="changeImageByOffset(-1)">
+    <Icon name="ion:chevron-back-outline" size="24" />
+  </button>
 
-      <button
-        v-if="galleryImages.length > 1"
-        class="absolute right-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/25 text-gray-900 opacity-0 shadow-md transition-[opacity,background-color,box-shadow] ease-in hover:bg-white/70 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary group-hover:opacity-100"
-        type="button"
-        :aria-label="`Next image for ${node.name}`"
-        @click="changeImageByOffset(1)">
-        <Icon name="ion:chevron-forward-outline" size="24" />
-      </button>
-    </div>
+  <button
+    v-if="galleryImages.length > 1"
+    class="absolute right-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    type="button"
+    :aria-label="`Next image for ${node.name}`"
+    @click="changeImageByOffset(1)">
+    <Icon name="ion:chevron-forward-outline" size="24" />
+  </button>
+</div>
 
     <div v-if="gallery.nodes.length" :class="thumbnailListClasses">
       <button
