@@ -441,13 +441,7 @@ useSeoMeta({ title: t('shop.checkout') })
             </div>
 
             <!-- Section: Méthodes de livraison -->
-            <div v-if="shouldShowShippingFlow && hasAvailableShippingMethods && (cart as any)?.chosenShippingMethods?.[0]" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Icon name="ion:truck" class="text-[#ff4f24]" />
-                {{ $t('general.shippingSelect') }}
-              </h3>
-              <ShippingOptions :options="(cart as any)?.availableShippingMethods?.[0]?.rates ?? []" :active-option="(cart as any).chosenShippingMethods[0]" />
-            </div>
+          
 
             <!-- Section: Paiement -->
             <div v-if="checkoutPaymentGateways?.nodes?.length" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
