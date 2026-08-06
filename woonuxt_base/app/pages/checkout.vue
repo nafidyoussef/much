@@ -139,35 +139,7 @@ const shipToDifferentAddress = computed<boolean>({
   },
 })
 
-const requiresShipping = computed<boolean>(() => {
-  const currentCart = cart.value as any
-  if (!currentCart || currentCart.isEmpty) return false
-  if (typeof currentCart.needsShippingAddress === 'boolean') {
-    if (currentCart.needsShippingAddress) return true
-    if ((currentCart.availableShippingMethods?.length ?? 0) > 0) return true
-    if ((currentCart.chosenShippingMethods?.length ?? 0) > 0) return true
-  }
-  const cartNodes = currentCart.contents?.nodes ?? []
-  if (!cartNodes.length) return false
-  const hasExplicitVirtualFlags = cartNodes.some(
-    (item: any) => typeof (item?.product?.node as { virtual?: boolean } | null)?.virtual === 'boolean'
-  )
-  if (hasExplicitVirtualFlags) {
-    return cartNodes.some((item: any) => (item?.product?.node as { virtual?: boolean } | null)?.virtual !== true)
-  }
-  return true
-})
 
-const hasAvailableShippingMethods = computed<boolean>(() => {
-  return !!(cart.value as any)?.availableShippingMethods?.[0]?.rates?.length
-})
-
-const shouldShowShippingFlow = computed<boolean>(() => {
-  if (!cart.value || (cart.value as any).isEmpty) return false
-  if (requiresShipping.value) return true
-  if (hasAvailableShippingMethods.value) return true
-  return ((cart.value as any).chosenShippingMethods?.length ?? 0) > 0
-})
 
 // --- Validation (Modifiée : Email retiré des champs obligatoires) ---
 const isCheckoutDisabled = computed<boolean>(() => {
