@@ -192,12 +192,17 @@ const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : is
 // ==========================================
 // ✅ MODIFIÉ : Logique pour forcer l'app mobile WhatsApp
 // ==========================================
-const whatsappNumber = '212664612098'; // Votre numéro
+// ==========================================
+// ✅ MODIFIÉ : Deep Link pour ouverture DIRECTE de l'app mobile
+// ==========================================
+const whatsappNumber = '212664612098'; // Format international sans le '+'
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 
-// L'URL api.whatsapp.com est plus fiable que wa.me pour déclencher l'app native sur mobile
-const whatsappLink = computed(() => `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(whatsappMessage)}`);
+// Le schéma "whatsapp://" dit au téléphone d'ouvrir l'application directement
+const whatsappLink = computed(() => 
+  `whatsapp://send?phone=${whatsappNumber}&text=${encodeURIComponent(whatsappMessage)}`
+);
 </script>
 
 <template>
