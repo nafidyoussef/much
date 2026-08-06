@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script lang="ts" setup> 
 import { StockStatusEnum, ProductTypesEnum, type AddToCartInput, type ProductAttributeInput } from '#gql/default';
 import type {ProductDetail, Variation, VariationAttribute } from '#types/gql';
 
@@ -112,10 +112,8 @@ const defaultAttributes = computed<{ nodes: VariationAttribute[] } | null>(() =>
   return product.value?.defaultAttributes ? { nodes: product.value.defaultAttributes.nodes ?? [] } : null;
 });
 
-//const isSimpleProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.Simple);
 const isVariableProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.Variable);
 const isExternalProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.External);
-//const externalProduct = computed<ExternalProduct | null>(() => (isExternalProduct.value ? (product.value as ExternalProduct) : null));
 const shouldSkipStockRefresh = computed<boolean>(() => isExternalProduct.value);
 
 const displayProduct = computed<ProductDetail | Variation>(() => activeVariation.value || product.value!);
@@ -192,12 +190,14 @@ const disabledAddToCart = computed(() => {
 const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
 
 // ==========================================
-// ✅ NOUVEAU : Logique pour le lien WhatsApp
+// ✅ MODIFIÉ : Logique pour forcer l'app mobile WhatsApp
 // ==========================================
-const whatsappNumber = '212664612098'; // ⚠️ REMPLACEZ par votre vrai numéro (ex: 212660214159)
+const whatsappNumber = '212664612098'; // Votre numéro
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
+
+// L'URL api.whatsapp.com est plus fiable que wa.me pour déclencher l'app native sur mobile
+const whatsappLink = computed(() => `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(whatsappMessage)}`);
 </script>
 
 <template>
@@ -233,7 +233,7 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
               </h1>
               <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" />
             </div>
-            <ProductPrice class="text-2xl font-bold text-[#ff4f24]" :sale-price="priceTarget?.salePrice" :regular-price="priceTarget?.regularPrice" />
+            <ProductPrice class="text-4xl font-bold text-[#ff4f24]" :sale-price="priceTarget?.salePrice" :regular-price="priceTarget?.regularPrice" />
           </div>
 
           <HookOutlet name="product.summary.afterPrice" :ctx="{ product: displayProduct }" as="div" />
@@ -249,11 +249,11 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
             </div>
           </div>
 
-          <div class="mb-8 text-gray-600 leading-relaxed" v-html="product.shortDescription || product.description"></div>
+          <div class="mb-8 text-gray-600 leading-relaxed" v-html="product.shortDescription"></div>
 
           <hr class="border-gray-200 my-6" />
 
-          <!-- Formulaire d'achat (SANS STICKY) -->
+          <!-- Formulaire d'achat -->
            <form @submit.prevent="handleAddToCart" class="space-y-4">
             <AttributeSelections
               v-if="isVariableProduct && product?.attributes?.nodes?.length && product?.variations"
@@ -263,10 +263,8 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
               :variations="product.variations.nodes"
               @attrs-changed="updateSelectedVariations" />
 
-            <!-- ✅ LIGNE 1 : Quantité (petite) + Ajouter au panier (grande) sur la MÊME ligne -->
+            <!-- LIGNE : Quantité + Ajouter au panier -->
             <div class="flex flex-row gap-3">
-              
-              <!-- Input Quantité (largeur fixe et compacte) -->
               <div class="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-28 md:w-36 flex-shrink-0 focus-within:border-[#ff4f24] transition-colors bg-white">
                 <button type="button" @click="quantity > 1 ? quantity-- : null" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">-</button>
                 <input
@@ -278,7 +276,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
                 <button type="button" @click="quantity++" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">+</button>
               </div>
 
-              <!-- Bouton Ajouter au panier (prend tout l'espace restant) -->
               <button 
                 type="submit" 
                 class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#ff4f24] text-white font-bold rounded-lg hover:bg-[#ff4f24]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#ff4f24]/20"
@@ -288,23 +285,8 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
                 {{ $t('shop.addToCart') }}
               </button>
             </div>
-
-            <!-- ✅ LIGNE 2 : Bouton WhatsApp (pleine largeur en dessous) -->
-            <a
-              :href="whatsappLink"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex w-full items-center justify-center gap-2 px-4 py-3.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20bd5a] transition-all shadow-sm shadow-[#25D366]/20"
-              aria-label="Commander sur WhatsApp"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
-              <span>Commander via WhatsApp</span>
-            </a>
-
-            <!-- Produit externe -->
-          
+            
+            <!-- ✅ L'ANCIEN BOUTON WHATSAPP A ÉTÉ SUPPRIMÉ D'ICI -->
           </form>
 
           <div v-if="storeSettings.showProductCategoriesOnSingleProduct && product.productCategories" class="mt-8">
@@ -328,13 +310,12 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 
           <div class="flex flex-wrap gap-4 mt-6">
             <WishlistButton :product />
-            <ShareButton :product />
           </div>
         </div>
       </div>
 
       <!-- Onglets et produits similaires -->
-      <div v-if="product.description || product.reviews" class="my-16 md:my-24">
+      <div v-if="product.description || product.reviews" class="my-8 md:my-12">
         <ProductTabs :product />
         <HookOutlet name="product.tabs.after" :ctx="{ product }" as="div" />
       </div>
@@ -348,6 +329,20 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
     <div v-else class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
+
+    <!-- ✅ NOUVEAU : BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
+    <a
+      :href="whatsappLink"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="fixed bottom-20 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
+      aria-label="Commander sur WhatsApp"
+    >
+      <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+    </a>
+
   </main>
 </template>
 
