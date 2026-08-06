@@ -206,12 +206,9 @@ const disabledAddToCart = computed(() => {
 const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
 
 // ==========================================
-// ✅ MODIFIÉ : Logique pour forcer l'app mobile WhatsApp
-// ==========================================
-// ==========================================
 // ✅ MODIFIÉ : Deep Link pour ouverture DIRECTE de l'app mobile
 // ==========================================
-const whatsappNumber = process.env.WTSP_PHONE; // Format international sans le '+'
+const whatsappNumber = process.env.WTSP_PHONE || '212664612098' ; // Format international sans le '+'
 
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
