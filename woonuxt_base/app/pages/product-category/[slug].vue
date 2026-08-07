@@ -52,7 +52,6 @@ const scrollSubcategories = (direction: 'left' | 'right') => {
   });
 };
 
-// ✅ REQUÊTE GRAPHQL OPTIMISÉE (Plus légère, sans erreurs de schéma)
 const getProductsQuery = `
   query getProducts(
     $after: String
@@ -95,13 +94,14 @@ const getProductsQuery = `
         ... on ProductWithPricing {
           price
           regularPrice
+          rawRegularPrice: regularPrice(format: RAW) # ✅ AJOUTÉ
           salePrice
+          rawSalePrice: salePrice(format: RAW)       # ✅ AJOUTÉ
         }
       }
     }
   }
 `;
-
 const buildVariables = (afterCursor: string | null = null, first: number = 10) => {
   const variables: any = {
     slug: slug ? [slug] : undefined,

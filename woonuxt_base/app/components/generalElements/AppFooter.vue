@@ -15,12 +15,10 @@ const { wooNuxtVersionInfo } = useHelpers();
       <div class="w-[42.857%] lg:w-auto">
         <div class="mb-1 font-semibold text-gray-900">{{ $t('general.information') }}</div>
         <div class="text-sm text-gray-700">
-          <a class="py-1.5 block" href="https://github.com/scottyzen/woonuxt?tab=readme-ov-file#next-generation-front-end-for-woocommerce" target="_blank">{{
+          <a class="py-1.5 block" href="/" target="_blank">{{
             $t('general.about')
           }}</a>
-          <a href="/" class="py-1.5 block">{{ $t('general.careers') }}</a>
-          <a href="/" class="py-1.5 block">{{ $t('general.press') }}</a>
-          <a href="https://woonuxt.com/faq" class="py-1.5 block" rel="noreferrer" target="_blank">FAQ's</a>
+          <a href="/" class="py-1.5 block" rel="noreferrer" target="_blank">FAQ's</a>
         </div>
       </div>
       <div class="w-[42.857%] lg:w-auto">

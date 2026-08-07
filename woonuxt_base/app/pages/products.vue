@@ -20,7 +20,7 @@ const hasSearched = ref(false);
 const currentSearch = computed(() => (route.query.search as string) || '');
 const isSearchMode = computed(() => !!currentSearch.value);
 
-// ✅ REQUÊTE GRAPHQL OPTIMISÉE (Plus légère, sans erreurs de schéma)
+// ✅ REQUÊTE GRAPHQL OPTIMISÉE ET CORRIGÉE (Avec les prix RAW pour le badge promo)
 const productsQuery = `
   query getProducts($search: String, $first: Int, $after: String, $orderby: ProductsOrderByEnum!, $order: OrderEnum) {
     products(
@@ -52,13 +52,14 @@ const productsQuery = `
         ... on ProductWithPricing {
           price
           regularPrice
+          rawRegularPrice: regularPrice(format: RAW) # ✅ AJOUTÉ pour le calcul du badge
           salePrice
+          rawSalePrice: salePrice(format: RAW)       # ✅ AJOUTÉ pour le calcul du badge
         }
       }
     }
   }
 `;
-
 // ✅ 2. Fonction de chargement avec Gestion du Cache
 const fetchProducts = async (append = false) => {
   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini

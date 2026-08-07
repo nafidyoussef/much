@@ -106,15 +106,15 @@ const query = `query getProducts($after: String, $slug: [String], $first: Int = 
         altText
         productCardSourceUrl: sourceUrl(size: MEDIUM)
       }
-      # ✅ Le stock est sur InventoriedProduct
       ... on InventoriedProduct {
         stockStatus
       }
-      # ✅ Les prix sont sur ProductWithPricing
       ... on ProductWithPricing {
         price
         regularPrice
+        rawRegularPrice: regularPrice(format: RAW) # ✅ ICI
         salePrice
+        rawSalePrice: salePrice(format: RAW)       # ✅ ICI
       }
     }
   }
