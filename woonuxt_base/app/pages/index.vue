@@ -104,7 +104,7 @@ const query = `query getProducts($after: String, $slug: [String], $first: Int = 
       image {
         sourceUrl
         altText
-        productCardSourceUrl: sourceUrl(size: MEDIUM)
+        productCardSourceUrl: sourceUrl(size: LARGE)
       }
       ... on InventoriedProduct {
         stockStatus
@@ -269,7 +269,7 @@ onMounted(() => {
           </div>
           <div>
             <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Maison</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
           </div>
         </NuxtLink>
         <!-- ... (Copiez-collez le reste de vos NuxtLink de catégories ici sans changement) ... -->
@@ -281,7 +281,7 @@ onMounted(() => {
           </div>
           <div>
             <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Cuisine</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 39 DH</small>
           </div>
         </NuxtLink>
         <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-2">
@@ -326,7 +326,7 @@ onMounted(() => {
           </div>
           <div>
             <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Auto</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
           </div>
         </NuxtLink>
         <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-2">
@@ -352,7 +352,7 @@ onMounted(() => {
           </div>
           <div>
             <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Sport</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
+            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 39 DH</small>
           </div>
         </NuxtLink>
       </div>
@@ -382,8 +382,8 @@ onMounted(() => {
             </div>
           </div>
           
-          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/new-in">
-            Voir toutes les offres
+          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/new">
+            Voir les offres
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

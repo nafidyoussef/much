@@ -68,16 +68,7 @@ const categories = [
             <Icon :name="cat.icon" class="w-5 h-5 text-gray-400 group-hover/item:text-[#ff4f24] transition-colors" />
             <span class="text-sm">{{ cat.name }}</span>
           </NuxtLink>
-          
-          <div class="mt-2 border-t border-gray-100 pt-2">
-            <NuxtLink 
-              to="/categories" 
-              class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold text-[#ff4f24] hover:bg-[#ff4f24]/5 transition-colors"
-            >
-              <span>Voir toutes les catégories</span>
-              <Icon name="ion:arrow-forward" class="w-4 h-4" />
-            </NuxtLink>
-          </div>
+      
         </div>
       </div>
     </div>

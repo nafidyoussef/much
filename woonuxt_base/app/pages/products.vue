@@ -86,7 +86,6 @@ const fetchProducts = async (append = false) => {
   else loading.value = true;
 
   try {
-    // ✅ UTILISATION DU REVERSE PROXY (plus rapide, pas de CORS)
     const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
 
     const response = await $fetch<any>(GQL_HOST, {
@@ -117,7 +116,7 @@ const fetchProducts = async (append = false) => {
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
     hasSearched.value = true;
 
-    // ✅ Sauvegarder l'état dans le cache après un chargement réussi
+    // Sauvegarder l'état dans le cache après un chargement réussi
     save(products.value, endCursor.value, hasNextPage.value);
 
   } catch (error) {
