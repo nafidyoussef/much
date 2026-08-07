@@ -13,13 +13,13 @@ const { wooNuxtVersionInfo } = useHelpers();
         </div>
       </div>
       <div class="w-[42.857%] lg:w-auto">
-        <div class="mb-1 font-semibold text-gray-900">{{ $t('general.information') }}</div>
-        <div class="text-sm text-gray-700">
-          <a class="py-1.5 block" href="/" target="_blank">{{
-            $t('general.about')
-          }}</a>
-          <a href="/" class="py-1.5 block" rel="noreferrer" target="_blank">FAQ's</a>
+        <div class="mb-1 font-semibold text-gray-900">Géneral vue </div>
+         <div class="text-sm text-gray-700">
+          <NuxtLink to="/about" class="py-1.5 block">{{ $t('general.information') }}</NuxtLink>
+          <NuxtLink to="/faq" class="py-1.5 block">FAQ ?</NuxtLink>
+  
         </div>
+       
       </div>
       <div class="w-[42.857%] lg:w-auto">
         <div class="mb-1 font-semibold text-gray-900">{{ $t('general.products') }}</div>
@@ -32,9 +32,9 @@ const { wooNuxtVersionInfo } = useHelpers();
         <div class="mb-1 font-semibold text-gray-900">{{ $t('general.customerService') }}</div>
         <div class="text-sm text-gray-700">
           <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.contactUs') }}</NuxtLink>
-          <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.shippingReturns') }}</NuxtLink>
-          <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.privacyPolicy') }}</NuxtLink>
-          <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
+          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.shippingReturns') }}</NuxtLink>
+          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.privacyPolicy') }}</NuxtLink>
+          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
         </div>
       </div>
       <div class="w-[42.857%] lg:w-auto">
