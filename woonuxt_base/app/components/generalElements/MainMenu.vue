@@ -40,13 +40,6 @@ const categories = [
           <span class="text-sm font-medium">{{ cat.name }}</span>
         </NuxtLink>
         
-        <NuxtLink 
-          to="/categories" 
-          class="flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-semibold text-[#ff4f24] hover:bg-[#ff4f24]/5 transition-colors mt-2 border-t border-gray-100 pt-3"
-        >
-          <span>Voir toutes les catégories</span>
-          <Icon name="ion:arrow-forward" class="w-4 h-4" />
-        </NuxtLink>
       </div>
     </div>
 
@@ -72,11 +65,6 @@ const categories = [
         </div>
       </div>
     </div>
-
-    <!-- Liens de fin -->
-    <NuxtLink to="/contact" class="hover:text-[#ff4f24] transition-colors">{{ $t('general.contact') }}</NuxtLink>
-    
-    <!-- Liens spécifiques Mobile -->
     <NuxtLink class="md:hidden hover:text-[#ff4f24] transition-colors mt-4 border-t border-gray-100 pt-4 w-full" to="/wishlist" :prefetch="false">Favoris</NuxtLink>
     <NuxtLink class="md:hidden hover:text-[#ff4f24] transition-colors w-full" to="/my-account" :prefetch="false" @click="navigateToLogin(route.fullPath)">Mon Compte</NuxtLink>
   </nav>

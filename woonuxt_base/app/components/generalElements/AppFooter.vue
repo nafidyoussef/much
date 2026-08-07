@@ -32,9 +32,9 @@ const { wooNuxtVersionInfo } = useHelpers();
         <div class="mb-1 font-semibold text-gray-900">{{ $t('general.customerService') }}</div>
         <div class="text-sm text-gray-700">
           <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.contactUs') }}</NuxtLink>
-          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.shippingReturns') }}</NuxtLink>
-          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.privacyPolicy') }}</NuxtLink>
-          <NuxtLink to="/faq" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
+          <NuxtLink to="/expedition-retour" class="py-1.5 block">{{ $t('general.shippingReturns') }}</NuxtLink>
+          <NuxtLink to="/privacy-policy" class="py-1.5 block">{{ $t('general.privacyPolicy') }}</NuxtLink>
+          <NuxtLink to="/politique" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
         </div>
       </div>
       <div class="w-[42.857%] lg:w-auto">
