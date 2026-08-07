@@ -290,7 +290,7 @@ useSeoMeta({ title: t('shop.checkout') })
       </div>
 
       <!-- Formulaire de Checkout -->
-      <form v-else class="container max-w-6xl mx-auto px-4 py-8 lg:py-12" @submit.prevent="payNow">
+      <form v-else class="container max-w-6xl mx-auto px-1 py-4 lg:py-12" @submit.prevent="payNow">
         
         <!-- Indicateur d'étapes (Stepper) -->
         <div class="flex items-center justify-center mb-10">
@@ -314,24 +314,24 @@ useSeoMeta({ title: t('shop.checkout') })
           </div>
         </div>
 
-        <div class="grid lg:grid-cols-3 gap-8 lg:gap-12">
+        <div class="grid lg:grid-cols-3 gap-6 lg:gap-12">
           
           <!-- Colonne Gauche : Formulaire -->
-          <div class="lg:col-span-2 space-y-6">
+          <div class="lg:col-span-1 space-y-2">
             
-            <!-- ✅ NOUVEAU : Message d'accueil simplifié (Remplace le bloc de connexion) -->
-            <div class="bg-blue-50/50 rounded-2xl border border-blue-100 p-5 flex items-start gap-4">
+            <!-- ✅ NOUVEAU : Message d'accueil simplifié (Remplace le bloc de connexion) 
+            <div class="bg-blue-50/50 rounded-2xl border border-blue-100 p-2 flex items-start gap-1">
               <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <Icon name="ion:checkmark-circle" class="text-blue-600" size="24" />
               </div>
               <div>
                 <h3 class="text-base font-bold text-gray-900">Finaliser votre commande</h3>
-                <p class="text-sm text-gray-600 mt-1">Aucun compte nécessaire. Nous confirmerons votre commande par téléphone.</p>
+                <span class="text-[10px] text-gray-600">Aucun compte nécessaire. Nous confirmerons votre commande par téléphone.</span>
               </div>
-            </div>
+            </div>-->
 
             <!-- Section: Détails de facturation -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
               <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <Icon name="ion:receipt" class="text-[#ff4f24]" />
                 {{ $t('billing.billingDetails') }}
@@ -428,7 +428,7 @@ useSeoMeta({ title: t('shop.checkout') })
             </div>
 
             <!-- Section: Note de commande -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
               <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Icon name="ion:document-text" class="text-[#ff4f24]" />
                 {{ $t('shop.orderNote') }} <span class="text-sm font-normal text-gray-400">({{ $t('general.optional') }})</span>
@@ -442,7 +442,7 @@ useSeoMeta({ title: t('shop.checkout') })
           <!-- Colonne Droite : Récapitulatif (Sticky) -->
           <div class="lg:col-span-1">
             <div class="sticky top-6 space-y-6">
-              <div class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-6">
+              <div class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-2">
                 <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Icon name="ion:receipt" class="text-[#ff4f24]" />
                   Récapitulatif

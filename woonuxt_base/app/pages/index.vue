@@ -196,7 +196,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen">
+  <main class="min-h-screen mb-40">
     <!-- 💡 ASSUREZ-VOUS QUE VOTRE COMPOSANT HeroBanner utilise loading="eager" et fetchpriority="high" sur son image principale -->
     <HeroBanner />
     
