@@ -51,7 +51,7 @@ const moveToWishList = () => {
       {{ productType.name }}
     </NuxtLink>
           <span v-if="productType.salePrice" class="text-[10px] border-green-200 leading-none bg-green-100 inline-block p-0.5 rounded-sm text-green-600 border">
-            Save {{ salePercentage }}
+            sauver {{ salePercentage }}
           </span>
           <span v-if="isLowStock" class="text-[10px] border-yellow-200 leading-none bg-yellow-100 inline-block p-0.5 rounded-sm text-orange-500 border">
             Low Stock
@@ -68,7 +68,7 @@ const moveToWishList = () => {
             :disabled="isOptimisticItem"
             type="button"
             @click="moveToWishList">
-            Move to Wishlist
+            
           </button>
           <button
             title="Remove Item"

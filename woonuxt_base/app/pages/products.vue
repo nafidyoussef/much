@@ -189,9 +189,7 @@ useHead({
             Résultats pour "{{ currentSearch }}" 
             
           </div>
-          <div v-else class="text-sm text-gray-500">
-            <span class="font-semibold text-gray-900">{{ products.length }}</span> produits affichés
-          </div>
+          
 
           <OrderByDropdown v-if="storeSettings.showOrderByDropdown && !isSearchMode" class="hidden md:inline-flex" />
           <ShowFilterTrigger v-if="storeSettings.showFilters && !isSearchMode" class="md:hidden" />

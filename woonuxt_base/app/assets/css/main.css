@@ -57,7 +57,9 @@
     @apply bg-gray-50 border rounded-md border-gray-300 shadow-inner w-full py-2 px-4 text-base text-gray-900 leading-6 outline-none transition-colors;
     @apply focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30;
   }
-
+.placeholder-text-12::placeholder {
+  font-size: 12px;
+}
   .wn-form select {
     @apply appearance-none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
