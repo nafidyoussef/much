@@ -26,7 +26,7 @@ const handleSubmit = () => {
       id="product-search-input"
       v-model="searchQuery"
       type="text"
-      placeholder="Chercher parmi plus de 2800 produits"
+      placeholder="Chercher parmi plus de 4800 produits"
       class="w-full h-10 pl-5 pr-12 text-base text-gray-700 border-1 border-[#ff4f24] rounded-full bg-gray-50 focus:bg-white focus:outline-none placeholder-text-12 placeholder:text-gray-400 transition-all"
     />
     
