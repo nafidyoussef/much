@@ -4,7 +4,7 @@ const runtimeConfig = useRuntimeConfig();
 const img = useImage();
 
 const logoUrl = runtimeConfig?.public?.LOGO ? img(runtimeConfig?.public?.LOGO) : null;
-const faviconUrl = '/logo.svg';
+const faviconUrl = '/logo.png';
 </script>
 
 <template>
