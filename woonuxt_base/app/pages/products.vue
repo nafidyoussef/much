@@ -86,7 +86,7 @@ const fetchProducts = async (append = false) => {
   else loading.value = true;
 
   try {
-    const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 
     const response = await $fetch<any>(GQL_HOST, {
       method: 'POST',

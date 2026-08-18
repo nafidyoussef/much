@@ -8,7 +8,7 @@ const { siteName, description, shortDescription, siteImage } = useAppConfig();
 // ==========================================
 useHead({
   link: [
-    { rel: 'preconnect', href: 'https://api.bazzaria.ma' },
+    { rel: 'preconnect', href: 'https://api.much.ma' },
     // Si vous utilisez le reverse proxy Nuxt, remplacez par : { rel: 'preconnect', href: window.location.origin }
   ]
 });
@@ -120,7 +120,7 @@ const query = `query getProducts($after: String, $slug: [String], $first: Int = 
   }
 }`;
 
-    const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 
     const response = await $fetch(GQL_HOST, {
       method: 'POST',

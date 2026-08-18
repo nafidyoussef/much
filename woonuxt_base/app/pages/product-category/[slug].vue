@@ -205,8 +205,8 @@ const fetchProducts = async (append = false) => {
     const variables = buildVariables(cursor, 10);
 
     // ✅ UTILISATION DU REVERSE PROXY (plus rapide, pas de CORS)
-     const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
-    //const apiUrl = import.meta.server ? 'https://api.bazzaria.ma/graphql' : '/graphql';
+     const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
+    //const apiUrl = import.meta.server ? 'https://api.much.ma/graphql' : '/graphql';
 
     const response = await $fetch<any>(GQL_HOST, {
       method: 'POST',

@@ -5,8 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 const { resolve } = createResolver(import.meta.url);
 
 // ✅ 1. Point directly to your backend
-const GQL_HOST = process.env.GQL_HOST || 'https://api.bazzaria.ma/graphql';
-const APP_HOST = process.env.APP_HOST || 'https://bazzaria.ma';
+const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
+const APP_HOST = process.env.APP_HOST || 'https://much.ma';
 
 const parsedCatalogIsrTtl = Number.parseInt(process.env.CATALOG_ISR_TTL || '3600', 10);
 const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTtl > 0 ? parsedCatalogIsrTtl : 3600;
