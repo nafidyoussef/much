@@ -18,6 +18,7 @@ Toute commande passée sur le site implique l'acceptation sans réserve des pré
   {
     id: 'article-2',
     icon: 'ion:information-circle',
+    
     title: 'Article 2 - Informations légales',
     content: `Le présent site est édité par <strong>Much.ma</strong>, entreprise enregistrée au Maroc.`,
     list: [

@@ -34,7 +34,7 @@ const { wooNuxtVersionInfo } = useHelpers();
           <NuxtLink to="/contact" class="py-1.5 block">{{ $t('general.contactUs') }}</NuxtLink>
           <NuxtLink to="/expedition-retour" class="py-1.5 block">{{ $t('general.shippingReturns') }}</NuxtLink>
           <NuxtLink to="/privacy-policy" class="py-1.5 block">{{ $t('general.privacyPolicy') }}</NuxtLink>
-          <NuxtLink to="/politique" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
+          <NuxtLink to="/cgv" class="py-1.5 block">{{ $t('general.termsConditions') }}</NuxtLink>
         </div>
       </div>
       <div class="w-[42.857%] lg:w-auto">
@@ -53,7 +53,7 @@ const { wooNuxtVersionInfo } = useHelpers();
             <a href="/" :title="`Built with love by much ${wooNuxtVersionInfo}`" target="_blank">Built with love by much {{ wooNuxtVersionInfo }}</a>
           </p>
         </div>
-        <SocialIcons class="ml-auto" />
+        
       </div>
     </div>
 

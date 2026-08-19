@@ -190,9 +190,6 @@ useHead({
             
           </div>
           
-
-          <OrderByDropdown v-if="storeSettings.showOrderByDropdown && !isSearchMode" class="hidden md:inline-flex" />
-          <ShowFilterTrigger v-if="storeSettings.showFilters && !isSearchMode" class="md:hidden" />
         </div>
 
         <!-- ✅ Grille de produits (ProductCard DIRECT) -->
