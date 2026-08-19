@@ -414,14 +414,7 @@ const handleImageChange = (image: any) => {
       {{ productLoadError }}
     </div>
 
-     <ProductImageGalleryVert
-        v-if="productImage && productGallery.nodes.length > 0"
-        :main-image="productImage"
-        :gallery="productGallery"
-        :node="displayProduct"
-        :active-variation="activeVariation"
-        @image-change="handleImageChange"
-      />
+    
 
     <!-- ✅ BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
     <a
