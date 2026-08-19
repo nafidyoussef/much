@@ -291,14 +291,14 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
   />
   
   <!-- Badge d'économie (s'affiche uniquement si > 0) -->
-  <div v-if="savingsAmount > 0" class="flex items-center gap-1.5 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full shadow-sm">
-    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <span class="text-sm font-bold text-green-700">
-      Économisez {{ Math.round(savingsAmount) }} DH
-    </span>
-  </div>
+ <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">
+  <svg class="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  <span class="text-[8px] font-semibold text-green-700 leading-none">
+    Economiser -{{ Math.round(savingsAmount) }} DH
+  </span>
+</div>
 </div>
           </div>
 
