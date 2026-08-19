@@ -102,7 +102,7 @@ const getProductsQuery = `
     }
   }
 `;
-const buildVariables = (afterCursor: string | null = null, first: number = 10) => {
+const buildVariables = (afterCursor: string | null = null, first: number = 12) => {
   const variables: any = {
     slug: slug ? [slug] : undefined,
     orderby: ProductsOrderByEnum.MenuOrder,
@@ -202,7 +202,7 @@ const fetchProducts = async (append = false) => {
 
   try {
     const cursor = append ? endCursor.value : null;
-    const variables = buildVariables(cursor, 10);
+    const variables = buildVariables(cursor, 12);
 
     // ✅ UTILISATION DU REVERSE PROXY (plus rapide, pas de CORS)
      const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';

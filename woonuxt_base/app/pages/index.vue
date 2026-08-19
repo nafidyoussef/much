@@ -44,7 +44,7 @@ const activeCategory = ref('all');
 // ==========================================
 // 3. Variables pour le chargement
 // ==========================================
-const productsPerPage = 10;
+const productsPerPage = 12;
 const loading = ref(false);
 const hasMore = ref(true);
 const allProducts = ref<Product[]>([]);
@@ -196,7 +196,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen mb-40">
+  <main class="min-h-screen mb-10">
     <!-- 💡 ASSUREZ-VOUS QUE VOTRE COMPOSANT HeroBanner utilise loading="eager" et fetchpriority="high" sur son image principale -->
     <HeroBanner />
     
@@ -445,7 +445,7 @@ onMounted(() => {
       </div>
 
       <!-- Grille de produits -->
-      <div v-else-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <div v-else-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
         <ProductCard 
           v-for="product in allProducts" 
           :key="product.databaseId || product.id"
