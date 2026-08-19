@@ -234,10 +234,6 @@ const whatsappNumber = process.env.WTSP_PHONE || '212664612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
-const handleImageChange = (image: any) => {
-  // Optionnel : faire quelque chose quand l'image change
-  console.log('Image changée:', image);
-};
 </script>
 
 <template>

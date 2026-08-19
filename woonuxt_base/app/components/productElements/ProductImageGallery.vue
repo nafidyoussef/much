@@ -96,7 +96,7 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
 
   <button
     v-if="galleryImages.length > 1"
-    class="absolute left-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    class="absolute left-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     type="button"
     :aria-label="`Previous image for ${node.name}`"
     @click="changeImageByOffset(-1)">
@@ -105,7 +105,7 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
 
   <button
     v-if="galleryImages.length > 1"
-    class="absolute right-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    class="absolute right-4 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     type="button"
     :aria-label="`Next image for ${node.name}`"
     @click="changeImageByOffset(1)">
