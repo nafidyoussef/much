@@ -234,6 +234,10 @@ const whatsappNumber = process.env.WTSP_PHONE || '212664612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
+const handleImageChange = (image: any) => {
+  // Optionnel : faire quelque chose quand l'image change
+  console.log('Image changée:', image);
+};
 </script>
 
 <template>
@@ -403,10 +407,21 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
         <LazyProductRow :products="product.related.nodes" class="grid-cols-2 md:grid-cols-4 lg:grid-cols-5" />
       </div>
     </div>
+
+
     
     <div v-else class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
+
+     <ProductImageGalleryVert
+        v-if="productImage && productGallery.nodes.length > 0"
+        :main-image="productImage"
+        :gallery="productGallery"
+        :node="displayProduct"
+        :active-variation="activeVariation"
+        @image-change="handleImageChange"
+      />
 
     <!-- ✅ BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
     <a
