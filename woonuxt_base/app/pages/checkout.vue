@@ -422,9 +422,7 @@ useSeoMeta({ title: t('shop.checkout') })
                 {{ $t('billing.paymentOptions') }}
               </h3>
               <PaymentOptions :model-value="orderInput.paymentMethod" class="mb-6 space-y-3" :payment-gateways="checkoutPaymentGateways" @update:model-value="handleGatewaySelect" />
-              <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <PaymentGatewayComponent :gateway="orderInput.paymentMethod" />
-              </div>
+             
             </div>
 
             <!-- Section: Note de commande -->
@@ -462,7 +460,7 @@ useSeoMeta({ title: t('shop.checkout') })
                 <div class="mt-6 pt-6 border-t border-gray-100">
                   <p class="text-xs text-gray-500 text-center flex items-center justify-center gap-2">
                     <Icon name="ion:lock-closed" class="text-green-600" size="16" /> 
-                    Paiement 100% sécurisé. En commandant, vous acceptez nos <NuxtLink to="/cgv" class="text-[#ff4f24] hover:underline">CGV</NuxtLink>.
+                    Payer en argent comptant à la livraison. 
                   </p>
                 </div>
               </div>
