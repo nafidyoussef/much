@@ -9,7 +9,7 @@ const freeShippingThreshold = Number(config.public.freeShippingThreshold) || 500
 const currentSubtotal = computed(() => {
   if (!cart.value?.subtotal) return 0;
   // Nettoie la chaîne pour ne garder que les chiffres et les points/virgules
-  const cleanString = String(cart.value.subtotal).replace(/[^0-9,.]/g, '').replace(',', '.');
+  const cleanString = String(cart.value.subtotal).replace(/[^0-9,.]/g, '').replace(',', '');
   return parseFloat(cleanString) || 0;
 });
 
