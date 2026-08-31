@@ -18,7 +18,7 @@ useHead({
 // ==========================================
 // On garde useAsyncGql car il est bon pour le SSR, mais on s'assure qu'il est rapide
 const { data: newInData } = await useAsyncGql('getNewInProducts', { 
-  category: 'mode' 
+  category: 'vente-flash' 
 });
 const newInProducts = computed<Product[]>(() => 
   (newInData.value?.products?.nodes as Product[] | undefined) ?? []
@@ -255,7 +255,7 @@ onMounted(() => {
     </section>
 
     <!-- SECTION 1 : Explorez nos univers -->
-    <section class="container py-4 md:py-6">
+    <section class="container py-2 md:py-4">
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <h2 class="text-xl md:text-2xl font-medium text-gray-900">Explorez nos univers</h2>
       </div>
@@ -359,7 +359,7 @@ onMounted(() => {
     </section>
 
     <!-- SECTION 2 : Vente Flash -->
-    <section v-if="newInProducts.length" class="container py-4 md:py-10">
+    <section v-if="newInProducts.length" class="container py-2 md:py-10">
       <!-- ... (Gardez votre code de section Vente Flash exact ici) ... -->
       <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
         <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
@@ -382,7 +382,7 @@ onMounted(() => {
             </div>
           </div>
           
-          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/new">
+          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/vente-flash">
             Voir les offres
             <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -413,7 +413,7 @@ onMounted(() => {
     </section>
 
     <!-- SECTION 3 : Recommandé (ONGLETS + LOAD MORE) -->
-    <section class="container py-4 bg-gray-50/50 rounded-2xl px-4 md:px-6 mb-8">
+    <section class="container py-2 bg-gray-50/50 rounded-2xl px-4 md:px-6 mb-8">
       <div class="mb-6">
         <p class="text-xs font-bold text-[#ff4f24] uppercase tracking-wide mb-2">RECOMMANDÉ POUR VOUS</p>
         <h2 class="text-2xl md:text-3xl font-medium text-gray-900 mb-2">Encore plus de bons plans</h2>

@@ -29,21 +29,8 @@ onMounted(() => {
   }
 });
 
-const isOutOfStock = computed(() => fakeStock.value === 0);
 
-const stockPercentage = computed(() => {
-  if (isOutOfStock.value || fakeStock.value === 0) return 4;
-  if (fakeStock.value === null) return null;
-  const pct = (fakeStock.value / 10) * 100;
-  return Math.min(Math.max(pct, 10), 100);
-});
 
-// Message à afficher
-const stockMessage = computed(() => {
-  if (isOutOfStock.value || fakeStock.value === 0) return 'Vient de se terminer';
-  if (fakeStock.value !== null && fakeStock.value <= 5) return `Plus que ${fakeStock.value} en stock`;
-  return null;
-});
 </script>
 
 <template>
@@ -103,21 +90,6 @@ const stockMessage = computed(() => {
       <ProductPrice class="mt-1.5 text-base font-bold text-gray-900" :sale-price="node.salePrice ?? undefined" :regular-price="node.regularPrice ?? undefined" />
 
       <!-- ✅ BARRE DE STOCK MARKETING avec message EN DESSOUS -->
-      <div v-if="stockMessage && fakeStock !== null" class="mt-2.5">
-        <!-- Barre de progression -->
-        <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            class="h-full rounded-full transition-all duration-700 ease-out"
-            :class="isOutOfStock ? 'bg-red-500 animate-pulse' : 'bg-orange-500'"
-            :style="{ width: stockPercentage + '%' }"
-          ></div>
-        </div>
-        
-        <!-- ✅ Message EN DESSOUS, en gris, petite police -->
-        <p class="text-[10px] text-gray-500 mt-1 leading-tight">
-          {{ stockMessage }}
-        </p>
-      </div>
 
     </div>
   </div>
