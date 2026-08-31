@@ -82,7 +82,7 @@ onUnmounted(() => {
         <!-- ✅ overflow-hidden est crucial pour que max-h-0 fonctionne sans débordement -->
         <div 
           class="flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden"
-          :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-2 mb-0'"
+          :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-1 mb-0'"
         >
           <Logo class="w-28" />
           <div class="flex items-center gap-4">
