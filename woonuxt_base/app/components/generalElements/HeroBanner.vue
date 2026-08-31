@@ -3,15 +3,15 @@ const currentSlide = ref(0);
 
 const slides = [
   {
-    image: '/images/MS.gif',
+    image: '/images/maison-pc-1.webp',
     alt: 'Collection Nouveau Année'
   },
   {
-    image: '/images/MS-1.gif',
+    image: '/images/maison-pc-1.webp',
     alt: 'Collection Nouveau Année'
   },
   {
-    image: '/images/MS-2.gif',
+    image: '/images/maison-pc-1.webp',
     alt: 'Collection Nouveau Année'
   }
 ];

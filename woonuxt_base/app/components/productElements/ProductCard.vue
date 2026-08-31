@@ -80,7 +80,7 @@ const isButtonDisabled = computed(() => {
     <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100 aspect-[8/9]">
       
       <!-- Badge Promo -->
-      <div v-if="discountPercentage" class="absolute top-2 right-2 z-20 bg-[#ffe461bf] text-[#ff4f24] text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+      <div v-if="discountPercentage" class="absolute top-2 right-2 z-20 bg-[#f8e8a8] text-[#ff4f24] text-[10px] font-bold px-2 py-1 rounded shadow-sm">
         -{{ discountPercentage }}%
       </div>
 
