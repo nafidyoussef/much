@@ -76,8 +76,8 @@ const isButtonDisabled = computed(() => {
 <template>
   <div class="relative group w-full mt-0 px-0 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
     
-    <!-- Zone Image -->
-    <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100 aspect-[8/9]">
+    <!-- Zone Image avec hauteur fixe -->
+    <div class="relative w-full overflow-hidden rounded-t-xl bg-gray-100 aspect-square">
       
       <!-- Badge Promo -->
       <div v-if="discountPercentage" class="absolute top-2 right-2 z-20 bg-[#f8e8a8] text-[#ff4f24] text-[10px] font-bold px-2 py-1 rounded shadow-sm">
@@ -100,7 +100,7 @@ const isButtonDisabled = computed(() => {
           :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
           class="absolute inset-0 w-full h-full"
           :img-attrs="{ 
-            class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+            class: 'w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105' 
           }" 
         />
       </NuxtLink>
@@ -116,7 +116,7 @@ const isButtonDisabled = computed(() => {
           :sizes="`sm:${imgWidth / 2}px md:${imgWidth}px`"
           class="absolute inset-0 w-full h-full"
           :img-attrs="{ 
-            class: 'w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110' 
+            class: 'w-full h-full object-contain object-center transition-transform duration-700 ease-out group-hover:scale-105' 
           }" 
         />
       </div>
@@ -155,8 +155,7 @@ const isButtonDisabled = computed(() => {
           </span>
         </div>
 
-        <!-- ✅ Bouton "+" (Droite) -->
-              <!-- ✅ Bouton Cercle Plein (Droite) -->
+        <!-- ✅ Bouton Cercle Plein (Droite) -->
         <button
           v-if="node.__typename !== 'ExternalProduct'"
           @click="handleAddToCart"
