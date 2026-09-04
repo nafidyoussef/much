@@ -109,17 +109,18 @@ const fetchProducts = async (append = false) => {
     // ✅ TRI INTELLIGENT : Uniquement en mode recherche
     // ✅ TRI INTELLIGENT RENFORCÉ : Uniquement en mode recherche
       // ✅ TRI ET FILTRAGE STRICT EN MODE RECHERCHE
+      // ✅ TRI ET FILTRAGE STRICT EN MODE RECHERCHE
 if (isSearchMode.value && currentSearch.value) {
   const keyword = currentSearch.value.toLowerCase().trim();
   
   // 1. FILTRER : Garder uniquement les produits avec le mot-clé dans le titre
-  newProducts = newProducts.filter(product => {
+  newProducts = newProducts.filter((product: any) => {
     const name = (product.name || '').toLowerCase();
     return name.includes(keyword);
   });
   
   // 2. TRIER : Par pertinence parmi les produits filtrés
-  newProducts = newProducts.sort((a, b) => {
+  newProducts = newProducts.sort((a: any, b: any) => {
     const nameA = (a.name || '').toLowerCase();
     const nameB = (b.name || '').toLowerCase();
     
@@ -137,7 +138,6 @@ if (isSearchMode.value && currentSearch.value) {
     return nameA.indexOf(keyword) - nameB.indexOf(keyword);
   });
 }
-
     if (append) {
       products.value = [...products.value, ...newProducts];
     } else {

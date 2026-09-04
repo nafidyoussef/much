@@ -4,7 +4,6 @@ import { SliderRange, SliderRoot, SliderThumb, SliderTrack } from 'reka-ui';
 const { getFilter, setFilter, isFiltersActive } = useFiltering();
 const runtimeConfig = useRuntimeConfig();
 const maxPrice = Number(runtimeConfig?.public?.MAX_PRICE) || 1000;
-const currencySymbol = runtimeConfig?.public?.CURRENCY_SYMBOL || '$';
 
 const activeFilters = ref(getFilter('price'));
 const price = activeFilters.value.length ? ref(activeFilters.value.map((value) => Number(value))) : ref([0, maxPrice]);
@@ -38,7 +37,7 @@ watch(isFiltersActive, () => {
           type="number"
           placeholder="From"
           min="0" />
-        <label for="price-from" class="absolute px-2 leading-none text-gray-400" v-html="currencySymbol"></label>
+        
       </div>
       <div class="relative flex items-center">
         <input
@@ -48,7 +47,7 @@ watch(isFiltersActive, () => {
           type="number"
           placeholder="Up to"
           min="1" />
-        <label for="price-to" class="absolute px-2 leading-none text-gray-400" v-html="currencySymbol"></label>
+       
       </div>
       <div class="mx-1 mt-1 col-span-full">
         <SliderRoot
