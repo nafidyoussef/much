@@ -20,7 +20,7 @@ const hasSearched = ref(false);
 const currentSearch = computed(() => (route.query.search as string) || '');
 const isSearchMode = computed(() => !!currentSearch.value);
 
-// ✅ REQUÊTE GRAPHQL OPTIMISÉE
+// ✅ REQUÊTE GRAPHQL OPTIMISÉE ET CORRIGÉE (Avec les prix RAW pour le badge promo)
 const productsQuery = `
   query getProducts($search: String, $first: Int, $after: String, $orderby: ProductsOrderByEnum!, $order: OrderEnum) {
     products(
@@ -52,16 +52,15 @@ const productsQuery = `
         ... on ProductWithPricing {
           price
           regularPrice
-          rawRegularPrice: regularPrice(format: RAW)
+          rawRegularPrice: regularPrice(format: RAW) # ✅ AJOUTÉ pour le calcul du badge
           salePrice
-          rawSalePrice: salePrice(format: RAW)
+          rawSalePrice: salePrice(format: RAW)       # ✅ AJOUTÉ pour le calcul du badge
         }
       }
     }
   }
 `;
-
-// ✅ 2. Fonction de chargement avec Gestion du Cache et Tri Intelligent
+// ✅ 2. Fonction de chargement avec Gestion du Cache
 const fetchProducts = async (append = false) => {
   // Si on a un cache valide pour cette URL exacte et qu'on ne fait pas un scroll infini
   if (!append && isValid.value) {
@@ -71,13 +70,14 @@ const fetchProducts = async (append = false) => {
     hasSearched.value = true;
     loading.value = false;
     
+    // ✅ Restauration instantanée de la position du scroll (uniquement côté client)
     await nextTick();
     if (import.meta.client) {
       window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
     }
     
     setupObserver();
-    return;
+    return; // On arrête ici, PAS de requête réseau !
   }
 
   if (loading.value || loadingMore.value) return;
@@ -103,41 +103,9 @@ const fetchProducts = async (append = false) => {
       cache: 'no-store'
     });
 
-    let newProducts = response?.data?.products?.nodes || [];
+    const newProducts = response?.data?.products?.nodes || [];
     const pageInfo = response?.data?.products?.pageInfo;
 
-    // ✅ TRI INTELLIGENT : Uniquement en mode recherche
-    // ✅ TRI INTELLIGENT RENFORCÉ : Uniquement en mode recherche
-      // ✅ TRI ET FILTRAGE STRICT EN MODE RECHERCHE
-      // ✅ TRI ET FILTRAGE STRICT EN MODE RECHERCHE
-if (isSearchMode.value && currentSearch.value) {
-  const keyword = currentSearch.value.toLowerCase().trim();
-  
-  // 1. FILTRER : Garder uniquement les produits avec le mot-clé dans le titre
-  newProducts = newProducts.filter((product: any) => {
-    const name = (product.name || '').toLowerCase();
-    return name.includes(keyword);
-  });
-  
-  // 2. TRIER : Par pertinence parmi les produits filtrés
-  newProducts = newProducts.sort((a: any, b: any) => {
-    const nameA = (a.name || '').toLowerCase();
-    const nameB = (b.name || '').toLowerCase();
-    
-    // Correspondance exacte
-    if (nameA === keyword && nameB !== keyword) return -1;
-    if (nameA !== keyword && nameB === keyword) return 1;
-    
-    // Commence par le keyword
-    const aStartsWith = nameA.startsWith(keyword);
-    const bStartsWith = nameB.startsWith(keyword);
-    if (aStartsWith && !bStartsWith) return -1;
-    if (!aStartsWith && bStartsWith) return 1;
-    
-    // Position du keyword
-    return nameA.indexOf(keyword) - nameB.indexOf(keyword);
-  });
-}
     if (append) {
       products.value = [...products.value, ...newProducts];
     } else {
@@ -179,10 +147,11 @@ const setupObserver = () => {
   }
 };
 
-// ✅ Watcher PROTÉGÉ
+// ✅ Watcher PROTÉGÉ : Ne s'exécute QUE si on est sur la page /products
 watch(
   () => route.fullPath,
   async () => {
+    // ✅ IMPORTANT : Si on a quitté la page /products, on ne fait RIEN
     if (route.name !== 'products') return;
     
     await fetchProducts(false);
