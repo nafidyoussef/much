@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+
 const currentSlide = ref(0);
 
 const slides = [
@@ -34,31 +36,50 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- ✅ Mobile : w-full (100% largeur). Desktop (md) : max-w-7xl mx-auto (centré) + px-4 (marges) -->
   <div class="relative w-full md:max-w-8xl md:mx-auto md:px-4 lg:px-20">
-
-    <!-- ✅ Slider Container optimisé -->
-    <!-- Ajout de overflow-hidden et md:rounded-xl pour un rendu propre sur desktop -->
+    
+    <!-- Slider Container -->
     <div class="relative w-full overflow-hidden md:rounded-xl" style="aspect-ratio: 330/150;">
+      
       <div 
         v-for="(slide, index) in slides" 
         :key="index"
         class="absolute inset-0 transition-opacity duration-700 ease-in-out"
         :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
       >
+        
+        <!-- ✅ SLIDE 1 (LCP) : Balise <img> NATIVE -->
+        <!-- On retire NuxtPicture pour la première image. Une <img> native est parsée instantanément par le navigateur sans attendre le JS -->
+        <img
+          v-if="index === 0"
+          :src="slide.image"
+          :alt="slide.alt"
+          width="1320"
+          height="600"
+          class="object-cover w-full h-full"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+
+        <!-- ✅ SLIDES SUIVANTES : NuxtPicture ou img lazy -->
+        <!-- Les autres images peuvent utiliser NuxtPicture car elles ne sont pas le LCP -->
         <NuxtPicture
+          v-else
           width="1320"
           height="600"
           :src="slide.image"
           :alt="slide.alt"
           :img-attrs="{ class: 'object-cover w-full h-full' }"
-          :loading="index === 0 ? 'eager' : 'lazy'"
-          :preload="index === 0 ? { fetchPriority: 'high' } : undefined"
+          loading="lazy"
         />
+
       </div>
     </div>
   </div>
 </template>
+
+
 
 <style scoped>
 .marquee-container {
