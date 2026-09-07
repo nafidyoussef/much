@@ -8,6 +8,11 @@ const { addToCart, isUpdatingCart, isAddingToCart, isOptimisticCartMode, toggleC
 const { frontEndUrl, getErrorMessage } = useHelpers();
 const { t } = useI18n();
 const gql = useWooGraphQL();
+
+// ✅ 1. Récupération du seuil de livraison gratuite depuis les variables d'environnement
+const config = useRuntimeConfig();
+const freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
+
 const slug = route.params.slug as string;
 
 const { data, error } = await useAsyncGql('getProduct', { slug, frontEndUrl });
@@ -212,19 +217,38 @@ const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : is
 // ✅ CALCUL DE L'ÉCONOMIE (Badge promotion)
 // ==========================================
 const savingsAmount = computed(() => {
-  // On cast en 'any' pour éviter l'erreur TypeScript stricte sur le type Variation
-  // qui ne déclare pas toujours explicitement ces champs, bien qu'ils soient 
-  // bel et bien renvoyés par le backend GraphQL.
   const target = priceTarget.value as any;
-  
   if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
     return 0;
   }
-  
   const regular = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
   const sale = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
-  
   return Math.max(0, regular - sale);
+});
+
+// ==========================================
+// ✅ CALCUL LIVRAISON GRATUITE
+// ==========================================
+const showFreeShipping = computed(() => {
+  const target = priceTarget.value as any;
+  if (!target) return false;
+
+  let currentPrice = 0;
+  // Priorité au prix promo s'il existe
+  if (target.onSale && target.rawSalePrice) {
+    currentPrice = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
+  } 
+  // Sinon prix régulier
+  else if (target.rawRegularPrice) {
+    currentPrice = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
+  } 
+  // Fallback si les prix bruts ne sont pas disponibles
+  else {
+    const priceStr = target.salePrice || target.price || '0';
+    currentPrice = parseFloat(priceStr.replace(/[^0-9.-]+/g, '').replace(',', '.')) || 0;
+  }
+
+  return currentPrice >= freeShippingThreshold;
 });
 
 // ==========================================
@@ -275,31 +299,40 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
             <div class="flex-1">
-              <h2 class="flex flex-wrap items-center gap-2 mb-2 font-bold text-gray-900">
+              
+              <!-- ✅ BADGE LIVRAISON GRATUITE (Au-dessus du titre) -->
+              <div v-if="showFreeShipping" class="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-bold px-2.5 py-1 rounded-md mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Livraison gratuite
+              </div>
+
+              <h2 class="flex flex-wrap items-center gap-2 font-bold text-gray-900">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
               </h2>
-              <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" />
+              <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" class="mt-1" />
             </div>
             
             <!-- ✅ PRIX AGRANDI + BADGE D'ÉCONOMIE -->
-          <div class="flex flex-col items-end gap-2">
-  <ProductPriceMax
-    class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24]" 
-    :sale-price="priceTarget?.salePrice" 
-    :regular-price="priceTarget?.regularPrice" 
-  />
-  
-  <!-- Badge d'économie (s'affiche uniquement si > 0) -->
- <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">
-  <svg class="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-  <span class="text-[8px] font-semibold text-green-700 leading-none">
-    Economiser -{{ Math.round(savingsAmount) }} DH
-  </span>
-</div>
-</div>
+            <div class="flex flex-col items-end gap-2">
+              <ProductPriceMax
+                class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24]" 
+                :sale-price="priceTarget?.salePrice" 
+                :regular-price="priceTarget?.regularPrice" 
+              />
+              
+              <!-- Badge d'économie (s'affiche uniquement si > 0) -->
+              <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">
+                <svg class="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-[8px] font-semibold text-green-700 leading-none">
+                  Economiser -{{ Math.round(savingsAmount) }} DH
+                </span>
+              </div>
+            </div>
           </div>
 
           <HookOutlet name="product.summary.afterPrice" :ctx="{ product: displayProduct }" as="div" />
@@ -404,13 +437,9 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
       </div>
     </div>
 
-
-    
     <div v-else class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
-
-    
 
     <!-- ✅ BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
     <a
