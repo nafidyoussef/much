@@ -1,5 +1,9 @@
+
 <script setup lang="ts">
+
 import type { PaymentGateway } from '#types/gql'
+import { useOrderAttribution } from 'app/composables/useOrderAttribution';
+const { getOrderMetaData } = useOrderAttribution();
 
 const route = useRoute()
 const { t } = useI18n()
@@ -204,8 +208,7 @@ const payNow = async () => {
   if (!customer.value.shipping) customer.value.shipping = {} as any
 
   // ✅ CORRECTION CRUCIALE : 
-  // On extrait 'fullName' de l'objet pour qu'il ne soit PAS envoyé à GraphQL.
-  // 'validBillingData' ne contiendra QUE les champs autorisés (email, phone, address1, city, etc.)
+ 
   const { fullName: billingFullName, ...validBillingData } = formData.billing
   const { fullName: shippingFullName, ...validShippingData } = formData.shipping
 
@@ -257,6 +260,13 @@ const payNow = async () => {
     orderInput.value.billing = billingPayload
     orderInput.value.shipping = shippingPayload
   }
+  const attributionMetaData = getOrderMetaData();
+
+  // Fusionner avec vos métadonnées existantes
+  orderInput.value.metaData = [
+    { key: 'order_via', value: 'WooNuxt' },
+    ...attributionMetaData
+  ];
 
   await processCheckout(paymentResult.isPaid)
 }
