@@ -55,17 +55,16 @@ useHead({
   ],
 
   // 4. ✅ Google Tag Manager : Fallback <noscript> juste après <body>
- 
+  noscript: [
+    {
+      innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PGQNM7T6" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+      tagPosition: 'bodyOpen', // ⚠️ Place le code juste après l'ouverture de <body>
+    },
+  ],
 });
 </script>
 
 <template>
-    <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PGQNM7T6" 
-            height="0" width="0" 
-            style="display:none;visibility:hidden">
-    </iframe>
-  </noscript>
   <NuxtPwaManifest />
   <NuxtLoadingIndicator />
   <div class="flex flex-col min-h-screen">
