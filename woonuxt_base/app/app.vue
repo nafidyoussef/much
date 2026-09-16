@@ -28,10 +28,37 @@ watch(
 );
 
 useHead({
+  // 1. Titre de la page
   titleTemplate: `%s - ${siteName}`,
+  
+  // 2. Couleur primaire dynamique
   style: [
     {
       innerHTML: `:root { --color-primary: ${safePrimaryColor.value}; }`,
+    },
+  ],
+
+  // 3. ✅ Google Tag Manager : Script dans le <head>
+  script: [
+    {
+      // Initialisation du dataLayer (recommandé par Google)
+      innerHTML: `window.dataLayer = window.dataLayer || [];`,
+    },
+    {
+      // Code principal GTM
+      innerHTML: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-PGQNM7T6');`,
+    },
+  ],
+
+  // 4. ✅ Google Tag Manager : Fallback <noscript> juste après <body>
+  noscript: [
+    {
+      innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PGQNM7T6" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+      tagPosition: 'bodyOpen', // ⚠️ Place le code juste après l'ouverture de <body>
     },
   ],
 });
