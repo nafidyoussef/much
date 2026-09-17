@@ -4,6 +4,8 @@ export default defineNuxtConfig({
   ssr: true,
   components: [{ path: './components', pathPrefix: false }],
 
+  modules: ['@vercel/speed-insights'],
+
   /**
    * Depending on your servers capabilities, you may need to adjust the following settings.
    * It will affect the build time but also increase the reliability of the build process.
