@@ -4,9 +4,6 @@ import type { Product } from '#types/gql';
 useAppConfig();
 const { addToCart, toggleCart } = useCart();
 
-// ✅ 1. Récupération de la variable d'environnement
-const config = useRuntimeConfig();
-const freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
 
 const props = defineProps({
   node: { type: Object as PropType<Product>, required: true },
@@ -40,21 +37,9 @@ const discountPercentage = computed(() => {
 });
 
 // ✅ 2. Calcul du prix actuel (pour vérifier le seuil de livraison gratuite)
-const currentRawPrice = computed(() => {
-  if (props.node.onSale && props.node.rawSalePrice) {
-    return Number(props.node.rawSalePrice);
-  }
-  if (props.node.rawRegularPrice) {
-    return Number(props.node.rawRegularPrice);
-  }
-  const priceStr = props.node.salePrice || props.node.price || '0';
-  return parseFloat(priceStr.replace(/[^0-9.-]+/g, '').replace(',', '.')) || 0;
-});
+
 
 // ✅ 3. Condition d'affichage du badge
-const showFreeShipping = computed(() => {
-  return currentRawPrice.value >= freeShippingThreshold;
-});
 
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();
@@ -101,15 +86,6 @@ const isButtonDisabled = computed(() => {
       <div v-if="discountPercentage" class="absolute top-2 right-2 z-20 bg-[#f8e8a8] text-[#ff4f24] text-[10px] font-bold px-2 py-1 rounded shadow-sm">
         -{{ discountPercentage }}%
       </div>
-
-      <!-- ✅ BADGE LIVRAISON GRATUITE (En bas de l'image) -->
-      <div v-if="showFreeShipping" class="absolute bottom-0 left-0 z-20 bg-green-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-md flex items-center gap-1">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-        Livraison gratuite
-      </div>
-
       <!-- Image du produit -->
       <NuxtLink
         v-if="node.slug"

@@ -2,7 +2,7 @@
 <script setup lang="ts">
 
 import type { PaymentGateway } from '#types/gql'
-import { useOrderAttribution } from 'app/composables/useOrderAttribution';
+
 const { getOrderMetaData } = useOrderAttribution();
 
 const route = useRoute()

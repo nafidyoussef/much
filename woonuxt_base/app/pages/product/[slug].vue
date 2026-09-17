@@ -10,8 +10,8 @@ const { t } = useI18n();
 const gql = useWooGraphQL();
 
 // ✅ 1. Récupération du seuil de livraison gratuite depuis les variables d'environnement
-const config = useRuntimeConfig();
-const freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
+//const config = useRuntimeConfig();
+//const freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
 
 const slug = route.params.slug as string;
 
@@ -229,27 +229,7 @@ const savingsAmount = computed(() => {
 // ==========================================
 // ✅ CALCUL LIVRAISON GRATUITE
 // ==========================================
-const showFreeShipping = computed(() => {
-  const target = priceTarget.value as any;
-  if (!target) return false;
 
-  let currentPrice = 0;
-  // Priorité au prix promo s'il existe
-  if (target.onSale && target.rawSalePrice) {
-    currentPrice = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
-  } 
-  // Sinon prix régulier
-  else if (target.rawRegularPrice) {
-    currentPrice = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
-  } 
-  // Fallback si les prix bruts ne sont pas disponibles
-  else {
-    const priceStr = target.salePrice || target.price || '0';
-    currentPrice = parseFloat(priceStr.replace(/[^0-9.-]+/g, '').replace(',', '.')) || 0;
-  }
-
-  return currentPrice >= freeShippingThreshold;
-});
 
 // ==========================================
 // Lien WhatsApp
@@ -301,12 +281,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
             <div class="flex-1">
               
               <!-- ✅ BADGE LIVRAISON GRATUITE (Au-dessus du titre) -->
-              <div v-if="showFreeShipping" class="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-bold px-2.5 py-1 rounded-md mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Livraison gratuite
-              </div>
 
               <h2 class="flex flex-wrap items-center gap-2 font-bold text-gray-900">
                 {{ displayProduct.name }}
