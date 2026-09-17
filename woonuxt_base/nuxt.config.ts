@@ -51,7 +51,9 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
     '@vite-pwa/nuxt',
+    '@vercel/speed-insights'
   ],
+ 
 
   css: [resolve('./app/assets/css/main.css')],
 
