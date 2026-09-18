@@ -11,7 +11,7 @@ const categories = [
   { name: 'Mode', slug: 'mode', icon: 'ion:diamond-outline' },
   { name: 'Auto', slug: 'auto', icon: 'ion:flash-outline' },
   { name: 'Kids', slug: 'kids', icon: 'ion:happy-outline' },
-  { name: 'Sport', slug: 'sports-loisirs', icon: 'ion:ellipse-outline' },
+  { name: 'Sport', slug: 'sport', icon: 'ion:ellipse-outline' },
 ];
 </script>
 
