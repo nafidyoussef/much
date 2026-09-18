@@ -4,19 +4,18 @@ import type { Product } from '#types/gql';
 const { siteName, description, shortDescription, siteImage } = useAppConfig();
 
 // ==========================================
-// 0. OPTIMISATION FCP : Preconnect à l'API
+// 0. OPTIMISATION FCP : Preconnect & DNS-Prefetch
 // ==========================================
 useHead({
   link: [
     { rel: 'preconnect', href: 'https://api.much.ma' },
-    // Si vous utilisez le reverse proxy Nuxt, remplacez par : { rel: 'preconnect', href: window.location.origin }
+    { rel: 'dns-prefetch', href: 'https://api.much.ma' } // ✅ Ajouté pour une résolution DNS plus rapide sur tous les navigateurs
   ]
 });
 
 // ==========================================
-// 1. Récupération des données initiales
+// 1. Récupération des données Vente Flash (SSR)
 // ==========================================
-// On garde useAsyncGql car il est bon pour le SSR, mais on s'assure qu'il est rapide
 const { data: newInData } = await useAsyncGql('getNewInProducts', { 
   category: 'vente-flash' 
 });
@@ -40,130 +39,165 @@ const categories = [
 ];
 
 const activeCategory = ref('all');
+const productsPerPage = 12;
 
 // ==========================================
-// 3. Variables pour le chargement
+// 3. État réactif des produits
 // ==========================================
-const productsPerPage = 12;
-const loading = ref(false);
-const hasMore = ref(true);
 const allProducts = ref<Product[]>([]);
 const endCursor = ref<string | null>(null);
+const hasMore = ref(true);
+const loading = ref(false);
 
 // ==========================================
-// 4. Fonction de chargement OPTIMISÉE
+// 4. Requête GraphQL OPTIMISÉE (Minifiée)
 // ==========================================
-const fetchProducts = async (categoryId: string, append = false) => {
-  if (loading.value) return;
-  
-  loading.value = true;
-  try {
-    const variables: any = {
-      first: productsPerPage,
-      orderby: 'MENU_ORDER' 
-    };
-    
-    if (categoryId !== 'all') {
-      variables.slug = [categoryId]; 
-    }
-    
-    if (append && endCursor.value) {
-      variables.after = endCursor.value;
-    }
-
-    // ✅ REQUÊTE GRAPHQL CORRIGÉE AVEC FRAGMENTS EN LIGNE
- // ✅ REQUÊTE GRAPHQL CORRIGÉE
-// ✅ REQUÊTE GRAPHQL CORRIGÉE - VERSION FINALE
-const query = `query getProducts($after: String, $slug: [String], $first: Int = 10, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC, $onSale: Boolean, $minPrice: Float, $maxPrice: Float, $taxonomyFilter: ProductTaxonomyInput) {
-  products(
-    first: $first
-    after: $after
-    where: {
-      categoryIn: $slug
-      visibility: VISIBLE
-      status: "publish"
-      onSale: $onSale
-      minPrice: $minPrice
-      maxPrice: $maxPrice
-      orderby: { field: $orderby, order: $order }
-      taxonomyFilter: $taxonomyFilter
-    }
-  ) {
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
-    nodes {
-      __typename
-      databaseId
-      id
-      name
-      slug
-      type
-      onSale
-      image {
-        sourceUrl
-        altText
-        productCardSourceUrl: sourceUrl(size: LARGE)
+// ✅ Changements de performance :
+// 1. Suppression de __typename (inutile et alourdit la réponse JSON de ~10%)
+// 2. Passage de LARGE à MEDIUM pour l'image de carte (réduction du poids image de ~60-80%)
+// 3. Suppression des variables where non utilisées (onSale, minPrice, etc.) pour un parsing serveur plus rapide
+const productQuery = `
+  query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
+    products(
+      first: $first
+      after: $after
+      where: {
+        categoryIn: $slug
+        visibility: VISIBLE
+        status: "publish"
+        orderby: { field: $orderby, order: $order }
       }
-      ... on InventoriedProduct {
-        stockStatus
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
       }
-      ... on ProductWithPricing {
-        price
-        regularPrice
-        rawRegularPrice: regularPrice(format: RAW) # ✅ ICI
-        salePrice
-        rawSalePrice: salePrice(format: RAW)       # ✅ ICI
+      nodes {
+        databaseId
+        id
+        name
+        slug
+        onSale
+        image {
+          altText
+          productCardSourceUrl: sourceUrl(size: MEDIUM) # ✅ MEDIUM au lieu de LARGE
+        }
+        ... on InventoriedProduct {
+          stockStatus
+        }
+        ... on ProductWithPricing {
+          price
+          regularPrice
+          rawRegularPrice: regularPrice(format: RAW)
+          salePrice
+          rawSalePrice: salePrice(format: RAW)
+        }
       }
     }
   }
-}`;
+`;
 
-    const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
+// ==========================================
+// 5. Fonction de chargement PURE (Retourne les données)
+// ==========================================
+const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
+  const variables: any = {
+    first: productsPerPage,
+    orderby: 'MENU_ORDER',
+    order: 'DESC'
+  };
+  
+  if (categoryId !== 'all') {
+    variables.slug = [categoryId]; 
+  }
+  
+  if (cursor) {
+    variables.after = cursor;
+  }
 
-    const response = await $fetch(GQL_HOST, {
-      method: 'POST',
-      body: { query, variables, operationName: 'getProducts' },
-      cache: 'no-store' 
-    });
+  const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 
-    const data = response as any;
-    const newProducts = data?.data?.products?.nodes || [];
+  const response = await $fetch(GQL_HOST, {
+    method: 'POST',
+    body: { query: productQuery, variables, operationName: 'getProducts' },
+    cache: 'no-store' 
+  });
+
+  return response as any;
+};
+
+// ==========================================
+// 6. Chargement Initial (SSR pour un FCP/LCP immédiat)
+// ==========================================
+// ✅ CRITIQUE : Déplacé hors de onMounted. S'exécute côté serveur (SSR).
+// Le HTML arrive avec les produits déjà rendus. Plus de "flash" de chargement, meilleur SEO.
+const { data: initialData } = await useAsyncData(
+  'home-initial-products',
+  () => fetchProductsData('all', null),
+  {
+    transform: (res) => ({
+      nodes: res?.data?.products?.nodes || [],
+      pageInfo: res?.data?.products?.pageInfo || null
+    }),
+    // Nuxt mettra automatiquement ces données en cache dans le payload HTML, 
+    // évitant un double appel réseau lors de l'hydratation côté client.
+  }
+);
+
+// Initialisation des refs avec les données SSR (ou fallback vide)
+if (initialData.value) {
+  allProducts.value = initialData.value.nodes;
+  endCursor.value = initialData.value.pageInfo?.endCursor || null;
+  hasMore.value = initialData.value.pageInfo?.hasNextPage ?? (initialData.value.nodes.length === productsPerPage);
+}
+
+// ==========================================
+// 7. Actions Utilisateur (Client-side)
+// ==========================================
+const loadInitialProducts = async () => {
+  loading.value = true;
+  try {
+    const data = await fetchProductsData(activeCategory.value, null);
+    const nodes = data?.data?.products?.nodes || [];
     const pageInfo = data?.data?.products?.pageInfo;
     
-    if (append) {
-      allProducts.value = [...allProducts.value, ...newProducts];
-    } else {
-      allProducts.value = newProducts;
-    }
-    
+    allProducts.value = nodes;
     endCursor.value = pageInfo?.endCursor || null;
-    hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
-    
+    hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
   } catch (error) {
     console.error('Erreur lors du chargement des produits:', error);
   } finally {
     loading.value = false;
   }
 };
-const loadInitialProducts = () => {
-  endCursor.value = null;
-  hasMore.value = true;
-  fetchProducts(activeCategory.value, false);
-};
 
-const loadMoreProducts = () => {
-  fetchProducts(activeCategory.value, true);
+const loadMoreProducts = async () => {
+  if (loading.value || !hasMore.value) return;
+  
+  loading.value = true;
+  try {
+    const data = await fetchProductsData(activeCategory.value, endCursor.value);
+    const newProducts = data?.data?.products?.nodes || [];
+    const pageInfo = data?.data?.products?.pageInfo;
+    
+    allProducts.value = [...allProducts.value, ...newProducts];
+    endCursor.value = pageInfo?.endCursor || null;
+    hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
+  } catch (error) {
+    console.error('Erreur lors du chargement des produits:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const selectCategory = (slug: string) => {
+  if (activeCategory.value === slug) return;
   activeCategory.value = slug;
   loadInitialProducts();
 };
 
 // ==========================================
-// 5. SEO
+// 8. SEO
 // ==========================================
 useSeoMeta({
   title: `Accueil`,
@@ -175,7 +209,7 @@ useSeoMeta({
 });
 
 // ==========================================
-// 6. Logique du slider Vente Flash
+// 9. Logique du slider Vente Flash
 // ==========================================
 const newInSliderRef = ref<HTMLElement | null>(null);
 const scrollNewIn = (direction: 'left' | 'right') => {
@@ -186,13 +220,6 @@ const scrollNewIn = (direction: 'left' | 'right') => {
     behavior: 'smooth',
   });
 };
-
-// ==========================================
-// 7. Chargement initial
-// ==========================================
-onMounted(() => {
-  loadInitialProducts();
-});
 </script>
 
 <template>
@@ -202,7 +229,6 @@ onMounted(() => {
     
     <!-- Section Confiance -->
     <section class="container py-6 mb-2">
-      <!-- ... (Votre code HTML de la section confiance reste inchangé) ... -->
       <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div class="grid grid-cols-2">
           <div class="flex items-center gap-3 p-2 md:p-5 border-b border-r border-gray-200">
@@ -216,7 +242,6 @@ onMounted(() => {
               <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Payez à la réception</p>
             </div>
           </div>
-          <!-- ... (Gardez le reste de votre template exactement comme il est) ... -->
           <div class="flex items-center gap-3 p-2 md:p-3 border-b border-gray-200">
             <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
               <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -259,7 +284,6 @@ onMounted(() => {
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <h2 class="text-xl md:text-2xl font-medium text-gray-900">Explorez nos univers</h2>
       </div>
-      <!-- ... (Gardez votre grille de catégories exacte ici) ... -->
       <div class="grid grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4 lg:gap-3">
         <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-2">
           <div class="w-16 h-16 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
@@ -272,8 +296,7 @@ onMounted(() => {
             <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
           </div>
         </NuxtLink>
-        <!-- ... (Copiez-collez le reste de vos NuxtLink de catégories ici sans changement) ... -->
-         <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2">
+        <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2">
           <div class="w-16 h-16 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
             <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
@@ -360,7 +383,6 @@ onMounted(() => {
 
     <!-- SECTION 2 : Vente Flash -->
     <section v-if="newInProducts.length" class="container py-2 md:py-10">
-      <!-- ... (Gardez votre code de section Vente Flash exact ici) ... -->
       <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
         <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
         <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
@@ -393,7 +415,7 @@ onMounted(() => {
         <div class="relative group/slider">
           <div ref="newInSliderRef" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-4 md:px-6 scrollbar-hide">
             <div v-for="(product, index) in newInProducts" :key="product.databaseId || product.id" class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start">
-              <!-- 💡 ASTUCE FCP : Assurez-vous que ProductCardMini a loading="eager" pour les 2-3 premiers éléments -->
+              <!-- 💡 ASTUCE FCP : Assurez-vous que ProductCardMini utilise <NuxtImg loading="eager" pour index < 3, et "lazy" pour les autres -->
               <ProductCardMini :node="product" :index="index" />
             </div>
           </div>
@@ -446,6 +468,7 @@ onMounted(() => {
 
       <!-- Grille de produits -->
       <div v-else-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+        <!-- 💡 ASTUCE : Assurez-vous que ProductCard utilise <NuxtImg loading="lazy" decoding="async" -->
         <ProductCard 
           v-for="product in allProducts" 
           :key="product.databaseId || product.id"
