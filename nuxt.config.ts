@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   extends: ['./woonuxt_base'],
   ssr: true,
   components: [{ path: './components', pathPrefix: false }],
+  modules: ['@vercel/speed-insights/nuxt'],
 
   /**
    * Depending on your servers capabilities, you may need to adjust the following settings.
