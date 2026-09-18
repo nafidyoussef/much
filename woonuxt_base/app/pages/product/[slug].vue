@@ -11,7 +11,7 @@ const gql = useWooGraphQL();
 
 // ✅ 1. Récupération du seuil de livraison gratuite depuis les variables d'environnement
 //const config = useRuntimeConfig();
-//const freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
+//onst freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
 
 const slug = route.params.slug as string;
 
@@ -277,50 +277,55 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
-            <div class="flex-1">
-              
-              <!-- ✅ BADGE LIVRAISON GRATUITE (Au-dessus du titre) -->
-
-              <h2 class="flex flex-wrap items-center gap-2 font-bold text-gray-900">
+          <!-- ✅ NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
+          <div class="mb-6">
+            <!-- 1. Titre et Note (Pleine largeur en haut) -->
+            <div class="mb-4">
+              <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
-              </h2>
-              <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" class="mt-1" />
+              </span>
+              <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" class="mt-1.5" />
             </div>
-            
-            <!-- ✅ PRIX AGRANDI + BADGE D'ÉCONOMIE -->
-            <div class="flex flex-col items-end gap-2">
-              <ProductPriceMax
-                class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24]" 
-                :sale-price="priceTarget?.salePrice" 
-                :regular-price="priceTarget?.regularPrice" 
-              />
+
+            <!-- 2. Ligne d'alignement : Stock/SKU (Gauche) | Prix/Badge (Droite) -->
+            <div class="flex flex-row justify-between items-start">
               
-              <!-- Badge d'économie (s'affiche uniquement si > 0) -->
-              <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-1.5 py-0.5 rounded-full">
-                <svg class="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-[8px] font-semibold text-green-700 leading-none">
-                  Economiser -{{ Math.round(savingsAmount) }} DH
-                </span>
+              <!-- Partie Gauche : Disponibilité et SKU -->
+              <div class="flex flex-col gap-1.5 text-sm">
+                <div v-if="!isExternalProduct" class="flex items-center gap-2">
+                  <span class="text-gray-400">{{ $t('shop.availability') }}:</span>
+                  <StockStatus :stock-status="stockStatus" />
+                </div>
+                <div v-if="storeSettings.showSKU && product?.sku" class="flex items-center gap-2">
+                  <span class="text-gray-400">{{ $t('shop.sku') }}:</span>
+                  <span class="font-medium text-gray-700">{{ product?.sku || 'N/A' }}</span>
+                </div>
               </div>
+
+              <!-- Partie Droite : Prix et Badge d'économie -->
+              <div class="flex flex-col items-end gap-2">
+                <ProductPriceMax
+                  class="text-2xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24] leading-none" 
+                  :sale-price="priceTarget?.salePrice" 
+                  :regular-price="priceTarget?.regularPrice" 
+                />
+                
+                <!-- Badge d'économie -->
+                <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+                  <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-[10px] md:text-xs font-semibold text-green-700 leading-none">
+                    Économiser {{ Math.round(savingsAmount) }} DH
+                  </span>
+                </div>
+              </div>
+
             </div>
           </div>
 
           <HookOutlet name="product.summary.afterPrice" :ctx="{ product: displayProduct }" as="div" />
-
-          <div class="grid gap-2 my-6 text-sm empty:hidden">
-            <div v-if="!isExternalProduct" class="flex items-center gap-2">
-              <span class="text-gray-400">{{ $t('shop.availability') }}: </span>
-              <StockStatus :stock-status="stockStatus" />
-            </div>
-            <div v-if="storeSettings.showSKU && product?.sku" class="flex items-center gap-2">
-              <span class="text-gray-400">{{ $t('shop.sku') }}: </span>
-              <span>{{ product?.sku || 'N/A' }}</span>
-            </div>
-          </div>
 
           <div class="mb-8 text-gray-600 leading-relaxed" v-html="product.shortDescription"></div>
 
@@ -430,7 +435,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 
   </main>
 </template>
-
 <style scoped>
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
