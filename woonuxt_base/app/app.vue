@@ -12,7 +12,7 @@ const safePrimaryColor = computed(() => {
   const color = String(primaryColor.value).trim();
   return /^#[0-9a-f]{6}$/i.test(color) || /^#[0-9a-f]{3}$/i.test(color) ? color : '#7f54b2';
 });
-
+useOrderAttribution(); 
 const closeCartAndMenu = () => {
   toggleCart(false);
   toggleMobileMenu(false);
