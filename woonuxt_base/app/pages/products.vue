@@ -127,8 +127,6 @@ const fetchProducts = async (append = false) => {
     loadingMore.value = false;
   }
 };
-
-// ✅ Intersection Observer pour le scroll infini
 let observer: IntersectionObserver | null = null;
 
 const setupObserver = () => {
