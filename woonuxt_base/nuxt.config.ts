@@ -50,8 +50,7 @@ export default defineNuxtConfig({
     ['@nuxt/image', { provider: 'vercel' }],
     '@nuxtjs/i18n',
     '@nuxt/eslint',
-    '@vite-pwa/nuxt',
-    '@vercel/speed-insights'
+    '@vite-pwa/nuxt'
   ],
  
 

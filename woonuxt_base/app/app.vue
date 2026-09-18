@@ -52,6 +52,15 @@ useHead({
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','GTM-PGQNM7T6');`,
     },
+   {
+      // ✅ Utilisez 'innerHTML' au lieu de 'children' pour le code inline
+      innerHTML: 'window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };',
+    },
+    {
+      // Chargement du script Vercel Speed Insights
+      src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
+      defer: true,
+    }
   ],
 
   // 4. ✅ Google Tag Manager : Fallback <noscript> juste après <body>
