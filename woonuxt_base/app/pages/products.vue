@@ -127,23 +127,41 @@ const fetchProducts = async (append = false) => {
     loadingMore.value = false;
   }
 };
+
 let observer: IntersectionObserver | null = null;
 
 const setupObserver = () => {
   if (import.meta.client && sentinelRef.value) {
     if (observer) observer.disconnect();
-
+    
     observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && !loadingMore.value && hasNextPage.value && !loading.value) {
+        // ✅ Déclenche le chargement si visible, s'il reste des pages, et si aucun chargement n'est en cours
+        if (entries[0]?.isIntersecting && hasNextPage.value && !loading.value && !loadingMore.value) {
           fetchProducts(true);
         }
       },
-      { rootMargin: '500px' }
+      // ✅ AUGMENTÉ : Déclenche le chargement 1000px AVANT d'arriver en bas (au lieu de 500px)
+      { rootMargin: '1000px' } 
     );
     observer.observe(sentinelRef.value);
   }
 };
+
+watch(loadingMore, async (isLoading) => {
+  // Quand un chargement se termine (isLoading passe à false)
+  if (!isLoading && hasNextPage.value && import.meta.client && sentinelRef.value) {
+    await nextTick(); // Attend que Vue ait rendu les nouveaux produits dans le DOM
+    
+    // Vérifie si le sentinel est TOUJOURS visible (ou très proche du bas de l'écran)
+    const rect = sentinelRef.value.getBoundingClientRect();
+    if (rect.top <= window.innerHeight + 200) {
+      // L'utilisateur a scrollé si vite qu'après le rendu, on est encore en bas.
+      // On relance immédiatement un chargement !
+      fetchProducts(true);
+    }
+  }
+});
 
 // ✅ Watcher PROTÉGÉ : Ne s'exécute QUE si on est sur la page /products
 watch(
