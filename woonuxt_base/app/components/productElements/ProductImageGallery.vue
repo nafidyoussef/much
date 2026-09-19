@@ -47,6 +47,28 @@ const changeImageByOffset = (offset: number) => {
   return false;
 };
 
+// ✅ NEW: Tap-to-navigate handler
+const mainImageContainer = ref<HTMLElement | null>(null);
+const handleImageTap = (event: MouseEvent | TouchEvent) => {
+  if (!mainImageContainer.value || galleryImages.value.length <= 1) return;
+  
+  const rect = mainImageContainer.value.getBoundingClientRect();
+  const clientX = 'touches' in event ? event.touches[0]!.clientX : event.clientX;
+  const clickX = clientX - rect.left;
+  const containerWidth = rect.width;
+  
+  // Only trigger if clicked outside the arrow buttons (center 80% of the image)
+  // This prevents accidental navigation when trying to click arrows
+  const leftThreshold = containerWidth * 0.3;
+  const rightThreshold = containerWidth * 0.7;
+  
+  if (clickX < leftThreshold) {
+    changeImageByOffset(-1);
+  } else if (clickX > rightThreshold) {
+    changeImageByOffset(1);
+  }
+};
+
 watch(
   () => props.activeVariation,
   (newVal) => {
@@ -82,36 +104,50 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
 
 <template>
   <div :class="galleryRootClasses">
-  <div class="relative group aspect-square w-full min-w-0 overflow-hidden rounded-xl bg-gray-100">
-  <SaleBadge :node class="absolute text-base top-4 right-4" />
-  <NuxtPicture
-    :width="imgWidth"
-    :height="imgWidth"
-    sizes="412px:100vw sm:100vw md:50vw lg:50vw xl:640px"
-    :alt="imageToShow.altText || node.name"
-    :title="imageToShow.title || node.name"
-    :src="imageToShow.sourceUrl || FALLBACK_IMG"
-    :preload="{ fetchPriority: 'high' }"
-    :img-attrs="{ class: 'h-full w-full object-contain' }" />
+    <div 
+      ref="mainImageContainer"
+      class="relative group aspect-square w-full min-w-0 overflow-hidden rounded-xl bg-gray-100 cursor-pointer select-none"
+      @click="handleImageTap"
+    >
+      <SaleBadge :node class="absolute text-base top-4 right-4 z-10" />
+      
+      <NuxtPicture
+        :width="imgWidth"
+        :height="imgWidth"
+        sizes="412px:100vw sm:100vw md:50vw lg:50vw xl:640px"
+        :alt="imageToShow.altText || node.name"
+        :title="imageToShow.title || node.name"
+        :src="imageToShow.sourceUrl || FALLBACK_IMG"
+        :preload="{ fetchPriority: 'high' }"
+        :img-attrs="{ class: 'h-full w-full object-contain pointer-events-none' }" 
+      />
 
-  <button
-    v-if="galleryImages.length > 1"
-    class="absolute left-1 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    type="button"
-    :aria-label="`Previous image for ${node.name}`"
-    @click="changeImageByOffset(-1)">
-    <Icon name="ion:chevron-back-outline" size="24" />
-  </button>
+      <!-- Optional: Visual feedback zones (hidden by default, shown on hover) -->
+      <div class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-black/5 to-transparent"></div>
+        <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-black/5 to-transparent"></div>
+      </div>
 
-  <button
-    v-if="galleryImages.length > 1"
-    class="absolute right-1 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    type="button"
-    :aria-label="`Next image for ${node.name}`"
-    @click="changeImageByOffset(1)">
-    <Icon name="ion:chevron-forward-outline" size="24" />
-  </button>
-</div>
+      <button
+        v-if="galleryImages.length > 1"
+        class="absolute left-1 top-1/2 z-20 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        type="button"
+        :aria-label="`Previous image for ${node.name}`"
+        @click.stop="changeImageByOffset(-1)"
+      >
+        <Icon name="ion:chevron-back-outline" size="24" />
+      </button>
+
+      <button
+        v-if="galleryImages.length > 1"
+        class="absolute right-1 top-1/2 z-20 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/40 text-gray-900 shadow-md transition-[background-color,box-shadow] ease-in hover:bg-white hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        type="button"
+        :aria-label="`Next image for ${node.name}`"
+        @click.stop="changeImageByOffset(1)"
+      >
+        <Icon name="ion:chevron-forward-outline" size="24" />
+      </button>
+    </div>
 
     <div v-if="gallery.nodes.length" :class="thumbnailListClasses">
       <button
@@ -121,15 +157,27 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
         type="button"
         :aria-label="`Show image for ${node.name}`"
         :aria-pressed="galleryImg.databaseId === imageToShow.databaseId"
-        @click="changeImage(galleryImg)">
+        @click="changeImage(galleryImg)"
+      >
         <NuxtPicture
           :width="160"
           :height="160"
           :src="galleryImg.sourceUrl || FALLBACK_IMG"
           :alt="galleryImg.altText || node.name"
           loading="lazy"
-          :img-attrs="{ class: 'h-full w-full object-contain' }" />
+          :img-attrs="{ class: 'h-full w-full object-contain' }" 
+        />
       </button>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Prevent text selection on rapid tapping */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
