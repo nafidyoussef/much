@@ -387,7 +387,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
         <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
 
-        <div class="relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-3 px-4 pt-4 md:px-6 md:pt-6 bg-[#ff4f24]/10">
+        <div class="relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-2 px-1 pt-4 md:px-6 md:pt-6 bg-[#ff4f24]/10">
           <div class="flex items-center gap-2">
             <div class="flex-shrink-0 w-7 h-7 mb-2 bg-[#ff4f24] rounded-full flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

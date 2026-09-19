@@ -80,11 +80,11 @@ onMounted(() => {
         :title="node.name || undefined"
         class="block"
       >
-        <span
-          class="text-[15px] font-normal leading-tight text-gray-900 line-clamp-2 group-hover:text-primary transition-colors duration-300"
-        >
-          {{ node.name }}
-        </span>
+       <span
+  class="text-xs font-normal leading-tight text-gray-900 line-clamp-1 group-hover:text-primary transition-colors duration-300"
+>
+  {{ node.name }}
+</span>
       </NuxtLink>
       
       <ProductPrice class="mt-1.5 text-base font-bold text-gray-900" :sale-price="node.salePrice ?? undefined" :regular-price="node.regularPrice ?? undefined" />

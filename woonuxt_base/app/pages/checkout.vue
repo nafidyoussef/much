@@ -451,10 +451,6 @@ useSeoMeta({ title: t('shop.checkout') })
           <div class="lg:col-span-1">
             <div class="sticky top-6 space-y-6">
               <div class="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 p-2">
-                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <Icon name="ion:receipt" class="text-[#ff4f24]" />
-                  Récapitulatif
-                </h2>
                 <OrderSummary />
                 
                 <div v-if="checkoutError" role="alert" class="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3">
