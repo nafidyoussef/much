@@ -8,10 +8,25 @@ const { siteName, description, shortDescription, siteImage } = useAppConfig();
 // ==========================================
 useHead({
   link: [
-    { rel: 'preconnect', href: 'https://api.much.ma' },
-    { rel: 'dns-prefetch', href: 'https://api.much.ma' } // ✅ Ajouté pour une résolution DNS plus rapide sur tous les navigateurs
+    { rel: 'preconnect', href: 'https://api.much.ma', crossorigin: '' },
+    { rel: 'dns-prefetch', href: 'https://api.much.ma' }
   ]
 });
+
+// ✅ CORRECTION VERCEL : Ne charger le script que en PRODUCTION
+if (import.meta.env.PROD) {
+  useHead({
+    script: [
+      {
+        innerHTML: 'window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };',
+      },
+      {
+        src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
+        defer: true,
+      }
+    ]
+  });
+ }
 
 // ==========================================
 // 1. Récupération des données Vente Flash (SSR)
@@ -50,12 +65,8 @@ const hasMore = ref(true);
 const loading = ref(false);
 
 // ==========================================
-// 4. Requête GraphQL OPTIMISÉE (Minifiée)
+// 4. Requête GraphQL OPTIMISÉE
 // ==========================================
-// ✅ Changements de performance :
-// 1. Suppression de __typename (inutile et alourdit la réponse JSON de ~10%)
-// 2. Passage de LARGE à MEDIUM pour l'image de carte (réduction du poids image de ~60-80%)
-// 3. Suppression des variables where non utilisées (onSale, minPrice, etc.) pour un parsing serveur plus rapide
 const productQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
     products(
@@ -80,7 +91,7 @@ const productQuery = `
         onSale
         image {
           altText
-          productCardSourceUrl: sourceUrl(size: MEDIUM) # ✅ MEDIUM au lieu de LARGE
+          productCardSourceUrl: sourceUrl(size: MEDIUM)
         }
         ... on InventoriedProduct {
           stockStatus
@@ -98,7 +109,7 @@ const productQuery = `
 `;
 
 // ==========================================
-// 5. Fonction de chargement PURE (Retourne les données)
+// 5. Fonction de chargement PURE
 // ==========================================
 const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
   const variables: any = {
@@ -127,10 +138,8 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
 };
 
 // ==========================================
-// 6. Chargement Initial (SSR pour un FCP/LCP immédiat)
+// 6. Chargement Initial (SSR)
 // ==========================================
-// ✅ CRITIQUE : Déplacé hors de onMounted. S'exécute côté serveur (SSR).
-// Le HTML arrive avec les produits déjà rendus. Plus de "flash" de chargement, meilleur SEO.
 const { data: initialData } = await useAsyncData(
   'home-initial-products',
   () => fetchProductsData('all', null),
@@ -139,12 +148,9 @@ const { data: initialData } = await useAsyncData(
       nodes: res?.data?.products?.nodes || [],
       pageInfo: res?.data?.products?.pageInfo || null
     }),
-    // Nuxt mettra automatiquement ces données en cache dans le payload HTML, 
-    // évitant un double appel réseau lors de l'hydratation côté client.
   }
 );
 
-// Initialisation des refs avec les données SSR (ou fallback vide)
 if (initialData.value) {
   allProducts.value = initialData.value.nodes;
   endCursor.value = initialData.value.pageInfo?.endCursor || null;
@@ -180,7 +186,9 @@ const loadMoreProducts = async () => {
     const newProducts = data?.data?.products?.nodes || [];
     const pageInfo = data?.data?.products?.pageInfo;
     
-    allProducts.value = [...allProducts.value, ...newProducts];
+    // ✅ OPTIMISATION CRITIQUE CONSERVÉE : .push() est beaucoup plus rapide que le spread operator
+    allProducts.value.push(...newProducts);
+    
     endCursor.value = pageInfo?.endCursor || null;
     hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
   } catch (error) {
@@ -224,7 +232,6 @@ const scrollNewIn = (direction: 'left' | 'right') => {
 
 <template>
   <main class="min-h-screen mb-10">
-    <!-- 💡 ASSUREZ-VOUS QUE VOTRE COMPOSANT HeroBanner utilise loading="eager" et fetchpriority="high" sur son image principale -->
     <HeroBanner />
     
     <!-- Section Confiance -->
@@ -415,7 +422,6 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         <div class="relative group/slider">
           <div ref="newInSliderRef" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-4 md:px-6 scrollbar-hide">
             <div v-for="(product, index) in newInProducts" :key="product.databaseId || product.id" class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start">
-              <!-- 💡 ASTUCE FCP : Assurez-vous que ProductCardMini utilise <NuxtImg loading="eager" pour index < 3, et "lazy" pour les autres -->
               <ProductCardMini :node="product" :index="index" />
             </div>
           </div>
@@ -468,7 +474,8 @@ const scrollNewIn = (direction: 'left' | 'right') => {
 
       <!-- Grille de produits -->
       <div v-else-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-        <!-- 💡 ASTUCE : Assurez-vous que ProductCard utilise <NuxtImg loading="lazy" decoding="async" -->
+        <!-- ✅ CORRECTION : Suppression de v-memo qui causait le crash. 
+             La clé stable (:key) et l'optimisation .push() suffisent amplement pour de hautes performances. -->
         <ProductCard 
           v-for="product in allProducts" 
           :key="product.databaseId || product.id"

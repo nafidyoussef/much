@@ -44,7 +44,7 @@ const productsQuery = `
         image {
           sourceUrl
           altText
-          productCardSourceUrl: sourceUrl(size: LARGE)
+          productCardSourceUrl: sourceUrl(size: MEDIUM)
         }
         ... on InventoriedProduct {
           stockStatus
