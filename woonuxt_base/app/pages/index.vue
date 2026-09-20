@@ -186,7 +186,7 @@ const loadMoreProducts = async () => {
     const newProducts = data?.data?.products?.nodes || [];
     const pageInfo = data?.data?.products?.pageInfo;
     
-    // ✅ OPTIMISATION CRITIQUE CONSERVÉE : .push() est beaucoup plus rapide que le spread operator
+    // ✅ OPTIMISATION CRITIQUE CONSERVÉE : .push() est beaucoup plus rapide
     allProducts.value.push(...newProducts);
     
     endCursor.value = pageInfo?.endCursor || null;
@@ -463,8 +463,8 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </button>
       </div>
 
-      <!-- SKELETON LOADER -->
-      <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- ✅ CORRECTION MAJEURE : Squelettes uniquement au premier chargement -->
+      <div v-if="loading && allProducts.length === 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         <div v-for="i in 8" :key="`skeleton-${i}`" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
           <div class="aspect-[8/9] bg-gray-200 rounded-lg mb-3"></div>
           <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -472,10 +472,8 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </div>
       </div>
 
-      <!-- Grille de produits -->
-      <div v-else-if="allProducts.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-        <!-- ✅ CORRECTION : Suppression de v-memo qui causait le crash. 
-             La clé stable (:key) et l'optimisation .push() suffisent amplement pour de hautes performances. -->
+      <!-- ✅ CORRECTION MAJEURE : La grille reste TOUJOURS visible si on a des produits, même pendant le chargement -->
+      <div v-if="allProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
         <ProductCard 
           v-for="product in allProducts" 
           :key="product.databaseId || product.id"
@@ -484,7 +482,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
       </div>
 
       <!-- État vide -->
-      <div v-else class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+      <div v-if="!loading && allProducts.length === 0" class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
         <p class="text-gray-500">Aucun produit trouvé dans cette catégorie pour le moment.</p>
       </div>
 
