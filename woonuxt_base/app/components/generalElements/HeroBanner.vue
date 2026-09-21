@@ -11,6 +11,10 @@ const slides = [
   {
     image: 'Hero-1.webp',
     alt: 'Collection Nouveau Année'
+  },
+  {
+    image: 'Hero-1.webp',
+    alt: 'Collection Nouveau Année'
   }
 ];
 
