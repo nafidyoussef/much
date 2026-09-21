@@ -3,6 +3,10 @@ import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
 import { useRouter } from 'vue-router';
 
+
+// ✅ TRACKING : Import du composable
+const { formatProduct, track } = useTracking();
+
 const hasLoadedOnce = ref(false);
 const route = useRoute();
 const router = useRouter();
@@ -94,14 +98,15 @@ const getProductsQuery = `
         ... on ProductWithPricing {
           price
           regularPrice
-          rawRegularPrice: regularPrice(format: RAW) # ✅ AJOUTÉ
+          rawRegularPrice: regularPrice(format: RAW)
           salePrice
-          rawSalePrice: salePrice(format: RAW)       # ✅ AJOUTÉ
+          rawSalePrice: salePrice(format: RAW)
         }
       }
     }
   }
 `;
+
 const buildVariables = (afterCursor: string | null = null, first: number = 12) => {
   const variables: any = {
     slug: slug ? [slug] : undefined,
@@ -154,7 +159,6 @@ const buildVariables = (afterCursor: string | null = null, first: number = 12) =
   return variables;
 };
 
-// ✅ FILTRE DE PRIX ADAPTÉ (puisque rawPrice a été supprimé pour alléger la requête)
 const filterProductsByPrice = (productsList: Product[]) => {
   const filterString = route.query.filter ? String(route.query.filter) : '';
   const priceMatch = /price\[([^\]]+)\]/.exec(filterString);
@@ -170,7 +174,6 @@ const filterProductsByPrice = (productsList: Product[]) => {
   const maxPrice = Number(prices[1]);
   
   return productsList.filter(product => {
-    // On nettoie la chaîne de prix (ex: "150,00 DH" -> 150)
     const priceStr = (product as any).salePrice || (product as any).price || '0';
     const cleanPrice = parseFloat(String(priceStr).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
     return cleanPrice >= minPrice && cleanPrice <= maxPrice;
@@ -204,9 +207,7 @@ const fetchProducts = async (append = false) => {
     const cursor = append ? endCursor.value : null;
     const variables = buildVariables(cursor, 12);
 
-    // ✅ UTILISATION DU REVERSE PROXY (plus rapide, pas de CORS)
-     const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
-    //const apiUrl = import.meta.server ? 'https://api.much.ma/graphql' : '/graphql';
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 
     const response = await $fetch<any>(GQL_HOST, {
       method: 'POST',
@@ -230,6 +231,17 @@ const fetchProducts = async (append = false) => {
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
     hasLoadedOnce.value = true;
 
+    // ✅ TRACKING : view_item_list (Uniquement au chargement initial ou changement de catégorie/filtre)
+    // GA4 recommande d'envoyer les 12 à 20 premiers produits visibles
+    if (!append && products.value.length > 0) {
+      const visibleItems = products.value.slice(0, 12).map(p => formatProduct(p, 1));
+      track('view_item_list', {
+        item_list_id: 'category',
+        item_list_name: slug || 'Catalogue',
+        items: visibleItems
+      });
+    }
+
     save(products.value, endCursor.value, hasNextPage.value);
 
   } catch (err) {
@@ -248,27 +260,21 @@ const setupObserver = () => {
     
     observer = new IntersectionObserver(
       (entries) => {
-        // ✅ Déclenche le chargement si visible, s'il reste des pages, et si aucun chargement n'est en cours
         if (entries[0]?.isIntersecting && hasNextPage.value && !loading.value && !loadingMore.value) {
           fetchProducts(true);
         }
       },
-      // ✅ AUGMENTÉ : Déclenche le chargement 1000px AVANT d'arriver en bas (au lieu de 500px)
       { rootMargin: '1000px' } 
     );
     observer.observe(sentinelRef.value);
   }
 };
+
 watch(loadingMore, async (isLoading) => {
-  // Quand un chargement se termine (isLoading passe à false)
   if (!isLoading && hasNextPage.value && import.meta.client && sentinelRef.value) {
-    await nextTick(); // Attend que Vue ait rendu les nouveaux produits dans le DOM
-    
-    // Vérifie si le sentinel est TOUJOURS visible (ou très proche du bas de l'écran)
+    await nextTick();
     const rect = sentinelRef.value.getBoundingClientRect();
     if (rect.top <= window.innerHeight + 200) {
-      // L'utilisateur a scrollé si vite qu'après le rendu, on est encore en bas.
-      // On relance immédiatement un chargement !
       fetchProducts(true);
     }
   }
@@ -317,12 +323,21 @@ watch(
   }
 );
 
+// ✅ TRACKING : Gestion du clic sur un produit
+const handleProductClick = (product: Product) => {
+  const item = formatProduct(product, 1);
+  track('select_item', {
+    item_list_id: 'category',
+    item_list_name: slug || 'Catalogue',
+    items: [item]
+  });
+};
+
 useHead({
   title: slug ? `${slug} - Produits` : 'Produits',
   meta: [{ name: 'description', content: 'Découvrez nos produits' }],
 });
 </script>
-
 <template>
   <main class="container">
     <!-- ... (VOTRE TEMPLATE RESTE EXACTEMENT LE MÊME, IL EST PARFAIT) ... -->
@@ -396,6 +411,7 @@ useHead({
             :key="node.id || `product-${i}`" 
             :node 
             :index="i" 
+            @click="handleProductClick(node)" 
           />
         </div>
 

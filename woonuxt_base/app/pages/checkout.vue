@@ -1,47 +1,52 @@
 
 <script setup lang="ts">
+import type { PaymentGateway } from '#types/gql';
 
-import type { PaymentGateway } from '#types/gql'
 
 const { getOrderMetaData } = useOrderAttribution();
+const { formatProduct, track } = useTracking(); // ✅ TRACKING
 
-const route = useRoute()
-const { t } = useI18n()
-const { query } = route
-const { cart, paymentGateways } = useCart()
-const { customer, viewer } = useAuth()
-const { orderInput, isProcessingOrder, processCheckout, checkoutError, resolvePaymentMethodId } = useCheckout()
-const { setActiveGateway, isActiveGatewayReady, processActiveGatewayPayment, getActiveGatewayDisabledMessage, resetActiveGateway } = usePaymentGateways()
+const route = useRoute();
+const { t } = useI18n();
+const { query } = route;
+const { cart, paymentGateways } = useCart();
+const { customer, viewer } = useAuth();
+const { orderInput, isProcessingOrder, processCheckout, checkoutError, resolvePaymentMethodId } = useCheckout();
+const { setActiveGateway, isActiveGatewayReady, processActiveGatewayPayment, getActiveGatewayDisabledMessage, resetActiveGateway } = usePaymentGateways();
 
-const buttonText = ref<string>(isProcessingOrder.value ? t('general.processing') : t('shop.checkoutButton'))
-const checkoutPaymentGateways = paymentGateways
-const selectedPaymentMethodId = computed<string>(() => resolvePaymentMethodId(orderInput.value.paymentMethod))
+// ✅ TRACKING : Flags pour éviter les doublons d'envoi
+const hasTrackedBeginCheckout = ref(false);
+const hasTrackedPaymentInfo = ref(false);
+
+const buttonText = ref<string>(isProcessingOrder.value ? t('general.processing') : t('shop.checkoutButton'));
+const checkoutPaymentGateways = paymentGateways;
+const selectedPaymentMethodId = computed<string>(() => resolvePaymentMethodId(orderInput.value.paymentMethod));
 
 // --- Validation ---
-const isInvalidEmail = ref<boolean>(false)
-const isInvalidPhone = ref<boolean>(false)
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-const phoneRegex = /^(?:\+?212|0)[5-7]\d{8}$/
+const isInvalidEmail = ref<boolean>(false);
+const isInvalidPhone = ref<boolean>(false);
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const phoneRegex = /^(?:\+?212|0)[5-7]\d{8}$/;
 
-// --- État Local du Formulaire (Modifié : Nom complet au lieu de prénom/nom) ---
+// --- État Local du Formulaire ---
 const formData = reactive({
   billing: {
     email: '',
     phone: '',
-    fullName: '', // ✅ Remplace firstName et lastName
+    fullName: '',
     address1: '',
     city: '',
     country: 'MA' as any,
     postcode: '10000'
   },
   shipping: {
-    fullName: '', // ✅ Remplace firstName et lastName
+    fullName: '',
     address1: '',
     city: '',
     country: 'MA' as any,
     postcode: '10000'
   }
-})
+});
 
 // --- Villes du Maroc ---
 const MOROCCAN_CITIES = [
@@ -58,229 +63,332 @@ const MOROCCAN_CITIES = [
   'Smara - السمارة', 'Taourirt - تاوريرت', 'Tanger - طنجة', 'Taroudant - تارودانت',
   'Taza - تازة', 'Temsia - تمسية', 'Tétouan - تطوان', 'Tinghir - تنغير', 'Tiznit - تيزنيت',
   'Youssoufia - اليوسفية', 'Zagora - زاكورة'
-].sort((a, b) => a.localeCompare(b, 'fr'))
+].sort((a, b) => a.localeCompare(b, 'fr'));
 
 // --- Logique de Recherche de Ville ---
-const citySearch = ref('')
-const showCityDropdown = ref(false)
-const cityInputRef = ref<HTMLElement | null>(null)
+const citySearch = ref('');
+const showCityDropdown = ref(false);
+const cityInputRef = ref<HTMLElement | null>(null);
 
-const shippingCitySearch = ref('')
-const showShippingCityDropdown = ref(false)
-const shippingCityInputRef = ref<HTMLElement | null>(null)
+const shippingCitySearch = ref('');
+const showShippingCityDropdown = ref(false);
+const shippingCityInputRef = ref<HTMLElement | null>(null);
 
 const filteredCities = computed(() => {
-  const q = citySearch.value.toLowerCase().trim()
-  if (!q) return MOROCCAN_CITIES
-  return MOROCCAN_CITIES.filter((city) => city.toLowerCase().includes(q))
-})
-
-
+  const q = citySearch.value.toLowerCase().trim();
+  if (!q) return MOROCCAN_CITIES;
+  return MOROCCAN_CITIES.filter((city) => city.toLowerCase().includes(q));
+});
 
 const selectCity = (city: string, isShipping = false) => {
   if (isShipping) {
-    formData.shipping.city = city
-    shippingCitySearch.value = city
-    showShippingCityDropdown.value = false
+    formData.shipping.city = city;
+    shippingCitySearch.value = city;
+    showShippingCityDropdown.value = false;
   } else {
-    formData.billing.city = city
-    citySearch.value = city
-    showCityDropdown.value = false
+    formData.billing.city = city;
+    citySearch.value = city;
+    showCityDropdown.value = false;
   }
-}
+};
 
 const handleCityInput = (isShipping = false) => {
   if (isShipping) {
-    formData.shipping.city = ''
-    showShippingCityDropdown.value = true
+    formData.shipping.city = '';
+    showShippingCityDropdown.value = true;
   } else {
-    formData.billing.city = ''
-    showCityDropdown.value = true
+    formData.billing.city = '';
+    showCityDropdown.value = true;
   }
-}
+};
 
 // --- Viewer Logic ---
 type CheckoutViewerSummary = {
-  email?: string | null
-  firstName?: string | null
-  lastName?: string | null
-  databaseId?: number | null
-}
-const viewerSummary = computed<CheckoutViewerSummary | null>(() => viewer.value as CheckoutViewerSummary | null)
-const viewerEmail = computed<string>(() => customer.value?.billing?.email || viewerSummary.value?.email || '')
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  databaseId?: number | null;
+};
+const viewerSummary = computed<CheckoutViewerSummary | null>(() => viewer.value as CheckoutViewerSummary | null);
+const viewerEmail = computed<string>(() => customer.value?.billing?.email || viewerSummary.value?.email || '');
 
-// --- Initialisation ---
-onBeforeMount(() => {
-  if (query.cancel_order && typeof window !== 'undefined') window.close()
+// ==========================================
+// ✅ TRACKING : begin_checkout
+// ==========================================
+onMounted(() => {
+  if (query.cancel_order && typeof window !== 'undefined') window.close();
   
-  const billing = customer.value?.billing
+  const billing = customer.value?.billing;
   if (billing && !formData.billing.fullName) {
-    formData.billing.email = billing.email || viewerEmail.value || ''
-    formData.billing.phone = billing.phone || ''
-    // ✅ Combine prénom et nom en un seul champ
-    formData.billing.fullName = `${billing.firstName || ''} ${billing.lastName || ''}`.trim()
-    formData.billing.address1 = billing.address1 || ''
-    formData.billing.city = billing.city || ''
+    formData.billing.email = billing.email || viewerEmail.value || '';
+    formData.billing.phone = billing.phone || '';
+    formData.billing.fullName = `${billing.firstName || ''} ${billing.lastName || ''}`.trim();
+    formData.billing.address1 = billing.address1 || '';
+    formData.billing.city = billing.city || '';
     
-    citySearch.value = formData.billing.city
-    shippingCitySearch.value = formData.billing.city
+    citySearch.value = formData.billing.city;
+    shippingCitySearch.value = formData.billing.city;
   }
   
   if (!formData.shipping.fullName && formData.billing.fullName) {
-    formData.shipping = { ...formData.billing }
+    formData.shipping = { ...formData.billing };
   }
-})
+
+  // ✅ Déclenchement de begin_checkout une seule fois si le panier n'est pas vide
+  if (cart.value && !cart.value.isEmpty && !hasTrackedBeginCheckout.value) {
+    const cartItems = (cart.value.contents?.nodes || []).map((item: any) => {
+      const entity = item.variation || item.product;
+      return formatProduct(entity, Number(item.quantity) || 1);
+    });
+
+    const cartValue = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Nettoyage safe du total du panier (ex: "150,00 DH" -> 150)
+    const rawTotal = (cart.value as any).rawTotal || cart.value.total || '0';
+    const cartTotal = parseFloat(String(rawTotal).replace(/[^0-9.,]/g, '').replace(',', '.')) || cartValue;
+
+    track('begin_checkout', {
+      value: cartValue,
+      order_total: cartTotal,
+      items: cartItems
+    });
+    hasTrackedBeginCheckout.value = true;
+  }
+});
 
 // --- Shipping Logic ---
 const shipToDifferentAddress = computed<boolean>({
   get: () => !!orderInput.value.shipToDifferentAddress,
   set: (value) => {
-    orderInput.value.shipToDifferentAddress = value
+    orderInput.value.shipToDifferentAddress = value;
     if (!value) {
-      formData.shipping = { ...formData.billing }
-      shippingCitySearch.value = formData.billing.city
+      formData.shipping = { ...formData.billing };
+      shippingCitySearch.value = formData.billing.city;
     }
   },
-})
+});
 
-
-
-// --- Validation (Modifiée : Email retiré des champs obligatoires) ---
+// --- Validation ---
 const isCheckoutDisabled = computed<boolean>(() => {
-  if (isProcessingOrder.value || !selectedPaymentMethodId.value) return true
-  const b = formData.billing
-  // ✅ Email retiré, fullName ajouté
-  if (!b.phone || !b.fullName || !b.address1 || !b.city) return true
-  if (isInvalidEmail.value || isInvalidPhone.value) return true
+  if (isProcessingOrder.value || !selectedPaymentMethodId.value) return true;
+  const b = formData.billing;
+  if (!b.phone || !b.fullName || !b.address1 || !b.city) return true;
+  if (isInvalidEmail.value || isInvalidPhone.value) return true;
 
   if (shipToDifferentAddress.value) {
-    const s = formData.shipping
-    if (!s.fullName || !s.address1 || !s.city) return true
+    const s = formData.shipping;
+    if (!s.fullName || !s.address1 || !s.city) return true;
   }
-  return !isActiveGatewayReady.value
-})
+  return !isActiveGatewayReady.value;
+});
 
 watch(
   selectedPaymentMethodId,
   (gatewayId) => {
-    if (gatewayId) void setActiveGateway(gatewayId)
+    if (gatewayId) void setActiveGateway(gatewayId);
   },
   { immediate: true }
-)
+);
 
+// ==========================================
+// ✅ TRACKING : add_payment_info
+// ==========================================
 const handleGatewaySelect = (gateway: PaymentGateway): void => {
-  orderInput.value.paymentMethod = gateway
-  void setActiveGateway(gateway)
-}
+  orderInput.value.paymentMethod = gateway;
+  void setActiveGateway(gateway);
 
-// ✅ Validation Email modifiée pour autoriser le champ vide
+  // ✅ Déclenchement une seule fois quand un mode de paiement est validement sélectionné
+  if (!hasTrackedPaymentInfo.value && cart.value && !cart.value.isEmpty) {
+    const cartItems = (cart.value.contents?.nodes || []).map((item: any) => {
+      const entity = item.variation || item.product;
+      return formatProduct(entity, Number(item.quantity) || 1);
+    });
+
+    const cartValue = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const rawTotal = (cart.value as any).rawTotal || cart.value.total || '0';
+    const cartTotal = parseFloat(String(rawTotal).replace(/[^0-9.,]/g, '').replace(',', '.')) || cartValue;
+
+    track('add_payment_info', {
+      value: cartValue,
+      order_total: cartTotal,
+      items: cartItems,
+      payment_type: gateway.id || 'cash_on_delivery' // Utilise l'ID du gateway (ex: 'cod', 'bacs')
+    });
+    hasTrackedPaymentInfo.value = true;
+  }
+};
+
+// --- Validation Email/Phone ---
 const checkEmailOnBlur = () => {
-  isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email)
-}
+  isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email);
+};
 const checkEmailOnInput = () => {
   if (isInvalidEmail.value) {
-    isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email)
+    isInvalidEmail.value = formData.billing.email !== '' && !emailRegex.test(formData.billing.email);
   }
-}
+};
 
 const checkPhoneOnBlur = () => {
-  const clean = formData.billing.phone.replace(/\s+/g, '')
-  isInvalidPhone.value = !phoneRegex.test(clean)
-}
+  const clean = formData.billing.phone.replace(/\s+/g, '');
+  isInvalidPhone.value = !phoneRegex.test(clean);
+};
 const checkPhoneOnInput = () => {
   if (isInvalidPhone.value) {
-    const clean = formData.billing.phone.replace(/\s+/g, '')
-    isInvalidPhone.value = !phoneRegex.test(clean)
+    const clean = formData.billing.phone.replace(/\s+/g, '');
+    isInvalidPhone.value = !phoneRegex.test(clean);
   }
-}
+};
 
-// --- Soumission du Formulaire ---
 // --- Soumission du Formulaire ---
 const payNow = async () => {
-  buttonText.value = t('general.processing')
-  checkoutError.value = null
+  buttonText.value = t('general.processing');
+  checkoutError.value = null;
 
-  if (!orderInput.value) orderInput.value = {} as any
-  if (!orderInput.value.billing) orderInput.value.billing = {} as any
-  if (!orderInput.value.shipping) orderInput.value.shipping = {} as any
-  if (!customer.value) customer.value = {} as any
-  if (!customer.value.billing) customer.value.billing = {} as any
-  if (!customer.value.shipping) customer.value.shipping = {} as any
+  if (!orderInput.value) orderInput.value = {} as any;
+  if (!orderInput.value.billing) orderInput.value.billing = {} as any;
+  if (!orderInput.value.shipping) orderInput.value.shipping = {} as any;
+  if (!customer.value) customer.value = {} as any;
+  if (!customer.value.billing) customer.value.billing = {} as any;
+  if (!customer.value.shipping) customer.value.shipping = {} as any;
 
-  // ✅ CORRECTION CRUCIALE : 
- 
-  const { fullName: billingFullName, ...validBillingData } = formData.billing
-  const { fullName: shippingFullName, ...validShippingData } = formData.shipping
+  const { fullName: billingFullName, ...validBillingData } = formData.billing;
+  const { fullName: shippingFullName, ...validShippingData } = formData.shipping;
 
-  // On reconstruit l'objet pour l'API avec firstName = nom complet, et lastName vide
   const billingPayload = {
     ...validBillingData,
     firstName: billingFullName,
-    lastName: '' // Chaîne vide (plus propre qu'un espace pour WooCommerce)
-  }
+    lastName: ''
+  };
 
   const shippingPayload = {
     ...validShippingData,
     firstName: shippingFullName,
     lastName: ''
-  }
+  };
 
-  orderInput.value.billing = billingPayload
-  orderInput.value.shipping = shippingPayload
-  customer.value.billing = billingPayload
-  customer.value.shipping = shippingPayload
+  orderInput.value.billing = billingPayload;
+  orderInput.value.shipping = shippingPayload;
+  customer.value.billing = billingPayload;
+  customer.value.shipping = shippingPayload;
 
-  await setActiveGateway(orderInput.value.paymentMethod)
-  resetActiveGateway()
-  orderInput.value.transactionId = ''
+  await setActiveGateway(orderInput.value.paymentMethod);
+  resetActiveGateway();
+  orderInput.value.transactionId = '';
 
   if (isCheckoutDisabled.value) {
-    checkoutError.value = getActiveGatewayDisabledMessage() || 'Veuillez remplir tous les champs obligatoires.'
-    buttonText.value = t('shop.checkoutButton')
-    return
+    checkoutError.value = getActiveGatewayDisabledMessage() || 'Veuillez remplir tous les champs obligatoires.';
+    buttonText.value = t('shop.checkoutButton');
+    return;
   }
 
-  let paymentResult
+  let paymentResult;
   try {
-    paymentResult = await processActiveGatewayPayment()
+    paymentResult = await processActiveGatewayPayment();
     if (!paymentResult.success) {
-      checkoutError.value = paymentResult.error || 'Le paiement a échoué. Veuillez réessayer.'
-      buttonText.value = t('shop.checkoutButton')
-      return
+      checkoutError.value = paymentResult.error || 'Le paiement a échoué. Veuillez réessayer.';
+      buttonText.value = t('shop.checkoutButton');
+      return;
     }
   } catch (error) {
-    console.error('Checkout error:', error)
-    checkoutError.value = error instanceof Error ? error.message : 'Une erreur est survenue'
-    buttonText.value = t('shop.checkoutButton')
-    return
+    console.error('Checkout error:', error);
+    checkoutError.value = error instanceof Error ? error.message : 'Une erreur est survenue';
+    buttonText.value = t('shop.checkoutButton');
+    return;
   }
 
-  // Vérification de dernière seconde
   if (!orderInput.value.billing || !orderInput.value.billing.email) {
-    orderInput.value.billing = billingPayload
-    orderInput.value.shipping = shippingPayload
+    orderInput.value.billing = billingPayload;
+    orderInput.value.shipping = shippingPayload;
   }
+  
   const attributionMetaData = getOrderMetaData();
-
-  // Fusionner avec vos métadonnées existantes
   orderInput.value.metaData = [
     { key: 'order_via', value: 'WooNuxt' },
     ...attributionMetaData
   ];
 
-  await processCheckout(paymentResult.isPaid)
-}
+  
+
+  // ✅ TRACKING : Capturer les données du panier AVANT processCheckout
+  // Car processCheckout fait une redirection et le code suivant ne s'exécute pas
+   // ✅ TRACKING : Capturer les données du panier AVANT processCheckout
+  if (cart.value && !cart.value.isEmpty) {
+    const cleanAmount = (val: string | number | null | undefined) =>
+      parseFloat(String(val || '0').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+
+    const orderItems = (cart.value.contents?.nodes || []).map((item: any) => {
+      // ✅ Structure WooNuxt : item.product.node et item.variation.node
+      const productNode = item.product?.node || item.product || {};
+      const variationNode = item.variation?.node || item.variation || null;
+      
+      // Privilégie la variante si elle existe
+      const entity = variationNode?.databaseId ? variationNode : productNode;
+
+      const lineTotal = cleanAmount(item.subtotal || item.total);
+      const qty = Number(item.quantity) || 1;
+      const unitPrice = lineTotal / qty;
+
+      return formatProduct(
+        { ...entity, rawSalePrice: unitPrice, rawRegularPrice: unitPrice },
+        qty
+      );
+    });
+
+    const orderDataForTracking = {
+      subtotal: cleanAmount(cart.value.subtotal),
+      total: cleanAmount(cart.value.total),
+      totalTax: cleanAmount((cart.value as any).totalTax),
+      shippingTotal: cleanAmount(cart.value.shippingTotal),
+      items: orderItems
+    };
+
+    sessionStorage.setItem('pending_order_tracking', JSON.stringify(orderDataForTracking));
+    console.log('✅ Données de commande stockées pour tracking:', orderDataForTracking);
+  }
+  // ✅ Exécution du checkout (fait la redirection vers /order-confirmation/[id])
+  await processCheckout(paymentResult.isPaid);
+
+
+
+  // ✅ TRACKING : Capturer les données depuis la réponse du checkout
+
+  
+  /* 
+   * ⚠️ NOTE IMPORTANTE SUR L'ÉVÉNEMENT `purchase` :
+   * Si `processCheckout` redirige vers une page de confirmation (ex: /order-confirmation/[id]), 
+   * l'événement `purchase` doit être placé sur CETTE page de confirmation en lisant l'ID de commande 
+   * depuis l'URL ou le payload, pour éviter les doublons en cas de rafraîchissement.
+   * 
+   * Si `processCheckout` renvoie directement l'objet commande avec succès ici, vous pouvez décommenter :
+   * 
+   * if (checkoutResult?.success && checkoutResult?.order) {
+   *   const order = checkoutResult.order;
+   *   const orderItems = (order.items || []).map((item: any) => formatProduct(item, item.quantity));
+   *   
+   *   track('purchase', {
+   *     transaction_id: String(order.number || order.id),
+   *     value: Number(order.itemsTotalExTax || 0),
+   *     shipping: Number(order.shippingExTax || 0),
+   *     tax: Number(order.totalTax || 0),
+   *     order_total: Number(order.total || 0),
+   *     coupon: order.couponCode || '',
+   *     items: orderItems
+   *   });
+   * }
+   */
+
+  buttonText.value = t('shop.checkoutButton');
+};
 
 // Gestion du clic en dehors des dropdowns
 const handleClickOutside = (e: MouseEvent) => {
-  if (cityInputRef.value && !cityInputRef.value.contains(e.target as Node)) showCityDropdown.value = false
-  if (shippingCityInputRef.value && !shippingCityInputRef.value.contains(e.target as Node)) showShippingCityDropdown.value = false
-}
+  if (cityInputRef.value && !cityInputRef.value.contains(e.target as Node)) showCityDropdown.value = false;
+  if (shippingCityInputRef.value && !shippingCityInputRef.value.contains(e.target as Node)) showShippingCityDropdown.value = false;
+};
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
-useSeoMeta({ title: t('shop.checkout') })
+useSeoMeta({ title: t('shop.checkout') });
 </script>
 
 <template>

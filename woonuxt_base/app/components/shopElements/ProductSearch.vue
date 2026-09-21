@@ -1,5 +1,10 @@
 <script setup>
+// ✅ 1. Import du composable de tracking (si l'auto-import ne fonctionne pas, décommentez la ligne)
+// import { useTracking } from '~/composables/useTracking';
+
 const { getSearchQuery, setSearchQuery, clearSearchQuery } = useSearching();
+const { track } = useTracking(); // ✅ 2. Initialisation
+
 const searchQuery = ref(getSearchQuery());
 
 const reset = () => {
@@ -15,7 +20,19 @@ watch(
 );
 
 const handleSubmit = () => {
-  setSearchQuery(searchQuery.value);
+  // ✅ 3. Nettoyer la requête (enlever les espaces avant/après)
+  const query = searchQuery.value.trim();
+
+  // ✅ 4. Ne tracker que si la recherche fait au moins 2 caractères
+  if (query.length > 1) {
+    track('search', null, {
+      search_term: query
+    });
+    console.log('🔍 GA4 search tracked:', query);
+  }
+
+  // ✅ 5. Déclencher la recherche (même si c'est 1 caractère, on laisse le site gérer)
+  setSearchQuery(query);
 };
 </script>
 

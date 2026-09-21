@@ -9,9 +9,8 @@ const { frontEndUrl, getErrorMessage } = useHelpers();
 const { t } = useI18n();
 const gql = useWooGraphQL();
 
-// ✅ 1. Récupération du seuil de livraison gratuite depuis les variables d'environnement
-//const config = useRuntimeConfig();
-//onst freeShippingThreshold = Number(config.public.freeShippingThreshold || 500);
+// ✅ 1. INITIALISATION DU TRACKING (Tout en haut)
+const { formatProduct, track } = useTracking();
 
 const slug = route.params.slug as string;
 
@@ -130,6 +129,9 @@ const isVariableProduct = computed<boolean>(() => product.value?.type === Produc
 const isExternalProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.External);
 const shouldSkipStockRefresh = computed<boolean>(() => isExternalProduct.value);
 
+// ==========================================
+// ✅ 2. DÉCLARATION DES COMPUTED (AVANT LES WATCHERS)
+// ==========================================
 const displayProduct = computed<ProductDetail | Variation>(() => activeVariation.value || product.value!);
 const priceTarget = computed<ProductDetail | Variation>(() => activeVariation.value || product.value!);
 const productImage = computed(() => product.value?.image || null);
@@ -144,16 +146,61 @@ const selectProductInput = computed<AddToCartInput>(() => {
   return input;
 });
 
+// ==========================================
+// ✅ 3. WATCHERS DE TRACKING (MAINTENANT SÉCURISÉS)
+// ==========================================
+let hasTrackedViewItem = false;
+
+watch(() => displayProduct.value?.databaseId, (newId) => {
+  if (newId && !hasTrackedViewItem) {
+    const item = formatProduct(displayProduct.value!, 1);
+    track('view_item', {
+      value: item.price,
+      items: [item]
+    });
+    hasTrackedViewItem = true;
+  }
+}, { immediate: true });
+
+watch(() => route.fullPath, () => {
+  hasTrackedViewItem = false;
+});
+
+// ==========================================
+// 4. FONCTIONS ET ACTIONS
+// ==========================================
 const handleAddToCart = async (): Promise<void> => {
   if (!product.value) return;
-  await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-  toggleCart(true);
+  
+  const item = formatProduct(displayProduct.value, quantity.value);
+
+  try {
+    await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
+    
+    track('add_to_cart', {
+      value: item.price * quantity.value,
+      items: [item]
+    });
+    
+    toggleCart(true);
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout au panier:', error);
+  }
 };
 
 const handleBuyNow = async (): Promise<void> => {
   if (!product.value) return;
+  
+  const item = formatProduct(displayProduct.value, quantity.value);
+
   try {
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
+    
+    track('add_to_cart', {
+      value: item.price * quantity.value,
+      items: [item]
+    });
+    
     await navigateTo('/checkout');
   } catch (error) {
     console.error('Erreur lors de l\'achat immédiat:', error);
@@ -165,6 +212,7 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
   attrValues.value = variations.map((el) => ({ attributeName: el.name || '', attributeValue: el.value }));
   activeVariation.value = findMatchingVariation(variations);
   variation.value = variations;
+  
   if (import.meta.client) {
     const query: Record<string, string> = {};
     variations.forEach((v) => { if (v.name && v.value) query[v.name] = v.value; });
@@ -213,9 +261,6 @@ const disabledAddToCart = computed(() => {
 
 const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
 
-// ==========================================
-// ✅ CALCUL DE L'ÉCONOMIE (Badge promotion)
-// ==========================================
 const savingsAmount = computed(() => {
   const target = priceTarget.value as any;
   if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
@@ -226,20 +271,12 @@ const savingsAmount = computed(() => {
   return Math.max(0, regular - sale);
 });
 
-// ==========================================
-// ✅ CALCUL LIVRAISON GRATUITE
-// ==========================================
-
-
-// ==========================================
-// Lien WhatsApp
-// ==========================================
 const whatsappNumber = process.env.WTSP_PHONE || '212664612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
-</script>
 
+</script>
 <template>
   <main class="container relative py-6 xl:max-w-7xl">
     <div v-if="product">

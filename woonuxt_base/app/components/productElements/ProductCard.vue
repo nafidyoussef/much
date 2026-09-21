@@ -3,7 +3,7 @@ import type { Product } from '#types/gql';
 
 useAppConfig();
 const { addToCart, toggleCart } = useCart();
-
+const { formatProduct, track } = useTracking(); // ✅ AJOUT DU TRACKING
 
 const props = defineProps({
   node: { type: Object as PropType<Product>, required: true },
@@ -36,11 +36,7 @@ const discountPercentage = computed(() => {
   return null;
 });
 
-// ✅ 2. Calcul du prix actuel (pour vérifier le seuil de livraison gratuite)
-
-
-// ✅ 3. Condition d'affichage du badge
-
+// ✅ TRACKING : Ajout au panier depuis la carte produit
 const handleAddToCart = async (event: Event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -52,7 +48,17 @@ const handleAddToCart = async (event: Event) => {
 
   isAdding.value = true;
   try {
+    // 1. Appel à l'API pour ajouter au panier
     await addToCart({ productId: props.node.databaseId, quantity: 1 });
+    
+    // 2. ✅ Tracker l'événement GA4 après succès
+    const item = formatProduct(props.node, 1);
+    track('add_to_cart', {
+      value: item.price * 1,
+      items: [item]
+    });
+    
+    // 3. Ouvrir le panier latéral
     toggleCart(true); 
   } catch (error) {
     console.error('Failed to add to cart:', error);
@@ -75,7 +81,6 @@ const isButtonDisabled = computed(() => {
   return props.node.__typename === 'SimpleProduct' && props.node.stockStatus === 'OUT_OF_STOCK';
 });
 </script>
-
 <template>
   <div class="relative group w-full mt-0 px-0 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
     
