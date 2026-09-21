@@ -5,15 +5,11 @@ const currentSlide = ref(0);
 
 const slides = [
   {
-    image: '/images/maison-pc-1.webp',
+    image: 'Hero-1.webp',
     alt: 'Collection Nouveau Année'
   },
   {
-    image: '/images/maison-pc-1.webp',
-    alt: 'Collection Nouveau Année'
-  },
-  {
-    image: '/images/maison-pc-1.webp',
+    image: 'Hero-1.webp',
     alt: 'Collection Nouveau Année'
   }
 ];
