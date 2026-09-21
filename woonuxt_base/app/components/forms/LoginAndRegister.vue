@@ -1,61 +1,3 @@
-<template>
-  <div class="flex flex-col justify-center max-w-lg mx-auto my-16 text-center min-h-150 align-center">
-    <div class="flex flex-col my-8">
-      <h1 class="text-xl font-semibold text-gray-900 lg:text-3xl">{{ formTitle }}</h1>
-      <p v-if="formView === FormView.LOGIN" class="mt-2 text-gray-500">
-        {{ $t('account.noAccount') }}
-        <a class="font-semibold cursor-pointer text-primary hover:underline" @click="navigate(FormView.REGISTER)"> {{ $t('account.accountRegister') }} </a>.
-      </p>
-      <p v-else-if="formView === FormView.REGISTER" class="mt-2 text-gray-500">
-        {{ $t('account.hasAccount') }}
-        <a class="cursor-pointer text-primary text-semibold hover:underline" @click="navigate(FormView.LOGIN)">Sign in</a>.
-      </p>
-    </div>
-
-    <LoginProviders v-if="formView === FormView.LOGIN || formView === FormView.REGISTER" class="mb-8" />
-
-    <form @submit.prevent="handleFormSubmit(userInfo)">
-      <p v-if="formView === FormView.FORGOT_PASSWORD" class="mb-8 text-sm text-gray-500">{{ $t('account.enterEmailOrUsernameForReset') }}</p>
-      <input
-        v-if="formView === FormView.REGISTER || formView === FormView.FORGOT_PASSWORD"
-        id="email"
-        v-model="userInfo.email"
-        :placeholder="inputPlaceholder.email"
-        autocomplete="email"
-        type="text"
-        required />
-      <div v-if="formView !== FormView.FORGOT_PASSWORD">
-        <input v-model="userInfo.username" :placeholder="inputPlaceholder.username" autocomplete="username" type="text" required />
-        <PasswordInput
-          v-model="userInfo.password"
-          :placeholder="passwordLabel"
-          :autocomplete="formView === FormView.LOGIN ? 'current-password' : 'new-password'"
-          :required="true" />
-      </div>
-      <Transition name="scale-y" mode="out-in">
-        <div v-if="message" class="my-4 text-sm text-green-500" v-html="message"></div>
-      </Transition>
-
-      <!-- Login button -->
-      <Button :loading="isPending" type="submit" class="my-6 text-lg">
-        {{ buttonText }}
-      </Button>
-
-      <div v-if="formView === FormView.LOGIN" class="flex items-center justify-between mt-4">
-        <div class="text-sm font-semibold cursor-pointer text-primary hover:underline" @click="navigate(FormView.FORGOT_PASSWORD)">Forgot password?</div>
-      </div>
-    </form>
-
-    <div v-if="formView === FormView.FORGOT_PASSWORD" class="my-8 text-center cursor-pointer text-primary hover:underline" @click="navigate(FormView.LOGIN)">
-      {{ $t('account.backToLogin') }}
-    </div>
-
-    <Transition name="scale-y" mode="out-in">
-      <div v-if="errorMessage" class="my-4 text-sm text-red-500" v-html="errorMessage"></div>
-    </Transition>
-  </div>
-</template>
-
 <script setup lang="ts">
 import type { UserInfo } from '#types/gql';
 
@@ -63,6 +5,9 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { loginUser, isPending, registerUser, sendResetPasswordEmail } = useAuth();
+
+// ✅ Import du tracking (auto-importé par Nuxt si le fichier est dans /composables)
+const { track } = useTracking();
 
 enum FormView {
   LOGIN = 'login',
@@ -76,7 +21,6 @@ const message = ref<string>('');
 const errorMessage = ref<string>('');
 
 const updateFormView = () => {
-  // Reset error message on view change
   errorMessage.value = '';
 
   if (route.query.action === FormView.FORGOT_PASSWORD) {
@@ -87,6 +31,7 @@ const updateFormView = () => {
     formView.value = FormView.LOGIN;
   }
 };
+
 watch(route, updateFormView, { immediate: true });
 
 const login = async (userInfo: UserInfo) => {
@@ -112,7 +57,11 @@ const login = async (userInfo: UserInfo) => {
 const handleFormSubmit = async (userInfo: UserInfo) => {
   if (formView.value === FormView.REGISTER) {
     const { success, error } = await registerUser(userInfo);
+    
     if (success) {
+      // ✅ TRACKING : Déclenché uniquement si l'inscription a réussi
+      track('sign_up');
+
       errorMessage.value = '';
       message.value = t('account.accountCreated') + ' ' + t('account.loggingIn');
       setTimeout(() => {
@@ -181,6 +130,64 @@ const inputPlaceholder = computed(() => {
   };
 });
 </script>
+<template>
+  <div class="flex flex-col justify-center max-w-lg mx-auto my-16 text-center min-h-150 align-center">
+    <div class="flex flex-col my-8">
+      <h1 class="text-xl font-semibold text-gray-900 lg:text-3xl">{{ formTitle }}</h1>
+      <p v-if="formView === FormView.LOGIN" class="mt-2 text-gray-500">
+        {{ $t('account.noAccount') }}
+        <a class="font-semibold cursor-pointer text-primary hover:underline" @click="navigate(FormView.REGISTER)"> {{ $t('account.accountRegister') }} </a>.
+      </p>
+      <p v-else-if="formView === FormView.REGISTER" class="mt-2 text-gray-500">
+        {{ $t('account.hasAccount') }}
+        <a class="cursor-pointer text-primary text-semibold hover:underline" @click="navigate(FormView.LOGIN)">Sign in</a>.
+      </p>
+    </div>
+
+    <LoginProviders v-if="formView === FormView.LOGIN || formView === FormView.REGISTER" class="mb-8" />
+
+    <form @submit.prevent="handleFormSubmit(userInfo)">
+      <p v-if="formView === FormView.FORGOT_PASSWORD" class="mb-8 text-sm text-gray-500">{{ $t('account.enterEmailOrUsernameForReset') }}</p>
+      <input
+        v-if="formView === FormView.REGISTER || formView === FormView.FORGOT_PASSWORD"
+        id="email"
+        v-model="userInfo.email"
+        :placeholder="inputPlaceholder.email"
+        autocomplete="email"
+        type="text"
+        required />
+      <div v-if="formView !== FormView.FORGOT_PASSWORD">
+        <input v-model="userInfo.username" :placeholder="inputPlaceholder.username" autocomplete="username" type="text" required />
+        <PasswordInput
+          v-model="userInfo.password"
+          :placeholder="passwordLabel"
+          :autocomplete="formView === FormView.LOGIN ? 'current-password' : 'new-password'"
+          :required="true" />
+      </div>
+      <Transition name="scale-y" mode="out-in">
+        <div v-if="message" class="my-4 text-sm text-green-500" v-html="message"></div>
+      </Transition>
+
+      <!-- Login button -->
+      <Button :loading="isPending" type="submit" class="my-6 text-lg">
+        {{ buttonText }}
+      </Button>
+
+      <div v-if="formView === FormView.LOGIN" class="flex items-center justify-between mt-4">
+        <div class="text-sm font-semibold cursor-pointer text-primary hover:underline" @click="navigate(FormView.FORGOT_PASSWORD)">Forgot password?</div>
+      </div>
+    </form>
+
+    <div v-if="formView === FormView.FORGOT_PASSWORD" class="my-8 text-center cursor-pointer text-primary hover:underline" @click="navigate(FormView.LOGIN)">
+      {{ $t('account.backToLogin') }}
+    </div>
+
+    <Transition name="scale-y" mode="out-in">
+      <div v-if="errorMessage" class="my-4 text-sm text-red-500" v-html="errorMessage"></div>
+    </Transition>
+  </div>
+</template>
+
 
 <style scoped>
 @reference "#tailwind";

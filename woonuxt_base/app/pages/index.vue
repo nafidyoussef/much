@@ -10,7 +10,21 @@ useHead({
   link: [
     { rel: 'preconnect', href: 'https://api.much.ma', crossorigin: '' },
     { rel: 'dns-prefetch', href: 'https://api.much.ma' }
+  ],
+  meta: [
+    { name: 'facebook-domain-verification', content: '4fxkoiju8mbw77jhhhdekd9tk9ft2m' }
   ]
+});
+// ==========================================
+// 8. SEO
+// ==========================================
+useSeoMeta({
+  title: `Accueil`,
+  ogTitle: siteName,
+  description: description,
+  ogDescription: shortDescription,
+  ogImage: siteImage,
+  twitterCard: `summary_large_image`
 });
 
 // ✅ CORRECTION VERCEL : Ne charger le script que en PRODUCTION
