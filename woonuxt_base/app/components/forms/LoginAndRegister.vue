@@ -6,7 +6,7 @@ const route = useRoute();
 const router = useRouter();
 const { loginUser, isPending, registerUser, sendResetPasswordEmail } = useAuth();
 
-// ✅ Import du tracking (auto-importé par Nuxt si le fichier est dans /composables)
+// ✅ Import du tracking
 const { track } = useTracking();
 
 enum FormView {
@@ -34,8 +34,10 @@ const updateFormView = () => {
 
 watch(route, updateFormView, { immediate: true });
 
+// ✅ FONCTION DE CONNEXION AVEC TRACKING
 const login = async (userInfo: UserInfo) => {
   const { success, error } = await loginUser(userInfo);
+  
   switch (error) {
     case 'invalid_username':
       errorMessage.value = t('error.invalidUsername');
@@ -51,6 +53,9 @@ const login = async (userInfo: UserInfo) => {
   if (success) {
     errorMessage.value = '';
     message.value = t('account.loggingIn');
+    
+    // ✅ TRACKING : Déclenché UNIQUEMENT si la connexion a réussi
+    track('login'); 
   }
 };
 
@@ -59,13 +64,13 @@ const handleFormSubmit = async (userInfo: UserInfo) => {
     const { success, error } = await registerUser(userInfo);
     
     if (success) {
-      // ✅ TRACKING : Déclenché uniquement si l'inscription a réussi
+      // ✅ TRACKING INSCRIPTION
       track('sign_up');
 
       errorMessage.value = '';
       message.value = t('account.accountCreated') + ' ' + t('account.loggingIn');
       setTimeout(() => {
-        login(userInfo);
+        login(userInfo); // Cela déclenchera aussi l'événement 'login', ce qui est logique
       }, 2000);
     } else {
       errorMessage.value = error ?? '';
