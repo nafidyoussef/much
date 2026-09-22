@@ -2,8 +2,7 @@
 const currentSlide = ref(0); // 0 = slide statique visible par défaut
 
 const nextSlides = [
-  { image: '/Hero-2.webp', alt: 'Collection Nouveau Année' },
-  { image: '/Hero-3.webp', alt: 'Collection Nouveau Année' },
+  
 ];
 
 useHead({
@@ -42,19 +41,7 @@ onUnmounted(() => { if (timer) clearInterval(timer); });
       />
 
       <!-- Slides JS uniquement -->
-      <div
-        v-for="(slide, i) in nextSlides"
-        :key="slide.image"
-        class="absolute inset-0 transition-opacity duration-700"
-        :class="currentSlide === i + 1 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
-      >
-        <img
-          :src="slide.image" :alt="slide.alt"
-          width="1320" height="600"
-          class="h-full w-full object-cover"
-          loading="lazy" decoding="async"
-        />
-      </div>
+     
 
     </div>
   </div>
