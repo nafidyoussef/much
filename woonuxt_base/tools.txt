@@ -1,0 +1,39 @@
+# =================================================================
+# 1. CONFIGURATION CORS DYNAMIQUE (Gère www et non-www)
+# =================================================================
+<IfModule mod_headers.c>
+    # Capture l'origine exacte (https://much.ma OU https://www.much.ma)
+    SetEnvIf Origin "^(https://(?:www\.)?much\.ma)$" ACCESS_CONTROL_ALLOW_ORIGIN=$1
+    
+    # Applique les en-têtes uniquement si l'origine correspond exactement
+    Header always set Access-Control-Allow-Origin "%{ACCESS_CONTROL_ALLOW_ORIGIN}e" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    # J'ai ajouté 'woocommerce-session' car il apparaît dans vos en-têtes
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-WP-Nonce, Accept, X-Requested-With, woocommerce-session" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true" env=ACCESS_CONTROL_ALLOW_ORIGIN
+</IfModule>
+
+# =================================================================
+# 2. GESTION DES REQUÊTES PREFLIGHT (OPTIONS)
+# =================================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Répondre immédiatement 200 OK aux requêtes OPTIONS
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ - [R=200,L]
+</IfModule>
+
+# =================================================================
+# 3. RÈGLES STANDARDS WORDPRESS
+# =================================================================
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress

@@ -62,7 +62,7 @@ onUnmounted(() => {
           decoding="async"
         />
 
-        <!-- ✅ SLIDES SUIVANTES : NuxtPicture ou img lazy -->
+        
         <!-- Les autres images peuvent utiliser NuxtPicture car elles ne sont pas le LCP -->
         <NuxtPicture
           v-else
