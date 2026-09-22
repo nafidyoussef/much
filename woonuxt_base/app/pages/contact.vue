@@ -9,7 +9,7 @@ const contactInfo = [
     icon: 'ion:logo-whatsapp',
     title: 'WhatsApp',
     value: '+212 6 64 61 20 98',
-    link: 'https://wa.me/212664612098',
+    link: 'https://wa.me/212660612098',
     description: 'Réponse en moins de 2h',
     color: 'bg-[#25D366]/10 text-[#25D366]'
   },
@@ -17,7 +17,7 @@ const contactInfo = [
     icon: 'ion:call',
     title: 'Téléphone',
     value: '+212 6 64 61 20 98',
-    link: 'tel:+212664612098',
+    link: 'tel:+212660612098',
     description: 'Lun - Sam, 9h - 18h',
     color: 'bg-blue-50 text-blue-600'
   },
@@ -73,7 +73,7 @@ const submitForm = async () => {
 
     // ✅ Option 1 : Envoyer via WhatsApp
     const whatsappMessage = `Bonjour Much,\n\nNom: ${formData.name}\nEmail: ${formData.email}\nTéléphone: ${formData.phone}\nSujet: ${formData.subject}\n\nMessage:\n${formData.message}`;
-    window.open(`https://wa.me/212664612098?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
+    window.open(`https://wa.me/212660612098?text=${encodeURIComponent(whatsappMessage)}`, '_blank');
 
     isSubmitted.value = true;
 
@@ -341,7 +341,7 @@ useSeoMeta({
 
             <!-- CTA WhatsApp -->
             <a 
-              href="https://wa.me/212664612098" 
+              href="https://wa.me/212660612098" 
               target="_blank"
               rel="noopener noreferrer"
               class="block bg-[#25D366] rounded-2xl p-6 text-white text-center hover:bg-[#20bd5a] transition-all duration-300 shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/30 hover:-translate-y-0.5"

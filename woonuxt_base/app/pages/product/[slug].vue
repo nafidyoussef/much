@@ -271,7 +271,7 @@ const savingsAmount = computed(() => {
   return Math.max(0, regular - sale);
 });
 
-const whatsappNumber = process.env.WTSP_PHONE || '212664612098';
+const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);

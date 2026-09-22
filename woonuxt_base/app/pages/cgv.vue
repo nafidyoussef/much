@@ -253,7 +253,7 @@ const lastUpdated = '7 août 2026';
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
           <a 
-            href="https://wa.me/212664612098?text=Bonjour%2C%20j%27ai%20une%20question%20concernant%20vos%20conditions%20g%C3%A9n%C3%A9rales%20de%20vente"
+            href="https://wa.me/212660612098?text=Bonjour%2C%20j%27ai%20une%20question%20concernant%20vos%20conditions%20g%C3%A9n%C3%A9rales%20de%20vente"
             target="_blank"
             class="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#ff4f24] font-bold rounded-xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
