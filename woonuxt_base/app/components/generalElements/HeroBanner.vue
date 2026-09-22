@@ -3,20 +3,34 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 const currentSlide = ref(0);
 
+// ✅ CORRECTION 1 : Ajout du slash '/' au début pour un chemin absolu depuis le dossier 'public'
 const slides = [
   {
-    image: 'Hero-1.webp',
+    image: '/Hero-1.webp', 
     alt: 'Collection Nouveau Année'
   },
   {
-    image: 'Hero-1.webp',
+    image: '/Hero-1.webp', // Pensez à changer les noms si vous avez Hero-2.webp, etc.
     alt: 'Collection Nouveau Année'
   },
   {
-    image: 'Hero-1.webp',
+    image: '/Hero-1.webp',
     alt: 'Collection Nouveau Année'
   }
 ];
+
+// ✅ CORRECTION 2 : Forcer le préchargement de l'image LCP au niveau du <head>
+// Cela garantit que le navigateur télécharge l'image AVANT même de lire le HTML du slider
+useHead({
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: slides[0]!.image,
+      fetchpriority: 'high'
+    }
+  ]
+});
 
 const nextSlide = () => {
   currentSlide.value = (currentSlide.value + 1) % slides.length;
@@ -48,8 +62,7 @@ onUnmounted(() => {
         :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
       >
         
-        <!-- ✅ SLIDE 1 (LCP) : Balise <img> NATIVE -->
-        <!-- On retire NuxtPicture pour la première image. Une <img> native est parsée instantanément par le navigateur sans attendre le JS -->
+        <!-- ✅ SLIDE 1 (LCP) : Balise <img> NATIVE optimisée -->
         <img
           v-if="index === 0"
           :src="slide.image"
@@ -62,8 +75,7 @@ onUnmounted(() => {
           decoding="async"
         />
 
-        
-        <!-- Les autres images peuvent utiliser NuxtPicture car elles ne sont pas le LCP -->
+        <!-- Les autres images utilisent NuxtPicture -->
         <NuxtPicture
           v-else
           width="1320"
@@ -79,26 +91,22 @@ onUnmounted(() => {
   </div>
 </template>
 
-
-
 <style scoped>
+/* Votre style marquee (non utilisé dans ce template, mais conservé au cas où) */
 .marquee-container {
   width: 100%;
   overflow: hidden;
   contain: strict;
 }
-
 .marquee-content {
   display: flex;
   will-change: transform;
   animation: marquee 25s linear infinite;
 }
-
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-
 .marquee-container:hover .marquee-content {
   animation-play-state: paused;
 }
