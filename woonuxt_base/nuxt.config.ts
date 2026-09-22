@@ -140,4 +140,14 @@ export default defineNuxtConfig({
     defaultLocale: 'fr_FR',
     strategy: 'no_prefix',
   },
+  routeRules: {
+    // Proxy toutes les requêtes commençant par /wp-json/ vers l'API
+    '/wp-json/**': { 
+      proxy: 'https://api.much.ma/wp-json/**',
+      // Optionnel : si vous avez besoin de passer des headers spécifiques
+      headers: {
+        'X-Forwarded-Host': 'much.ma'
+      }
+    }
+  }
 });
