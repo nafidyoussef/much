@@ -1,7 +1,7 @@
 
 <script setup lang="ts">
 import type { PaymentGateway } from '#types/gql';
-
+import moroccanCitiesData from '~/assets/data/moroccan-cities.json';
 
 const { getOrderMetaData } = useOrderAttribution();
 const { formatProduct, track } = useTracking(); // ✅ TRACKING
@@ -49,21 +49,9 @@ const formData = reactive({
 });
 
 // --- Villes du Maroc ---
-const MOROCCAN_CITIES = [
-  'Agadir - أكادير', 'Al Hoceima - الحسيمة', 'Azrou - أزرو', 'Beni Ansar - بني أنصار',
-  'Beni Mellal - بني ملال', 'Berkane - بركان', 'Berrechid - برشيد', 'Boujdour - بوجدور',
-  'Casablanca - الدار البيضاء', 'Chefchaouen - شفشاون', 'Dakhla - الداخلة', 'El Jadida - الجديدة',
-  'Errachidia - الرشيدية', 'Essaouira - الصويرة', 'Fès - فاس', 'Guelmim - كلميم',
-  'Ifrane - إفران', 'Inezgane - إنزكان', 'Kénitra - القنيطرة', 'Khemisset - الخميسات',
-  'Khenifra - خنيفرة', 'Khouribga - خريبكة', 'Laâyoune - العيون', 'Larache - العرائش',
-  'Marrakech - مراكش', 'Meknès - مكناس', 'Midelt - ميدلت', 'Mohammedia - المحمدية',
-  'Nador - الناضور', 'Ouarzazate - ورزازات', 'Ouezzane - وزان', 'Oujda - وجدة',
-  'Oulad Teima - أولاد تايمة', 'Rabat - الرباط', 'Safi - آسفي', 'Sefrou - صفرو',
-  'Settat - سطات', 'Sidi Ifni - سيدي إفني', 'Sidi Kacem - سيدي قاسم', 'Sidi Slimane - سيدي سليمان',
-  'Smara - السمارة', 'Taourirt - تاوريرت', 'Tanger - طنجة', 'Taroudant - تارودانت',
-  'Taza - تازة', 'Temsia - تمسية', 'Tétouan - تطوان', 'Tinghir - تنغير', 'Tiznit - تيزنيت',
-  'Youssoufia - اليوسفية', 'Zagora - زاكورة'
-].sort((a, b) => a.localeCompare(b, 'fr'));
+const MOROCCAN_CITIES = (moroccanCitiesData as any[]).sort((a, b) => 
+  a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' })
+);
 
 // --- Logique de Recherche de Ville ---
 const citySearch = ref('');
@@ -76,9 +64,21 @@ const shippingCityInputRef = ref<HTMLElement | null>(null);
 
 const filteredCities = computed(() => {
   const q = citySearch.value.toLowerCase().trim();
-  if (!q) return MOROCCAN_CITIES;
-  return MOROCCAN_CITIES.filter((city) => city.toLowerCase().includes(q));
+  
+  // Recherche avancée dans le nom, le displayName ET les alias
+  const results = MOROCCAN_CITIES.filter((city) => {
+    if (!q) return true;
+    const matchName = city.name?.toLowerCase().includes(q);
+    const matchDisplayName = city.displayName?.toLowerCase().includes(q);
+    const matchAlias = city.aliases?.some((alias: string) => alias.toLowerCase().includes(q));
+    return matchName || matchDisplayName || matchAlias;
+  });
+
+  // ⚠️ IMPORTANT : On retourne un tableau de strings (les displayNames) 
+  // pour que votre template (v-for="city in filteredCities") continue de fonctionner sans aucune modification.
+  return results.slice(0, 50).map(city => city.displayName);
 });
+
 
 const selectCity = (city: string, isShipping = false) => {
   if (isShipping) {
@@ -101,7 +101,6 @@ const handleCityInput = (isShipping = false) => {
     showCityDropdown.value = true;
   }
 };
-
 // --- Viewer Logic ---
 type CheckoutViewerSummary = {
   email?: string | null;
