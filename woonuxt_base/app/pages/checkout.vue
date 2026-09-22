@@ -54,18 +54,23 @@ const MOROCCAN_CITIES = (moroccanCitiesData as any[]).sort((a, b) =>
 );
 
 // --- Logique de Recherche de Ville ---
+// --- Logique de Recherche de Ville ---
+// ✅ citySearch = ce qui est AFFICHÉ dans le champ principal (vide au départ)
+// ✅ searchQuery = ce qu'on TAPE dans le dropdown pour filtrer
 const citySearch = ref('');
+const searchQuery = ref('');
 const showCityDropdown = ref(false);
 const cityInputRef = ref<HTMLElement | null>(null);
 
 const shippingCitySearch = ref('');
+const shippingSearchQuery = ref('');
 const showShippingCityDropdown = ref(false);
 const shippingCityInputRef = ref<HTMLElement | null>(null);
 
+// ✅ Le filtre utilise searchQuery (pas citySearch)
 const filteredCities = computed(() => {
-  const q = citySearch.value.toLowerCase().trim();
+  const q = searchQuery.value.toLowerCase().trim();
   
-  // Recherche avancée dans le nom, le displayName ET les alias
   const results = MOROCCAN_CITIES.filter((city) => {
     if (!q) return true;
     const matchName = city.name?.toLowerCase().includes(q);
@@ -74,33 +79,50 @@ const filteredCities = computed(() => {
     return matchName || matchDisplayName || matchAlias;
   });
 
-  // ⚠️ IMPORTANT : On retourne un tableau de strings (les displayNames) 
-  // pour que votre template (v-for="city in filteredCities") continue de fonctionner sans aucune modification.
-  return results.slice(0, 50).map(city => city.displayName);
+
+
+  return results.slice(0, 50);
 });
 
-
-const selectCity = (city: string, isShipping = false) => {
+// ✅ selectCity : remplit citySearch SEULEMENT à la sélection
+const selectCity = (city: any, isShipping = false) => {
   if (isShipping) {
-    formData.shipping.city = city;
-    shippingCitySearch.value = city;
+    formData.shipping.city = city.name;
+    shippingCitySearch.value = city.displayName; // ✅ Affiche seulement ici
+    shippingSearchQuery.value = ''; // Reset recherche
     showShippingCityDropdown.value = false;
   } else {
-    formData.billing.city = city;
-    citySearch.value = city;
+    formData.billing.city = city.name;
+    citySearch.value = city.displayName; // ✅ Affiche seulement ici
+    searchQuery.value = ''; // Reset recherche
     showCityDropdown.value = false;
   }
 };
-
-const handleCityInput = (isShipping = false) => {
+// ✅ Ouvrir le dropdown : on reset la recherche mais PAS l'affichage
+const toggleCityDropdown = (isShipping = false) => {
   if (isShipping) {
-    formData.shipping.city = '';
-    showShippingCityDropdown.value = true;
+    showShippingCityDropdown.value = !showShippingCityDropdown.value;
+    if (showShippingCityDropdown.value) shippingSearchQuery.value = '';
   } else {
-    formData.billing.city = '';
-    showCityDropdown.value = true;
+    showCityDropdown.value = !showCityDropdown.value;
+    if (showCityDropdown.value) searchQuery.value = '';
   }
 };
+
+// ✅ Effacer la sélection (bouton X)
+const clearCity = (isShipping = false) => {
+  if (isShipping) {
+    formData.shipping.city = '';
+    shippingCitySearch.value = '';
+    shippingSearchQuery.value = '';
+  } else {
+    formData.billing.city = '';
+    citySearch.value = '';
+    searchQuery.value = '';
+  }
+};
+
+
 // --- Viewer Logic ---
 type CheckoutViewerSummary = {
   email?: string | null;
@@ -489,26 +511,64 @@ useSeoMeta({ title: t('shop.checkout') });
 
              
               <!-- City Dropdown -->
-                <div ref="cityInputRef" class="relative">
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Ville <span class="text-[#ff4f24]">*</span></label>
-                  <div class="relative">
-                    <input v-model="citySearch" type="text" placeholder="Rechercher votre ville..." 
-                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white pr-12" 
-                      @focus="showCityDropdown = true" @input="handleCityInput(false)" />
-                    <Icon v-if="formData.billing.city" name="ion:checkmark-circle" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" size="20" />
-                    <Icon v-else name="ion:search-outline" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size="20" />
+                  <!-- City Dropdown (vide jusqu'à la sélection) -->
+<div ref="cityInputRef" class="relative">
+  <label class="block text-sm font-medium text-gray-700 mb-1.5">Ville <span class="text-[#ff4f24]">*</span></label>
+  <div class="relative">
+    <!-- ✅ Champ readonly, vide tant qu'aucune ville n'est sélectionnée -->
+    <input 
+      :value="citySearch" 
+      type="text" 
+      readonly
+      placeholder="Sélectionnez votre ville..." 
+      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white pr-20 cursor-pointer" 
+      @click="toggleCityDropdown(false)" />
+    
+    <!-- ✅ Bouton Effacer (X) si une ville est sélectionnée -->
+    <button 
+      v-if="formData.billing.city" 
+      type="button"
+      @click.stop="clearCity(false)"
+      class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1">
+      <Icon name="ion:close-circle" size="20" />
+    </button>
+    
+    <!-- ✅ Icône chevron -->
+    <Icon name="ion:chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size="20" />
 
-                    <div v-if="showCityDropdown && filteredCities.length > 0" class="absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar">
-                      <button v-for="city in filteredCities" :key="city" type="button" 
-                        class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#ff4f24]/5 hover:text-[#ff4f24] transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
-                        @click="selectCity(city, false)">
-                        <span class="font-medium">{{ city }}</span>
-                        <Icon v-if="formData.billing.city === city" name="ion:checkmark" class="text-[#ff4f24]" size="16" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
+    <!-- ✅ Dropdown avec recherche séparée -->
+    <div v-if="showCityDropdown" class="absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden">
+      <!-- Champ de recherche DANS le dropdown -->
+      <div class="sticky top-0 bg-white border-b border-gray-100 p-3">
+        <div class="relative">
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Rechercher une ville..." 
+            class="w-full px-3 py-2 pl-9 text-sm rounded-lg border border-gray-200 focus:border-[#ff4f24] focus:ring-2 focus:ring-[#ff4f24]/10 outline-none"
+            @click.stop />
+          <Icon name="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size="16" />
+        </div>
+      </div>
+      
+      <!-- Liste des villes -->
+      <div class="overflow-y-auto max-h-60 custom-scrollbar">
+        <div v-if="filteredCities.length === 0" class="px-4 py-6 text-sm text-gray-500 text-center">
+          Aucune ville trouvée
+        </div>
+        <button 
+          v-for="city in filteredCities" 
+          :key="city.id" 
+          type="button" 
+          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-[#ff4f24]/5 hover:text-[#ff4f24] transition-colors flex items-center justify-between group border-b border-gray-50 last:border-0"
+          @click="selectCity(city, false)">
+          <span class="font-medium">{{ city.displayName }}</span>
+          <Icon v-if="formData.billing.city === city.name" name="ion:checkmark" class="text-[#ff4f24]" size="16" />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
                 <!-- ✅ "Adresse 1" renommé en "Quartier" -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1.5">Quartier <span class="text-[#ff4f24]">*</span></label>
