@@ -541,11 +541,11 @@ useSeoMeta({ title: t('shop.checkout') });
       <!-- Champ de recherche DANS le dropdown -->
       <div class="sticky top-0 bg-white border-b border-gray-100 p-3">
         <div class="relative">
-          <input 
+         <input 
             v-model="searchQuery" 
             type="text" 
             placeholder="Rechercher une ville..." 
-            class="w-full px-3 py-2 pl-9 text-sm rounded-lg border border-gray-200 focus:border-[#ff4f24] focus:ring-2 focus:ring-[#ff4f24]/10 outline-none"
+            class="w-full px-3 py-2 pl-9 text-base rounded-lg border border-gray-200 focus:border-[#ff4f24] focus:ring-2 focus:ring-[#ff4f24]/10 outline-none"
             @click.stop />
           <Icon name="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size="16" />
         </div>
