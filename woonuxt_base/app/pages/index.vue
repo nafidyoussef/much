@@ -15,8 +15,9 @@ useHead({
     { name: 'facebook-domain-verification', content: '4fxkoiju8mbw77jhhhdekd9tk9ft2m' }
   ]
 });
+
 // ==========================================
-// 8. SEO
+// 1. SEO
 // ==========================================
 useSeoMeta({
   title: `Accueil`,
@@ -40,12 +41,13 @@ if (import.meta.env.PROD) {
       }
     ]
   });
- }
+}
 
 // ==========================================
-// 1. Récupération des données Vente Flash (SSR)
+// 2. Récupération des données Vente Flash (NON-BLOQUANT)
 // ==========================================
-const { data: newInData } = await useAsyncGql('getNewInProducts', { 
+// Suppression du 'await' pour ne pas bloquer le rendu initial du composant
+const { data: newInData } = useAsyncGql('getNewInProducts', { 
   category: 'vente-flash' 
 });
 const newInProducts = computed<Product[]>(() => 
@@ -53,7 +55,7 @@ const newInProducts = computed<Product[]>(() =>
 );
 
 // ==========================================
-// 2. Logique des onglets de catégories
+// 3. Logique des onglets de catégories
 // ==========================================
 const categories = [
   { slug: 'all', name: 'Tout' },
@@ -71,7 +73,7 @@ const activeCategory = ref('all');
 const productsPerPage = 12;
 
 // ==========================================
-// 3. État réactif des produits
+// 4. État réactif des produits
 // ==========================================
 const allProducts = ref<Product[]>([]);
 const endCursor = ref<string | null>(null);
@@ -79,7 +81,7 @@ const hasMore = ref(true);
 const loading = ref(false);
 
 // ==========================================
-// 4. Requête GraphQL OPTIMISÉE
+// 5. Requête GraphQL OPTIMISÉE
 // ==========================================
 const productQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
@@ -123,7 +125,7 @@ const productQuery = `
 `;
 
 // ==========================================
-// 5. Fonction de chargement PURE
+// 6. Fonction de chargement PURE
 // ==========================================
 const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
   const variables: any = {
@@ -152,12 +154,14 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
 };
 
 // ==========================================
-// 6. Chargement Initial (SSR)
+// 7. Chargement Initial (🚀 ULTRA-RAPIDE : Non-bloquant & Client-side)
 // ==========================================
-const { data: initialData } = await useAsyncData(
+const { data: initialData, pending: isInitialLoading } = useAsyncData(
   'home-initial-products',
   () => fetchProductsData('all', null),
   {
+    lazy: true,      // Ne bloque pas la navigation/hydratation client
+    server: false,   // 🚀 CLÉ : Le serveur n'attend pas cette requête, TTFB instantané pour la 1ère partie
     transform: (res) => ({
       nodes: res?.data?.products?.nodes || [],
       pageInfo: res?.data?.products?.pageInfo || null
@@ -165,14 +169,18 @@ const { data: initialData } = await useAsyncData(
   }
 );
 
-if (initialData.value) {
-  allProducts.value = initialData.value.nodes;
-  endCursor.value = initialData.value.pageInfo?.endCursor || null;
-  hasMore.value = initialData.value.pageInfo?.hasNextPage ?? (initialData.value.nodes.length === productsPerPage);
-}
+// Synchronisation réactive avec les états du composant
+watch([initialData, isInitialLoading], ([data, pending]) => {
+  loading.value = pending;
+  if (data) {
+    allProducts.value = data.nodes;
+    endCursor.value = data.pageInfo?.endCursor || null;
+    hasMore.value = data.pageInfo?.hasNextPage ?? (data.nodes.length === productsPerPage);
+  }
+}, { immediate: true });
 
 // ==========================================
-// 7. Actions Utilisateur (Client-side)
+// 8. Actions Utilisateur (Client-side)
 // ==========================================
 const loadInitialProducts = async () => {
   loading.value = true;
@@ -217,18 +225,6 @@ const selectCategory = (slug: string) => {
   activeCategory.value = slug;
   loadInitialProducts();
 };
-
-// ==========================================
-// 8. SEO
-// ==========================================
-useSeoMeta({
-  title: `Accueil`,
-  ogTitle: siteName,
-  description: description,
-  ogDescription: shortDescription,
-  ogImage: siteImage,
-  twitterCard: `summary_large_image`,
-});
 
 // ==========================================
 // 9. Logique du slider Vente Flash
@@ -477,7 +473,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </button>
       </div>
 
-      <!-- ✅ CORRECTION MAJEURE : Squelettes uniquement au premier chargement -->
+      <!-- Squelettes uniquement au premier chargement -->
       <div v-if="loading && allProducts.length === 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         <div v-for="i in 8" :key="`skeleton-${i}`" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
           <div class="aspect-[8/9] bg-gray-200 rounded-lg mb-3"></div>
@@ -486,7 +482,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </div>
       </div>
 
-      <!-- ✅ CORRECTION MAJEURE : La grille reste TOUJOURS visible si on a des produits, même pendant le chargement -->
+      <!-- La grille reste TOUJOURS visible si on a des produits, même pendant le chargement -->
       <div v-if="allProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
         <ProductCard 
           v-for="product in allProducts" 
