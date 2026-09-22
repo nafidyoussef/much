@@ -2,7 +2,7 @@
 const { siteName } = useAppConfig();
 const runtimeConfig = useRuntimeConfig();
 const img = useImage();
-
+//TODO fix it
 const logoUrl = runtimeConfig?.public?.LOGO ? img(runtimeConfig?.public?.LOGO) : null;
 const faviconUrl = '/logo.png';
 </script>
