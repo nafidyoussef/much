@@ -68,21 +68,66 @@ const showShippingCityDropdown = ref(false);
 const shippingCityInputRef = ref<HTMLElement | null>(null);
 
 // ✅ Le filtre utilise searchQuery (pas citySearch)
+
+// ✅ Fonction utilitaire de scoring pour prioriser les résultats
+const getCityMatchScore = (city: any, query: string): number => {
+  if (!query) return 0;
+  const q = query.toLowerCase();
+  
+  const displayName = city.displayName?.toLowerCase() || '';
+  const name = city.name?.toLowerCase() || '';
+  
+  // 1. Match EXACT dans displayName → score le plus élevé
+  if (displayName === q) return 1000;
+  
+  // 2. Match au DÉBUT du displayName → très haute priorité
+  if (displayName.startsWith(q)) return 900;
+  
+  // 3. Match PARTIEL dans displayName → haute priorité
+  if (displayName.includes(q)) return 800;
+  
+  // 4. Match EXACT dans name
+  if (name === q) return 700;
+  
+  // 5. Match au DÉBUT du name
+  if (name.startsWith(q)) return 600;
+  
+  // 6. Match PARTIEL dans name
+  if (name.includes(q)) return 500;
+  
+  // 7. Match dans les aliases (on prend le meilleur score parmi les aliases)
+  if (Array.isArray(city.aliases) && city.aliases.length > 0) {
+    let bestAliasScore = 0;
+    for (const alias of city.aliases) {
+      const a = alias.toLowerCase();
+      if (a === q) { bestAliasScore = Math.max(bestAliasScore, 400); break; }
+      if (a.startsWith(q)) { bestAliasScore = Math.max(bestAliasScore, 300); continue; }
+      if (a.includes(q)) { bestAliasScore = Math.max(bestAliasScore, 200); }
+    }
+    if (bestAliasScore > 0) return bestAliasScore;
+  }
+  
+  return 0;
+};
+
+// ✅ Billing : filtrer + trier par priorité
 const filteredCities = computed(() => {
   const q = searchQuery.value.toLowerCase().trim();
   
-  const results = MOROCCAN_CITIES.filter((city) => {
+  // Filtrer les villes qui correspondent
+  const matched = MOROCCAN_CITIES.filter((city) => {
     if (!q) return true;
-    const matchName = city.name?.toLowerCase().includes(q);
-    const matchDisplayName = city.displayName?.toLowerCase().includes(q);
-    const matchAlias = city.aliases?.some((alias: string) => alias.toLowerCase().includes(q));
-    return matchName || matchDisplayName || matchAlias;
+    return getCityMatchScore(city, q) > 0;
   });
-
-
-
-  return results.slice(0, 50);
+  
+  // Trier par score décroissant (les meilleurs en premier)
+  const sorted = q 
+    ? matched.sort((a, b) => getCityMatchScore(b, q) - getCityMatchScore(a, q))
+    : matched;
+  
+  return sorted.slice(0, 50);
 });
+
 
 // ✅ selectCity : remplit citySearch SEULEMENT à la sélection
 const selectCity = (city: any, isShipping = false) => {
