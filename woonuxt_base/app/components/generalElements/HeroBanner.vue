@@ -1,35 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+const slides = [
+  { image: '/Hero-1.webp', alt: 'Collection Nouveau Année' },
+  { image: '/Hero-2.webp', alt: 'Collection Nouveau Année' },
+  { image: '/Hero-3.webp', alt: 'Collection Nouveau Année' }
+];
 
 const currentSlide = ref(0);
 
-// ✅ CORRECTION 1 : Ajout du slash '/' au début pour un chemin absolu depuis le dossier 'public'
-const slides = [
-  {
-    image: '/Hero-1.webp', 
-    alt: 'Collection Nouveau Année'
-  },
-  {
-    image: '/Hero-1.webp', // Pensez à changer les noms si vous avez Hero-2.webp, etc.
-    alt: 'Collection Nouveau Année'
-  },
-  {
-    image: '/Hero-1.webp',
-    alt: 'Collection Nouveau Année'
-  }
-];
-
-// ✅ CORRECTION 2 : Forcer le préchargement de l'image LCP au niveau du <head>
-// Cela garantit que le navigateur télécharge l'image AVANT même de lire le HTML du slider
+// ✅ Précharger l'URL EXACTE que le navigateur va réellement fetcher
+// Vérifie dans DevTools > Network l'URL générée par ton <img> et mets-la ici
 useHead({
-  link: [
-    {
-      rel: 'preload',
-      as: 'image',
-      href: slides[0]!.image,
-      fetchpriority: 'high'
-    }
-  ]
+  link: [{
+    rel: 'preload',
+    as: 'image',
+    href: slides[0]!.image,
+    fetchpriority: 'high'
+  }]
 });
 
 const nextSlide = () => {
@@ -37,77 +23,35 @@ const nextSlide = () => {
 };
 
 let slideInterval: ReturnType<typeof setInterval> | null = null;
-
 onMounted(() => {
-  if (slides.length > 1) {
-    slideInterval = setInterval(nextSlide, 5000);
-  }
+  if (slides.length > 1) slideInterval = setInterval(nextSlide, 5000);
 });
-
-onUnmounted(() => {
-  if (slideInterval) clearInterval(slideInterval);
-});
+onUnmounted(() => { if (slideInterval) clearInterval(slideInterval); });
 </script>
 
 <template>
   <div class="relative w-full md:max-w-8xl md:mx-auto md:px-4 lg:px-20">
-    
-    <!-- Slider Container -->
-    <div class="relative w-full overflow-hidden md:rounded-xl" style="aspect-ratio: 330/150;">
-      
-      <div 
-        v-for="(slide, index) in slides" 
+    <div class="relative w-full overflow-hidden md:rounded-xl aspect-[330/150] md:aspect-[1320/600]">
+
+      <div
+        v-for="(slide, index) in slides"
         :key="index"
         class="absolute inset-0 transition-opacity duration-700 ease-in-out"
-        :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'"
+        :class="currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
       >
-        
-        <!-- ✅ SLIDE 1 (LCP) : Balise <img> NATIVE optimisée -->
+        <!-- ✅ img native partout : tu maîtrises l'URL exacte (précharge fiable) -->
         <img
-          v-if="index === 0"
           :src="slide.image"
           :alt="slide.alt"
           width="1320"
           height="600"
           class="object-cover w-full h-full"
-          loading="eager"
-          fetchpriority="high"
-          decoding="async"
+          :loading="index === 0 ? 'eager' : 'lazy'"
+          :fetchpriority="index === 0 ? 'high' : undefined"
+          :decoding="index === 0 ? 'sync' : 'async'"
         />
-
-        <!-- Les autres images utilisent NuxtPicture -->
-        <NuxtPicture
-          v-else
-          width="1320"
-          height="600"
-          :src="slide.image"
-          :alt="slide.alt"
-          :img-attrs="{ class: 'object-cover w-full h-full' }"
-          loading="lazy"
-        />
-
       </div>
+
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Votre style marquee (non utilisé dans ce template, mais conservé au cas où) */
-.marquee-container {
-  width: 100%;
-  overflow: hidden;
-  contain: strict;
-}
-.marquee-content {
-  display: flex;
-  will-change: transform;
-  animation: marquee 25s linear infinite;
-}
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.marquee-container:hover .marquee-content {
-  animation-play-state: paused;
-}
-</style>
