@@ -142,7 +142,7 @@ const setupObserver = () => {
         }
       },
       // ✅ AUGMENTÉ : Déclenche le chargement 1000px AVANT d'arriver en bas (au lieu de 500px)
-      { rootMargin: '1000px' } 
+      { rootMargin: '600px' } 
     );
     observer.observe(sentinelRef.value);
   }

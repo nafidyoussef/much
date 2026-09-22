@@ -264,7 +264,7 @@ const setupObserver = () => {
           fetchProducts(true);
         }
       },
-      { rootMargin: '1000px' } 
+      { rootMargin: '600px' } 
     );
     observer.observe(sentinelRef.value);
   }
