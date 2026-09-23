@@ -1,2 +1,133 @@
+# ============================================================
+# MOTEURS DE RECHERCHE IA — SEARCH
+# ============================================================
+
+# OpenAI — ChatGPT Search
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic — Claude Search
+User-agent: ClaudeBot
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Google — Gemini / Search
+User-agent: Google-Extended
+Allow: /
+
+# Microsoft — Bing / Copilot
+User-agent: Bingbot
+Allow: /
+# ============================================================
+# BOTS IA — TRAINING / SCRAPING
+# ============================================================
+
+# Common Crawl
+User-agent: CCBot
+Disallow: /
+
+# ByteDance / TikTok
+User-agent: Bytespider
+Disallow: /
+
+# Diffbot
+User-agent: Diffbot
+Disallow: /
+
+# Anthropic — training
+User-agent: anthropic-ai
+Disallow: /
+
+# Apple — training
+User-agent: Applebot-Extended
+Disallow: /
+
+# Meta — training
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+# Cohere — training
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: cohere-training-data-crawler
+Disallow: /
+
+# Allen Institute for AI
+User-agent: AI2Bot
+Disallow: /
+
+# Image / dataset scrapers
+User-agent: img2dataset
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+# Other scrapers
+User-agent: Omgili
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: Timpibot
+Disallow: /
+
+User-agent: Webzio-Extended
+Disallow: /
+
+User-agent: PanguBot
+Disallow: /
+# ============================================================
+# SEO CRAWLERS / SCRAPING AGRESSIF
+# ============================================================
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: Rogerbot
+Disallow: /
+
+
+# ============================================================
+# CRAWL GENERAL
+# ============================================================
+
 User-agent: *
 Allow: /
+
+Disallow: /my-account/
+Disallow: /my-account/*
+Disallow: /wishlist
+Disallow: /*?filter=*
+Disallow: /*?orderby=*
+Disallow: /cdn-cgi/
+
+
+# ============================================================
+# SITEMAP
+# ============================================================
+
+Sitemap: https://www.much.ma/sitemap.xml

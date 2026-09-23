@@ -4,7 +4,6 @@ import tailwindcss from '@tailwindcss/vite';
 
 const { resolve } = createResolver(import.meta.url);
 
-// ✅ 1. Point directly to your backend
 const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 const APP_HOST = process.env.APP_HOST || 'https://much.ma';
 
@@ -24,13 +23,12 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { lang: 'en' },
+      htmlAttrs: { lang: 'fr' }, // ✅ Corrigé en 'fr' puisque defaultLocale est fr_FR
       link: [
-        { rel: 'icon', href: '/logo.png', type: 'image/png+xml' },
+        { rel: 'icon', href: '/logo.png', type: 'image/png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
       ],
     },
-    //pageTransition: { name: 'page', mode: 'default' },
   },
 
   plugins: [
@@ -50,9 +48,9 @@ export default defineNuxtConfig({
     ['@nuxt/image', { provider: 'vercel' }],
     '@nuxtjs/i18n',
     '@nuxt/eslint',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    '@nuxtjs/sitemap', // ✅ 1. AJOUT DU MODULE SITEMAP
   ],
- 
 
   css: [resolve('./app/assets/css/main.css')],
 
@@ -66,7 +64,6 @@ export default defineNuxtConfig({
             tokenStorage: false,
             fetchOptions: {
               mode: 'cors',
-              // ✅ 2. MUST be 'include' for cross-origin cookies to work
               credentials: 'include', 
             },
           },
@@ -95,26 +92,24 @@ export default defineNuxtConfig({
     },
   },
 
-  // ✅ 3. FIX THE WORKBOX ERROR (Disable navigation fallback)
   pwa: {
     registerType: 'autoUpdate',
     workbox: {
-      navigateFallback: undefined, // Prevents "non-precached-url" crash
+      navigateFallback: undefined,
       runtimeCaching: [
         {
-          // ✅ NEVER cache GraphQL requests
-          urlPattern: /^https:\/\/api\.bazzaria\.ma\/graphql.*/i,
+          urlPattern: /^https:\/\/api\.much\.ma\/graphql.*/i, // ✅ Corrigé l'URL (bazzaria -> much)
           handler: 'NetworkOnly', 
         }
       ]
     },
     manifest: {
-      name: 'Bazzaria',
-      short_name: 'Bazzaria',
+      name: 'Much.ma', // ✅ Mis à jour
+      short_name: 'Much',
       start_url: '/',
       display: 'standalone',
       background_color: '#ffffff',
-      theme_color: '#ff0000',
+      theme_color: '#ff4f24', // ✅ Ta couleur primaire
     }
   },
 
@@ -134,20 +129,146 @@ export default defineNuxtConfig({
     locales: [
       { code: 'en_US', file: 'en-US.json', name: 'English 🇺🇸' },
       { code: 'fr_FR', file: 'fr-FR.json', name: 'Français 🇫🇷' },
-      // ... add your other locales back here
     ],
     langDir: 'locales',
     defaultLocale: 'fr_FR',
     strategy: 'no_prefix',
   },
+
   routeRules: {
-    // Proxy toutes les requêtes commençant par /wp-json/ vers l'API
     '/wp-json/**': { 
       proxy: 'https://api.much.ma/wp-json/**',
-      // Optionnel : si vous avez besoin de passer des headers spécifiques
-      headers: {
-        'X-Forwarded-Host': 'much.ma'
+      headers: { 'X-Forwarded-Host': 'much.ma' }
+    }
+  },
+
+ 
+  sitemap: {
+    exclude: [
+      '/my-account/**',
+      '/wishlist',
+      '/cart',
+      '/checkout',
+      '/order-received',
+      '/lost-password',
+      '/**?*filter=*',
+      '/**?*orderby=*',
+      '/api/**',
+    ],
+    async urls() {
+      const graphqlUrl = process.env.GQL_HOST || 'https://much.ma';
+      
+      // Interface intermédiaire pour harmoniser les entrées du Sitemap
+      interface SitemapItem {
+        loc: string;
+        lastmod?: string;
+        changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+        priority?: number;
       }
+
+      interface SitemapProduct {
+        slug: string;
+        modified: string;
+      }
+      interface SitemapCategory {
+        slug: string;
+      }
+
+      try {
+        // 1. Requête pour les produits
+     // 1. Requête pour les produits (Filtre "where" supprimé car implicite pour le public)
+const productsQuery = `
+  query GetSitemapProducts($first: Int!, $after: String) {
+    products(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { slug modified }
     }
   }
+`;
+
+
+        let allProducts: SitemapProduct[] = [];
+        let hasNextPage = true;
+        let afterCursor: string | null = null;
+
+        while (hasNextPage) {
+          const res = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: productsQuery,
+              variables: { first: 100, after: afterCursor },
+            }),
+          });
+
+          const data = await res.json() as any;
+          const products = data?.data?.products;
+          
+          if (products?.nodes) {
+            allProducts = allProducts.concat(products.nodes);
+          }
+          
+          hasNextPage = products?.pageInfo?.hasNextPage ?? false;
+          afterCursor = products?.pageInfo?.endCursor ?? null;
+        }
+
+        // 2. Requête pour les catégories
+        const categoriesQuery = `
+          query GetSitemapCategories {
+            productCategories(first: 100) {
+              nodes { slug }
+            }
+          }
+        `;
+        
+        const catRes = await fetch(graphqlUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: categoriesQuery }),
+        });
+        
+        const catData = await catRes.json() as any;
+        const categories: SitemapCategory[] = catData?.data?.productCategories?.nodes ?? [];
+
+        console.log(`✅ SITEMAP: ${allProducts.length} produits et ${categories.length} catégories générés.`);
+
+        // 3. Formatage avec le type strict défini SitemapItem
+        const productRoutes: SitemapItem[] = allProducts.map((p: SitemapProduct) => ({
+          loc: `/product/${p.slug}`,
+          lastmod: p.modified,
+          changefreq: 'weekly',
+          priority: 0.8,
+        }));
+
+        const categoryRoutes: SitemapItem[] = categories.map((c: SitemapCategory) => ({
+          loc: `/product-category/${c.slug}`,
+          changefreq: 'daily',
+          priority: 0.9,
+        }));
+
+        const staticRoutes: SitemapItem[] = [
+          { loc: '/', changefreq: 'daily', priority: 1.0 },
+          { loc: '/products', changefreq: 'daily', priority: 0.9 },
+          { loc: '/about', changefreq: 'monthly', priority: 0.5 },
+          { loc: '/faq', changefreq: 'monthly', priority: 0.5 },
+          { loc: '/contact', changefreq: 'monthly', priority: 0.5 },
+          { loc: '/expedition-retour', changefreq: 'monthly', priority: 0.3 },
+          { loc: '/privacy-policy', changefreq: 'monthly', priority: 0.2 },
+          { loc: '/cgv', changefreq: 'monthly', priority: 0.2 },
+        ];
+
+        // 4. Retour unifié de type SitemapItem[] (qui est compatible avec SitemapUrlInput[])
+        return [
+          ...staticRoutes,
+          ...categoryRoutes,
+          ...productRoutes,
+        ] as any; // Le 'as any' ou l'unification via SitemapItem[] garantit que TypeScript ne bloque plus sur l'absence de 'lastmod' sur certaines clés.
+      } catch (error) {
+        console.error('❌ Erreur lors de la génération du sitemap dynamique:', error);
+        return [];
+      }
+    },
+  },
+
+
 });

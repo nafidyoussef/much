@@ -275,12 +275,89 @@ const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
 const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
+// ==========================================
+// ✅ CONFIGURATION SEO NATIVE NUXT 3
+// ==========================================
+
+// 1. Fonction pour nettoyer la description (enlève le HTML et limite à 155 caractères)
+const stripHtmlAndTruncate = (html: string | null | undefined, maxLength: number = 155): string => {
+  if (!html) return '';
+  const text = html.replace(/<[^>]*>/g, ' '); 
+  const cleanText = text.replace(/\s+/g, ' ').trim(); 
+  return cleanText.length > maxLength ? cleanText.substring(0, maxLength).trim() + '...' : cleanText;
+};
+
+// 2. Valeurs dynamiques pour le SEO
+const siteName = 'Much.ma';
+const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`); 
+const seoTitle = computed(() => `${product.value?.name || 'Produit'} - ${siteName}`);
+const seoDescription = computed(() => stripHtmlAndTruncate(product.value?.description || product.value?.description));
+const seoImage = computed(() => displayProduct.value?.image?.sourceUrl || 'https://www.much.ma/images/placeholder.jpg');
+
+// 3. Injection des balises Meta (Title, Description, Open Graph, Twitter)
+useSeoMeta({
+  title: seoTitle,
+  description: seoDescription,
+  ogTitle: seoTitle,
+  ogDescription: seoDescription,
+  ogImage: seoImage,
+  ogType: 'product',
+  ogUrl: canonicalUrl,
+  twitterCard: 'summary_large_image',
+  twitterTitle: seoTitle,
+  twitterDescription: seoDescription,
+  twitterImage: seoImage,
+});
+
+// 4. Injection du lien Canonique et du Schema.org (JSON-LD)
+// 4. Injection du lien Canonique et du Schema.org (JSON-LD)
+useHead({
+  link: [
+    { rel: 'canonical', href: canonicalUrl }
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      // ✅ On utilise innerHTML avec un computed à l'intérieur (méthode officielle Nuxt 3)
+      innerHTML: computed(() => {
+        if (!displayProduct.value) return '';
+        
+        // Nettoyage du prix pour le schema (ex: "1,299.00 DH" -> 1299.00)
+        const rawPrice = String(displayProduct.value.price || '0').replace(/[^0-9.]/g, '');
+        const price = parseFloat(rawPrice) || 0;
+         const isAvailable = displayProduct.value.stockStatus === StockStatusEnum.InStock || 
+                            displayProduct.value.stockStatus === StockStatusEnum.OnBackorder
+        return JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": displayProduct.value.name,
+          "image": seoImage.value,
+          "description": seoDescription.value,
+          "sku": product?.value?.sku || String(route.params.slug),
+          "brand": {
+            "@type": "Brand",
+            "name": siteName
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": canonicalUrl.value,
+            "priceCurrency": "MAD",
+            "price": price,
+            "availability": isAvailable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+          }
+        });
+      })
+    }
+  ]
+});
 
 </script>
 <template>
   <main class="container relative py-6 xl:max-w-7xl">
     <div v-if="product">
-      <SEOHead :info="product" />
+     
+      <Breadcrumb v-if="storeSettings.showBreadcrumbOnSingleProduct" :product class="mb-2" />
+
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
         
         <!-- ✅ GALERIE D'IMAGES (Swipeable sur mobile) -->
@@ -301,17 +378,21 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
           />
           
           <!-- Indicateur visuel de swipe pour mobile -->
-    
+          <div class="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+            <div class="w-1.5 h-1.5 rounded-full bg-white/80 shadow-sm"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+          </div>
         </div>
 
         <!-- Détails du produit -->
-        <div class="w-full min-w-0 md:py-1">
+        <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
           <!-- ✅ NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
-          <div class="mb-2">
+          <div class="mb-6">
             <!-- 1. Titre et Note (Pleine largeur en haut) -->
-            <div class="mb-2">
+            <div class="mb-4">
               <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
