@@ -170,21 +170,19 @@ export default defineNuxtConfig({
         slug: string;
         modified: string;
       }
-      interface SitemapCategory {
-        slug: string;
-      }
+     
 
       try {
         // 1. Requête pour les produits
      // 1. Requête pour les produits (Filtre "where" supprimé car implicite pour le public)
-const productsQuery = `
-  query GetSitemapProducts($first: Int!, $after: String) {
-    products(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
-      nodes { slug modified }
-    }
-  }
-`;
+      const productsQuery = `
+          query GetSitemapProducts($first: Int!, $after: String) {
+          products(first: $first, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          nodes { slug modified }
+          }
+        }
+        `;
 
 
         let allProducts: SitemapProduct[] = [];
@@ -212,25 +210,8 @@ const productsQuery = `
           afterCursor = products?.pageInfo?.endCursor ?? null;
         }
 
-        // 2. Requête pour les catégories
-        const categoriesQuery = `
-          query GetSitemapCategories {
-            productCategories(first: 100) {
-              nodes { slug }
-            }
-          }
-        `;
-        
-        const catRes = await fetch(graphqlUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: categoriesQuery }),
-        });
-        
-        const catData = await catRes.json() as any;
-        const categories: SitemapCategory[] = catData?.data?.productCategories?.nodes ?? [];
 
-        console.log(`✅ SITEMAP: ${allProducts.length} produits et ${categories.length} catégories générés.`);
+        console.log(` SITEMAP: ${allProducts.length} produits  générés.`);
 
         // 3. Formatage avec le type strict défini SitemapItem
         const productRoutes: SitemapItem[] = allProducts.map((p: SitemapProduct) => ({
@@ -240,15 +221,18 @@ const productsQuery = `
           priority: 0.8,
         }));
 
-        const categoryRoutes: SitemapItem[] = categories.map((c: SitemapCategory) => ({
-          loc: `/product-category/${c.slug}`,
-          changefreq: 'daily',
-          priority: 0.9,
-        }));
 
         const staticRoutes: SitemapItem[] = [
           { loc: '/', changefreq: 'daily', priority: 1.0 },
           { loc: '/products', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/maison', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/cuisine', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/tech', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/beaute', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/mode', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/auto', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/kids', changefreq: 'daily', priority: 0.9 },
+          { loc: '/product-category/sport', changefreq: 'daily', priority: 0.9 },
           { loc: '/about', changefreq: 'monthly', priority: 0.5 },
           { loc: '/faq', changefreq: 'monthly', priority: 0.5 },
           { loc: '/contact', changefreq: 'monthly', priority: 0.5 },
@@ -260,11 +244,10 @@ const productsQuery = `
         // 4. Retour unifié de type SitemapItem[] (qui est compatible avec SitemapUrlInput[])
         return [
           ...staticRoutes,
-          ...categoryRoutes,
           ...productRoutes,
         ] as any; // Le 'as any' ou l'unification via SitemapItem[] garantit que TypeScript ne bloque plus sur l'absence de 'lastmod' sur certaines clés.
       } catch (error) {
-        console.error('❌ Erreur lors de la génération du sitemap dynamique:', error);
+        console.error('Erreur lors de la génération du sitemap dynamique:', error);
         return [];
       }
     },

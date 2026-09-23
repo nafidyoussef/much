@@ -2,9 +2,10 @@
 import type { Product } from '#types/gql';
 
 const { siteName, description, shortDescription, siteImage } = useAppConfig();
+const runtimeConfig = useRuntimeConfig();
 
 // ==========================================
-// 0. OPTIMISATION FCP : Preconnect & DNS-Prefetch
+// 0. OPTIMISATION FCP & DNS-Prefetch
 // ==========================================
 useHead({
   link: [
@@ -17,36 +18,37 @@ useHead({
 });
 
 // ==========================================
-// 1. SEO
+// 1. SEO (Optimized with computed properties)
 // ==========================================
 useSeoMeta({
-  title: `Accueil`,
-  ogTitle: siteName,
-  description: description,
-  ogDescription: shortDescription,
-  ogImage: siteImage,
-  twitterCard: `summary_large_image`
+  title: 'Accueil',
+  ogTitle: () => siteName,
+  description: () => description,
+  ogDescription: () => shortDescription,
+  ogImage: () => siteImage,
+  twitterCard: 'summary_large_image'
 });
 
-// ✅ CORRECTION VERCEL : Ne charger le script que en PRODUCTION
+// ✅ VERCEL PERFORMANCE SCRIPTS: Inject scripts conditionally with proper strategy
 if (import.meta.env.PROD) {
   useHead({
     script: [
       {
         innerHTML: 'window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };',
+        type: 'text/javascript'
       },
       {
         src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
         defer: true,
+        type: 'text/javascript'
       }
     ]
   });
 }
 
 // ==========================================
-// 2. Récupération des données Vente Flash (NON-BLOQUANT)
+// 2. Non-blocking Flash Sale Data
 // ==========================================
-// Suppression du 'await' pour ne pas bloquer le rendu initial du composant
 const { data: newInData } = useAsyncGql('getNewInProducts', { 
   category: 'vente-flash' 
 });
@@ -55,7 +57,7 @@ const newInProducts = computed<Product[]>(() =>
 );
 
 // ==========================================
-// 3. Logique des onglets de catégories
+// 3. Static Category Configuration
 // ==========================================
 const categories = [
   { slug: 'all', name: 'Tout' },
@@ -73,15 +75,14 @@ const activeCategory = ref('all');
 const productsPerPage = 12;
 
 // ==========================================
-// 4. État réactif des produits
+// 4. Reactive State
 // ==========================================
 const allProducts = ref<Product[]>([]);
 const endCursor = ref<string | null>(null);
 const hasMore = ref(true);
-const loading = ref(false);
 
 // ==========================================
-// 5. Requête GraphQL OPTIMISÉE
+// 5. Optimized GraphQL Core Query Structure
 // ==========================================
 const productQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
@@ -95,10 +96,7 @@ const productQuery = `
         orderby: { field: $orderby, order: $order }
       }
     ) {
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
+      pageInfo { hasNextPage endCursor }
       nodes {
         databaseId
         id
@@ -109,9 +107,7 @@ const productQuery = `
           altText
           productCardSourceUrl: sourceUrl(size: MEDIUM)
         }
-        ... on InventoriedProduct {
-          stockStatus
-        }
+        ... on InventoriedProduct { stockStatus }
         ... on ProductWithPricing {
           price
           regularPrice
@@ -125,10 +121,10 @@ const productQuery = `
 `;
 
 // ==========================================
-// 6. Fonction de chargement PURE
+// 6. Optimized Clean Fetch Function
 // ==========================================
 const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
-  const variables: any = {
+  const variables: Record<string, any> = {
     first: productsPerPage,
     orderby: 'MENU_ORDER',
     order: 'DESC'
@@ -142,81 +138,76 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
     variables.after = cursor;
   }
 
-  const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
+  // Safe fallback to public config layout rather than crashing Node global references
+  // Before: const GQL_HOST = runtimeConfig.public?.['graphql-client']?.clients?.default?.host || 'https://much.ma';
 
-  const response = await $fetch(GQL_HOST, {
+// ✅ After: Safely bypass the strict empty-object constraint using bracket notation or an inline cast
+const GQL_HOST = (runtimeConfig.public?.['graphql-client'] as any)?.clients?.default?.host || 'https://much.ma';
+
+
+  return await $fetch(GQL_HOST, {
     method: 'POST',
-    body: { query: productQuery, variables, operationName: 'getProducts' },
-    cache: 'no-store' 
+    body: { query: productQuery, variables, operationName: 'getProducts' }
   });
-
-  return response as any;
 };
 
 // ==========================================
-// 7. Chargement Initial (🚀 ULTRA-RAPIDE : Non-bloquant & Client-side)
+// 7. Client-Side Lazy Hydration Hook (Double-Fetch Fix)
 // ==========================================
-const { data: initialData, pending: isInitialLoading } = useAsyncData(
+const { pending: loading } = useAsyncData(
   'home-initial-products',
   () => fetchProductsData('all', null),
   {
-    lazy: true,      // Ne bloque pas la navigation/hydratation client
-    server: false,   // 🚀 CLÉ : Le serveur n'attend pas cette requête, TTFB instantané pour la 1ère partie
-    transform: (res) => ({
-      nodes: res?.data?.products?.nodes || [],
-      pageInfo: res?.data?.products?.pageInfo || null
-    }),
+    lazy: true,
+    server: false,
+    getCachedData(key, nuxtApp) {
+      return nuxtApp.isHydrating && nuxtApp.payload.data[key] ? nuxtApp.payload.data[key] : null;
+    },
+    // ✅ Utilisation de transform pour intercepter, mapper et distribuer les résultats proprement
+    transform: (res: any) => {
+      const nodes = res?.data?.products?.nodes || [];
+      const pageInfo = res?.data?.products?.pageInfo;
+
+      allProducts.value = nodes;
+      endCursor.value = pageInfo?.endCursor || null;
+      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+      
+      return res;
+    }
   }
 );
 
-// Synchronisation réactive avec les états du composant
-watch([initialData, isInitialLoading], ([data, pending]) => {
-  loading.value = pending;
-  if (data) {
-    allProducts.value = data.nodes;
-    endCursor.value = data.pageInfo?.endCursor || null;
-    hasMore.value = data.pageInfo?.hasNextPage ?? (data.nodes.length === productsPerPage);
-  }
-}, { immediate: true });
-
 // ==========================================
-// 8. Actions Utilisateur (Client-side)
+// 8. User Interaction Methods
 // ==========================================
 const loadInitialProducts = async () => {
-  loading.value = true;
+  allProducts.value = []; // Instant UI reset avoids layout thrashing
   try {
-    const data = await fetchProductsData(activeCategory.value, null);
+    const data: any = await fetchProductsData(activeCategory.value, null);
     const nodes = data?.data?.products?.nodes || [];
     const pageInfo = data?.data?.products?.pageInfo;
     
     allProducts.value = nodes;
     endCursor.value = pageInfo?.endCursor || null;
     hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
-  } catch (error) {
-    console.error('Erreur lors du chargement des produits:', error);
-  } finally {
-    loading.value = false;
+  } catch (err) {
+    console.error('Erreur lors du chargement des produits:', err);
   }
 };
 
 const loadMoreProducts = async () => {
   if (loading.value || !hasMore.value) return;
   
-  loading.value = true;
   try {
-    const data = await fetchProductsData(activeCategory.value, endCursor.value);
+    const data: any = await fetchProductsData(activeCategory.value, endCursor.value);
     const newProducts = data?.data?.products?.nodes || [];
     const pageInfo = data?.data?.products?.pageInfo;
     
-    // ✅ OPTIMISATION CRITIQUE CONSERVÉE : .push() est beaucoup plus rapide
     allProducts.value.push(...newProducts);
-    
     endCursor.value = pageInfo?.endCursor || null;
     hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
-  } catch (error) {
-    console.error('Erreur lors du chargement des produits:', error);
-  } finally {
-    loading.value = false;
+  } catch (err) {
+    console.error('Erreur lors du chargement des produits:', err);
   }
 };
 
@@ -227,7 +218,7 @@ const selectCategory = (slug: string) => {
 };
 
 // ==========================================
-// 9. Logique du slider Vente Flash
+// 9. UI Slider Mechanics
 // ==========================================
 const newInSliderRef = ref<HTMLElement | null>(null);
 const scrollNewIn = (direction: 'left' | 'right') => {
@@ -239,6 +230,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
   });
 };
 </script>
+
 
 <template>
   <main class="min-h-screen mb-10">
