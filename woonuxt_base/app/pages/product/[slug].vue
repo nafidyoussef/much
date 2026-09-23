@@ -281,8 +281,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
   <main class="container relative py-6 xl:max-w-7xl">
     <div v-if="product">
       <SEOHead :info="product" />
-      <Breadcrumb v-if="storeSettings.showBreadcrumbOnSingleProduct" :product class="mb-6" />
-
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
         
         <!-- ✅ GALERIE D'IMAGES (Swipeable sur mobile) -->
@@ -303,21 +301,17 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
           />
           
           <!-- Indicateur visuel de swipe pour mobile -->
-          <div class="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
-            <div class="w-1.5 h-1.5 rounded-full bg-white/80 shadow-sm"></div>
-            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
-            <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
-          </div>
+    
         </div>
 
         <!-- Détails du produit -->
-        <div class="w-full min-w-0 md:py-2">
+        <div class="w-full min-w-0 md:py-1">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
           <!-- ✅ NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
-          <div class="mb-6">
+          <div class="mb-2">
             <!-- 1. Titre et Note (Pleine largeur en haut) -->
-            <div class="mb-4">
+            <div class="mb-2">
               <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
