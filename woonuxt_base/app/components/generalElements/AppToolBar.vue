@@ -5,9 +5,9 @@
 <template>
 
   <!-- ========================================== -->
-  <!-- 📱 BARRE DE NAVIGATION MOBILE (Style App)  -->
+  <!-- BARRE DE NAVIGATION MOBILE (Style App)  -->
   <!-- ========================================== -->
-  <!-- ✅ Z-INDEX RÉDUIT À 30 : Passera en dessous des sidebars (qui sont généralement en z-50) -->
+  <!--  Z-INDEX RÉDUIT À 30 : Passera en dessous des sidebars (qui sont généralement en z-50) -->
   <nav class="fixed py-1 bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 lg:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
     <div class="flex items-center justify-around h-13 max-w-lg mx-auto">
       

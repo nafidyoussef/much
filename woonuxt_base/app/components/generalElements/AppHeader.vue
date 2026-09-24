@@ -5,12 +5,12 @@ const lastScrollY = ref(0);
 const isScrolled = ref(false);
 const isHeaderVisible = ref(true);
 
-// ✅ Verrou pour empêcher la boucle de vibration pendant l'animation
+// Verrou pour empêcher la boucle de vibration pendant l'animation
 const isTransitioning = ref(false);
 const SCROLL_THRESHOLD = 10;
 
 const handleScroll = () => {
-  // 🛑 Si une animation est en cours, on ignore TOUT événement de scroll
+  //  Si une animation est en cours, on ignore TOUT événement de scroll
   // C'est la clé pour casser la boucle de vibration !
   if (isTransitioning.value) return;
 
@@ -74,12 +74,12 @@ onUnmounted(() => {
     <div class="container px-4 md:px-6">
 
       <!-- ========================================== -->
-      <!-- 📱 VERSION MOBILE                           -->
+      <!-- VERSION MOBILE                           -->
       <!-- ========================================== -->
       <div class="lg:hidden">
         
         <!-- Row 1 : Logo et Panier/Compte -->
-        <!-- ✅ overflow-hidden est crucial pour que max-h-0 fonctionne sans débordement -->
+        <!-- overflow-hidden est crucial pour que max-h-0 fonctionne sans débordement -->
         <div 
           class="flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden"
           :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-1 mb-0'"
@@ -101,7 +101,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ========================================== -->
-      <!-- 🖥️ VERSION DESKTOP (Inchangée)             -->
+      <!-- VERSION DESKTOP (Inchangée)             -->
       <!-- ========================================== -->
       <div class="hidden lg:flex h-20 items-center gap-8">
         <Logo class="w-40 shrink-0" />

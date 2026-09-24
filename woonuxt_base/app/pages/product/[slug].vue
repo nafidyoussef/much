@@ -8,12 +8,9 @@ const { addToCart, isUpdatingCart, isAddingToCart, isOptimisticCartMode, toggleC
 const { frontEndUrl, getErrorMessage } = useHelpers();
 const { t } = useI18n();
 const gql = useWooGraphQL();
-
-// ✅ 1. INITIALISATION DU TRACKING (Tout en haut)
+// 1. INITIALISATION DU TRACKING (Tout en haut)
 const { formatProduct, track } = useTracking();
-
 const slug = route.params.slug as string;
-
 const { data, error } = await useAsyncGql('getProduct', { slug, frontEndUrl });
 const product = ref<ProductDetail | null>(data.value?.product ?? null);
 const quantity = ref<number>(1);
@@ -290,7 +287,7 @@ const stripHtmlAndTruncate = (html: string | null | undefined, maxLength: number
 // 2. Valeurs dynamiques pour le SEO
 const siteName = 'Much.ma';
 const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`); 
-const seoTitle = computed(() => `${product.value?.name || 'Produit'} - ${siteName}`);
+const seoTitle = computed(() => `${siteName} - ${product.value?.name || 'Produit'}`);
 const seoDescription = computed(() => stripHtmlAndTruncate(product.value?.description || product.value?.description));
 const seoImage = computed(() => displayProduct.value?.image?.sourceUrl || 'https://www.much.ma/images/placeholder.jpg');
 
@@ -360,7 +357,7 @@ useHead({
 
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
         
-        <!-- ✅ GALERIE D'IMAGES (Swipeable sur mobile) -->
+        <!-- GALERIE D'IMAGES (Swipeable sur mobile) -->
         <div class="relative w-full min-w-0 overflow-x-auto snap-x snap-mandatory flex md:block scrollbar-hide">
           <ProductImageGallery
             v-if="productImage"
@@ -389,7 +386,7 @@ useHead({
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
-          <!-- ✅ NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
+          <!-- NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
           <div class="mb-6">
             <!-- 1. Titre et Note (Pleine largeur en haut) -->
             <div class="mb-4">
@@ -532,7 +529,7 @@ useHead({
       {{ productLoadError }}
     </div>
 
-    <!-- ✅ BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
+    <!-- BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) -->
     <a
       :href="whatsappLink"
       target="_blank"
@@ -557,7 +554,7 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* ✅ Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
+/* Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }

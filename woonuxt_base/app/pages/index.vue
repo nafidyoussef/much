@@ -159,7 +159,7 @@ const loadInitialProducts = async () => {
   } catch (err) {
     console.error('Erreur lors du chargement des produits:', err);
   } finally {
-    isLoading.value = false; // On désactive le chargement quoi qu'il arrive
+    isLoading.value = false;
   }
 };
 
@@ -189,7 +189,7 @@ const loadMoreProducts = async () => {
 const selectCategory = (slug: string) => {
   if (activeCategory.value === slug) return;
   activeCategory.value = slug;
-  loadInitialProducts(); // Recharge proprement avec la nouvelle catégorie
+  loadInitialProducts();
 };
 
 // ==========================================
@@ -204,12 +204,6 @@ const scrollNewIn = (direction: 'left' | 'right') => {
     behavior: 'smooth',
   });
 };
-
-// ==========================================
-// 9. Déclenchement initial
-// ==========================================
-// On lance le chargement immédiatement au montage du composant
-
 onMounted(() => {
   loadInitialProducts();
 });
@@ -234,15 +228,11 @@ const { pending: initialLoading } = useAsyncData(
     }
   }
 );
-
-// ✅ Computed qui combine les deux états pour le template
 const loading = computed<boolean>(() => initialLoading.value || isLoading.value);
 </script>
 <template>
   <main class="min-h-screen mb-10">
     <HeroBanner />
-    
-    <!-- Section Confiance -->
     <section class="container py-6 mb-2">
       <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div class="grid grid-cols-2">
