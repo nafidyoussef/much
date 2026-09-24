@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Préchargement : l'image part avant même que le HTML soit parsé
+// Precharging the relative asset path directly in the header
 useHead({
   link: [{
     rel: 'preload',
@@ -11,13 +11,18 @@ useHead({
 </script>
 
 <template>
-  <div class="w-full md:max-w-8xl md:mx-auto md:px-4 lg:px-20">
+  <!-- 
+    ✅ FIXED: Added 'aspect-[330/150] md:aspect-[1320/600] overflow-hidden bg-gray-100' directly 
+    to the parent div element wrapper. This ensures the browser layouts the box layout 
+    even if the webp image file takes a few milliseconds to process.
+  -->
+  <div class="w-full md:max-w-8xl md:mx-auto md:px-4 lg:px-20 aspect-[330/150] md:aspect-[1320/600] overflow-hidden bg-gray-50">
     <img
       src="/Hero-1.webp"
       alt="Collection Nouveau Année"
       width="1320"
       height="600"
-      class="w-full md:rounded-xl aspect-[330/150] md:aspect-[1320/600] object-cover"
+      class="w-full h-full md:rounded-xl object-cover"
       loading="eager"
       fetchpriority="high"
       decoding="sync"
