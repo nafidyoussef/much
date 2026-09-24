@@ -143,7 +143,7 @@ export default defineNuxtConfig({
   },
 
  
-  sitemap: {
+ /* sitemap: {
     exclude: [
       '/my-account/**',
       '/wishlist',
@@ -252,6 +252,6 @@ export default defineNuxtConfig({
       }
     },
   },
-
+*/
 
 });

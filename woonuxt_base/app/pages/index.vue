@@ -18,7 +18,7 @@ useHead({
 });
 
 // ==========================================
-// 1. SEO (Optimized with computed properties)
+// 1. SEO
 // ==========================================
 useSeoMeta({
   title: 'Accueil',
@@ -29,25 +29,8 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 });
 
-// ✅ VERCEL PERFORMANCE SCRIPTS: Inject scripts conditionally with proper strategy
-if (import.meta.env.PROD) {
-  useHead({
-    script: [
-      {
-        innerHTML: 'window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };',
-        type: 'text/javascript'
-      },
-      {
-        src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
-        defer: true,
-        type: 'text/javascript'
-      }
-    ]
-  });
-}
-
 // ==========================================
-// 2. Non-blocking Flash Sale Data
+// 2. Vente Flash (Non-bloquant)
 // ==========================================
 const { data: newInData } = useAsyncGql('getNewInProducts', { 
   category: 'vente-flash' 
@@ -57,7 +40,7 @@ const newInProducts = computed<Product[]>(() =>
 );
 
 // ==========================================
-// 3. Static Category Configuration
+// 3. Configuration des catégories
 // ==========================================
 const categories = [
   { slug: 'all', name: 'Tout' },
@@ -75,14 +58,16 @@ const activeCategory = ref('all');
 const productsPerPage = 12;
 
 // ==========================================
-// 4. Reactive State
+// 4. État réactif des produits
 // ==========================================
 const allProducts = ref<Product[]>([]);
 const endCursor = ref<string | null>(null);
 const hasMore = ref(true);
+const isLoading = ref(false);         // Pour le chargement initial ou changement de catégorie
+const isLoadMoreLoading = ref(false); // Pour le bouton "Charger plus"
 
 // ==========================================
-// 5. Optimized GraphQL Core Query Structure
+// 5. Requête GraphQL
 // ==========================================
 const productQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
@@ -121,7 +106,7 @@ const productQuery = `
 `;
 
 // ==========================================
-// 6. Optimized Clean Fetch Function
+// 6. Fonction de chargement robuste
 // ==========================================
 const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
   const variables: Record<string, any> = {
@@ -130,6 +115,7 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
     order: 'DESC'
   };
   
+  // ⚠️ CRITIQUE : Ne pas envoyer 'all' comme slug à GraphQL, cela ne retourne rien
   if (categoryId !== 'all') {
     variables.slug = [categoryId]; 
   }
@@ -138,23 +124,96 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
     variables.after = cursor;
   }
 
-  // Safe fallback to public config layout rather than crashing Node global references
-  // Before: const GQL_HOST = runtimeConfig.public?.['graphql-client']?.clients?.default?.host || 'https://much.ma';
+  const GQL_HOST = (runtimeConfig.public?.['graphql-client'] as any)?.clients?.default?.host || 'https://api.much.ma/graphql';
 
-// ✅ After: Safely bypass the strict empty-object constraint using bracket notation or an inline cast
-const GQL_HOST = (runtimeConfig.public?.['graphql-client'] as any)?.clients?.default?.host || 'https://much.ma';
+  try {
+    const res = await $fetch(GQL_HOST, {
+      method: 'POST',
+      body: { query: productQuery, variables, operationName: 'getProducts' }
+    });
+    return res as any;
+  } catch (error) {
+    console.error('Erreur lors de la requête GraphQL:', error);
+    return null;
+  }
+};
 
+// ==========================================
+// 7. Actions Utilisateur
+// ==========================================
+const loadInitialProducts = async () => {
+  isLoading.value = true;
+  allProducts.value = []; // On vide pour éviter d'anciens produits pendant le chargement
+  
+  try {
+    const response = await fetchProductsData(activeCategory.value, null);
+    
+    if (response?.data?.products) {
+      const nodes = response.data.products.nodes || [];
+      const pageInfo = response.data.products.pageInfo;
+      
+      allProducts.value = nodes;
+      endCursor.value = pageInfo?.endCursor || null;
+      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+    }
+  } catch (err) {
+    console.error('Erreur lors du chargement des produits:', err);
+  } finally {
+    isLoading.value = false; // On désactive le chargement quoi qu'il arrive
+  }
+};
 
-  return await $fetch(GQL_HOST, {
-    method: 'POST',
-    body: { query: productQuery, variables, operationName: 'getProducts' }
+const loadMoreProducts = async () => {
+  if (isLoadMoreLoading.value || !hasMore.value) return;
+  
+  isLoadMoreLoading.value = true;
+  
+  try {
+    const response = await fetchProductsData(activeCategory.value, endCursor.value);
+    
+    if (response?.data?.products) {
+      const newProducts = response.data.products.nodes || [];
+      const pageInfo = response.data.products.pageInfo;
+      
+      allProducts.value.push(...newProducts);
+      endCursor.value = pageInfo?.endCursor || null;
+      hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
+    }
+  } catch (err) {
+    console.error('Erreur lors du chargement des produits suivants:', err);
+  } finally {
+    isLoadMoreLoading.value = false;
+  }
+};
+
+const selectCategory = (slug: string) => {
+  if (activeCategory.value === slug) return;
+  activeCategory.value = slug;
+  loadInitialProducts(); // Recharge proprement avec la nouvelle catégorie
+};
+
+// ==========================================
+// 8. UI Slider Mechanics (Vente Flash)
+// ==========================================
+const newInSliderRef = ref<HTMLElement | null>(null);
+const scrollNewIn = (direction: 'left' | 'right') => {
+  if (!newInSliderRef.value) return;
+  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
+  newInSliderRef.value.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth',
   });
 };
 
 // ==========================================
-// 7. Client-Side Lazy Hydration Hook (Double-Fetch Fix)
+// 9. Déclenchement initial
 // ==========================================
-const { pending: loading } = useAsyncData(
+// On lance le chargement immédiatement au montage du composant
+
+onMounted(() => {
+  loadInitialProducts();
+});
+const { pending: initialLoading } = useAsyncData(
   'home-initial-products',
   () => fetchProductsData('all', null),
   {
@@ -163,7 +222,6 @@ const { pending: loading } = useAsyncData(
     getCachedData(key, nuxtApp) {
       return nuxtApp.isHydrating && nuxtApp.payload.data[key] ? nuxtApp.payload.data[key] : null;
     },
-    // ✅ Utilisation de transform pour intercepter, mapper et distribuer les résultats proprement
     transform: (res: any) => {
       const nodes = res?.data?.products?.nodes || [];
       const pageInfo = res?.data?.products?.pageInfo;
@@ -177,61 +235,9 @@ const { pending: loading } = useAsyncData(
   }
 );
 
-// ==========================================
-// 8. User Interaction Methods
-// ==========================================
-const loadInitialProducts = async () => {
-  allProducts.value = []; // Instant UI reset avoids layout thrashing
-  try {
-    const data: any = await fetchProductsData(activeCategory.value, null);
-    const nodes = data?.data?.products?.nodes || [];
-    const pageInfo = data?.data?.products?.pageInfo;
-    
-    allProducts.value = nodes;
-    endCursor.value = pageInfo?.endCursor || null;
-    hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits:', err);
-  }
-};
-
-const loadMoreProducts = async () => {
-  if (loading.value || !hasMore.value) return;
-  
-  try {
-    const data: any = await fetchProductsData(activeCategory.value, endCursor.value);
-    const newProducts = data?.data?.products?.nodes || [];
-    const pageInfo = data?.data?.products?.pageInfo;
-    
-    allProducts.value.push(...newProducts);
-    endCursor.value = pageInfo?.endCursor || null;
-    hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits:', err);
-  }
-};
-
-const selectCategory = (slug: string) => {
-  if (activeCategory.value === slug) return;
-  activeCategory.value = slug;
-  loadInitialProducts();
-};
-
-// ==========================================
-// 9. UI Slider Mechanics
-// ==========================================
-const newInSliderRef = ref<HTMLElement | null>(null);
-const scrollNewIn = (direction: 'left' | 'right') => {
-  if (!newInSliderRef.value) return;
-  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
-  newInSliderRef.value.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
-    behavior: 'smooth',
-  });
-};
+// ✅ Computed qui combine les deux états pour le template
+const loading = computed<boolean>(() => initialLoading.value || isLoading.value);
 </script>
-
-
 <template>
   <main class="min-h-screen mb-10">
     <HeroBanner />
@@ -465,8 +471,8 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </button>
       </div>
 
-      <!-- Squelettes uniquement au premier chargement -->
-      <div v-if="loading && allProducts.length === 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- ✅ Squelettes de chargement (affichés pendant le chargement initial ou le changement de catégorie) -->
+      <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         <div v-for="i in 8" :key="`skeleton-${i}`" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
           <div class="aspect-[8/9] bg-gray-200 rounded-lg mb-3"></div>
           <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
@@ -474,8 +480,8 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         </div>
       </div>
 
-      <!-- La grille reste TOUJOURS visible si on a des produits, même pendant le chargement -->
-      <div v-if="allProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+      <!-- ✅ La grille des produits (visible seulement si on a des produits et qu'on n'est pas en plein chargement de catégorie) -->
+      <div v-if="!loading && allProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
         <ProductCard 
           v-for="product in allProducts" 
           :key="product.databaseId || product.id"
@@ -483,24 +489,25 @@ const scrollNewIn = (direction: 'left' | 'right') => {
         />
       </div>
 
-      <!-- État vide -->
+      <!-- ✅ État vide (seulement si ce n'est PAS en cours de chargement et qu'il n'y a vraiment aucun produit) -->
       <div v-if="!loading && allProducts.length === 0" class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
         <p class="text-gray-500">Aucun produit trouvé dans cette catégorie pour le moment.</p>
       </div>
 
-      <!-- BOUTON LOAD MORE -->
+      <!-- ✅ BOUTON LOAD MORE -->
       <div v-if="hasMore && allProducts.length > 0" class="flex justify-center mt-10">
         <button
           @click="loadMoreProducts"
-          :disabled="loading"
+          :disabled="isLoadMoreLoading"
           class="inline-flex items-center gap-2 px-8 py-3 bg-[#ff4f24] text-white font-semibold rounded-full shadow-lg shadow-[#ff4f24]/20 hover:bg-[#ff4f24]/90 hover:shadow-xl hover:shadow-[#ff4f24]/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <svg v-if="loading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <!-- Spinner uniquement pour le chargement "Voir plus" -->
+          <svg v-if="isLoadMoreLoading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
           </svg>
           
-          <span v-if="loading">Chargement...</span>
+          <span v-if="isLoadMoreLoading">Chargement...</span>
           
           <template v-else>
             <span>Charger plus de produits</span>
@@ -512,7 +519,7 @@ const scrollNewIn = (direction: 'left' | 'right') => {
       </div>
 
       <!-- Message "Tous les produits chargés" -->
-      <div v-else-if="!hasMore && allProducts.length > 0" class="text-center mt-8">
+      <div v-if="!hasMore && allProducts.length > 0" class="text-center mt-8">
         <p class="text-sm text-gray-400">Tous les produits ont été chargés</p>
       </div>
     </section>
