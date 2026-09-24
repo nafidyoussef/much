@@ -239,7 +239,7 @@ const { pending: initialLoading } = useAsyncData(
 const loading = computed<boolean>(() => initialLoading.value || isLoading.value);
 </script>
 <template>
-  <main class="min-h-screen mb-10">
+  <main class="min-h-screen mb-10 layout-stable">
     <HeroBanner />
     
     <!-- Section Confiance -->
