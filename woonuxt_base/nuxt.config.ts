@@ -150,6 +150,7 @@ export default defineNuxtConfig({
       '/cart',
       '/checkout',
       '/order-received',
+      '/order-summary/**',
       '/lost-password',
       '/**?*filter=*',
       '/**?*orderby=*',
