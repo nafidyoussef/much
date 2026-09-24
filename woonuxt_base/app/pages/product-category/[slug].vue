@@ -3,11 +3,9 @@ import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
 import { useRouter } from 'vue-router';
 
-
 // ✅ TRACKING : Import du composable
 const { formatProduct, track } = useTracking();
 
-const hasLoadedOnce = ref(false);
 const route = useRoute();
 const router = useRouter();
 const { storeSettings } = useAppConfig();
@@ -23,6 +21,7 @@ const loadingMore = ref(false);
 const hasNextPage = ref(true);
 const endCursor = ref<string | null>(null);
 const sentinelRef = ref<HTMLElement | null>(null);
+const hasLoadedOnce = ref(false);
 
 let currentCategoryId: number | null = null;
 let allCategories: any[] = [];
@@ -180,7 +179,76 @@ const filterProductsByPrice = (productsList: Product[]) => {
   });
 };
 
+// ✅ 1. GESTION DU CACHE (Si valide, on charge instantanément sans bloquer)
+if (isValid.value) {
+  products.value = cache.value.products;
+  allFetchedProducts.value = cache.value.products;
+  endCursor.value = cache.value.endCursor;
+  hasNextPage.value = cache.value.hasNextPage;
+  loading.value = false;
+  hasLoadedOnce.value = true;
+  
+  if (import.meta.client) {
+    window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
+  }
+} else {
+  // ✅ 2. CHARGEMENT NON-BLOQUANT (Si pas de cache)
+  const fetchInitialData = async () => {
+    const variables = buildVariables(null, 12);
+    const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
+    
+    const response = await $fetch<any>(GQL_HOST, {
+      method: 'POST',
+      body: { query: getProductsQuery, variables },
+      cache: 'no-store'
+    });
+
+    return {
+      nodes: response?.data?.products?.nodes || [],
+      pageInfo: response?.data?.products?.pageInfo || null
+    };
+  };
+
+  const { data: initialData, pending: isInitialLoading } = useAsyncData(
+    `category-initial-${slug}`,
+    fetchInitialData,
+    {
+      lazy: true,
+      server: false, // ⚡ Client-side only pour un TTFB instantané
+      getCachedData(key, nuxtApp) {
+        return nuxtApp.isHydrating && nuxtApp.payload.data[key] ? nuxtApp.payload.data[key] : null;
+      }
+    }
+  );
+
+  watch([initialData, isInitialLoading], ([data, pending]) => {
+    loading.value = pending;
+    if (data) {
+      const filtered = filterProductsByPrice(data.nodes);
+      products.value = filtered;
+      allFetchedProducts.value = data.nodes;
+      endCursor.value = data.pageInfo?.endCursor || null;
+      hasNextPage.value = data.pageInfo?.hasNextPage ?? false;
+      hasLoadedOnce.value = true;
+
+      // ✅ TRACKING : view_item_list
+      if (products.value.length > 0) {
+        const visibleItems = products.value.slice(0, 12).map(p => formatProduct(p, 1));
+        track('view_item_list', {
+          item_list_id: 'category',
+          item_list_name: slug || 'Catalogue',
+          items: visibleItems
+        });
+      }
+      
+      save(products.value, endCursor.value, hasNextPage.value);
+    }
+  }, { immediate: true });
+}
+
+// ✅ 3. FONCTION DE CHARGEMENT (Pour le "Load More" ou les changements de filtres)
 const fetchProducts = async (append = false) => {
+  // Si le cache est valide et qu'on ne fait pas un append, on utilise le cache
   if (!append && isValid.value) {
     products.value = cache.value.products;
     allFetchedProducts.value = cache.value.products;
@@ -189,12 +257,9 @@ const fetchProducts = async (append = false) => {
     loading.value = false;
     hasLoadedOnce.value = true;
     
-    await nextTick();
     if (import.meta.client) {
       window.scrollTo({ top: cache.value.scrollY, behavior: 'auto' });
     }
-    
-    setupObserver();
     return;
   }
 
@@ -206,7 +271,6 @@ const fetchProducts = async (append = false) => {
   try {
     const cursor = append ? endCursor.value : null;
     const variables = buildVariables(cursor, 12);
-
     const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 
     const response = await $fetch<any>(GQL_HOST, {
@@ -231,8 +295,6 @@ const fetchProducts = async (append = false) => {
     hasNextPage.value = pageInfo?.hasNextPage ?? false;
     hasLoadedOnce.value = true;
 
-    // ✅ TRACKING : view_item_list (Uniquement au chargement initial ou changement de catégorie/filtre)
-    // GA4 recommande d'envoyer les 12 à 20 premiers produits visibles
     if (!append && products.value.length > 0) {
       const visibleItems = products.value.slice(0, 12).map(p => formatProduct(p, 1));
       track('view_item_list', {
@@ -293,7 +355,7 @@ const checkAndRedirectSearch = () => {
 
 onMounted(async () => {
   if (checkAndRedirectSearch()) return;
-  await fetchProducts(false);
+  // Le chargement initial est déjà géré par useAsyncData ou le cache ci-dessus
   await nextTick();
   setupObserver();
 });
@@ -316,6 +378,7 @@ watch(
     hasNextPage.value = true;
     products.value = [];
     allFetchedProducts.value = [];
+    hasLoadedOnce.value = false;
     
     await fetchProducts(false);
     await nextTick();
@@ -338,9 +401,9 @@ useHead({
   meta: [{ name: 'description', content: 'Découvrez nos produits' }],
 });
 </script>
+
 <template>
   <main class="container">
-    <!-- ... (VOTRE TEMPLATE RESTE EXACTEMENT LE MÊME, IL EST PARFAIT) ... -->
     <div v-if="subcategories.length" class="bg-white/95 backdrop-blur-md border-b border-gray-100 -mx-1 px-2 md:mx-0 md:px-0 py-3 md:py-4 mb-1 group">
       <div class="relative">
         <button
