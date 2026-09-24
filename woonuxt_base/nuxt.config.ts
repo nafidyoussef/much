@@ -13,18 +13,12 @@ const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTt
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-10',
   experimental: { appManifest: false, asyncContext: true },
-  devtools: { enabled: false },
   
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
       include: ['@stripe/stripe-js/pure', '@vue/devtools-core', '@vue/devtools-kit', '@vueuse/core', 'graphql-request', 'graphql-tag', 'reka-ui', 'tailwind-merge', 'workbox-window'],
     },
-     build: {
-      // Ensure CSS is extracted properly
-      cssCodeSplit: true, 
-    }
-    // Prevent Nuxt from bundling heavy node_modules into the main chu
   },
 
   app: {
