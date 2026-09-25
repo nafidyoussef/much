@@ -59,34 +59,33 @@ export default defineNuxtConfig({
   css: [resolve('./app/assets/css/main.css')],
 
   runtimeConfig: {
-  public: {
-    'graphql-client': {
-      clients: {
-        default: {
-          host: GQL_HOST,
-          headers: { Origin: APP_HOST },
-          
-          // 1. On remplace false par une configuration de stockage explicite
-          tokenStorage: {
-            mode: 'cookie',
-            cookieOptions: {
-              name: 'woocommerce-session',      // Nom du cookie côté Nuxt
-              domain: '.much.ma',       // TRÈS IMPORTANT : partage le cookie entre much.ma et api.much.ma
-              maxAge: 60 * 60 * 24 * 14, // Conserve le panier pendant 14 jours (au lieu de la session)
-              sameSite: 'lax',
-              secure: true,             // Requis pour HTTPS
-            }
-          },
-          
-          // 2. Vos options fetch actuelles qui sont parfaites
-          fetchOptions: {
-            mode: 'cors',
-            credentials: 'include', 
-          },
+ public: {
+  'graphql-client': {
+    clients: {
+      default: {
+        host: GQL_HOST,
+        headers: { Origin: APP_HOST },
+        
+        tokenStorage: {
+          mode: 'cookie',
+          cookieOptions: {
+            name: 'woocommerce-session',
+            domain: '.much.ma',       // Parfait pour partager entre much.ma et api.much.ma
+            maxAge: 60 * 60 * 24 * 14, // 14 jours (parfait)
+            sameSite: 'none',         // ⚠️ OBLIGATOIRE pour les requêtes fetch cross-sous-domaine sur iOS
+            secure: true,             // OBLIGATOIRE quand sameSite est 'none'
+            path: '/'                 // Bonne pratique pour s'assurer qu'il est envoyé partout
+          }
+        },
+        
+        fetchOptions: {
+          mode: 'cors',
+          credentials: 'include',     // Parfait, gardez-le
         },
       },
     },
   },
+}
 },
 
 
