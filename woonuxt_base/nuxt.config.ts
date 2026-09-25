@@ -42,6 +42,7 @@ export default defineNuxtConfig({
     resolve('./app/plugins/payment-gateways/paypal.ts'),
     resolve('./app/plugins/payment-gateways/cod.ts'),
     resolve('./app/plugins/payment-gateways/cheque.ts'),
+    resolve('./app/plugins/restore-woo-session.client.ts'),
   ],
 
   components: [{ path: resolve('./app/components'), pathPrefix: false }],

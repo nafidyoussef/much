@@ -220,15 +220,30 @@ export function useCart() {
   type CartQueryPayload = Partial<Pick<GetCartQuery, 'cart' | 'customer' | 'viewer' | 'paymentGateways' | 'loginClients'>>;
   type CartSummaryQueryPayload = Partial<Pick<GetCartSummaryQuery, 'cart' | 'viewer'>>;
 
-  const syncWooSession = (token?: string | null): void => {
+    const syncWooSession = (token?: string | null): void => {
     if (!token) return;
+    
+    // 1. Mettre à jour les headers GraphQL pour les prochaines requêtes
     useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
     if (!import.meta.client) return;
+    
+    // 2. Sauvegarde Cookie (avec les attributs stricts pour survivre sur iOS)
     const domain = getDomain(window.location.href);
-    const cookieOptions = domain ? { domain, path: '/' } : { path: '/' };
+    const cookieOptions = domain 
+      ? { domain, path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true } 
+      : { path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true };
+    
     const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
     sessionCookie.value = token;
+
+    // 3. FALLBACK CRITIQUE : Sauvegarde dans le LocalStorage 
+    // (Le LocalStorage survit à la fermeture complète de l'app Safari sur iOS, contrairement aux cookies cross-site)
+    try {
+      localStorage.setItem('woocommerce-session-fallback', token);
+    } catch (e) {
+      console.warn('LocalStorage non disponible pour la session WooCommerce', e);
+    }
   };
 
   const applyCartSnapshot = (payload: CartQueryPayload): void => {
