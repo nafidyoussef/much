@@ -223,22 +223,32 @@ export function useCart() {
     const syncWooSession = (token?: string | null): void => {
     if (!token) return;
     
-    // 1. Mettre à jour les headers GraphQL pour les prochaines requêtes
     useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
     if (!import.meta.client) return;
     
-    // 2. Sauvegarde Cookie (avec les attributs stricts pour survivre sur iOS)
     const domain = getDomain(window.location.href);
+    
+    // ✅ CONFIGURATION COMPLÈTE AVEC maxAge ET SECURE
     const cookieOptions = domain 
-      ? { domain, path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true } 
-      : { path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true };
+      ? { 
+          domain, 
+          path: '/', 
+          maxAge: 60 * 60 * 24 * 14, // 14 jours en secondes
+          sameSite: 'lax' as const, 
+          secure: true 
+        } 
+      : { 
+          path: '/', 
+          maxAge: 60 * 60 * 24 * 14, // 14 jours en secondes
+          sameSite: 'lax' as const, 
+          secure: true 
+        };
     
     const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
     sessionCookie.value = token;
 
-    // 3. FALLBACK CRITIQUE : Sauvegarde dans le LocalStorage 
-    // (Le LocalStorage survit à la fermeture complète de l'app Safari sur iOS, contrairement aux cookies cross-site)
+    // ✅ FALLBACK CRITIQUE POUR IOS : Sauvegarde dans le LocalStorage
     try {
       localStorage.setItem('woocommerce-session-fallback', token);
     } catch (e) {
@@ -368,10 +378,21 @@ export function useCart() {
           const { updateCustomer, updateViewer } = useAuth();
           updateViewer(null);
 
-          const sessionCookie = import.meta.client
-            ? useCookie<string | null>('woocommerce-session', { domain: getDomain(window.location.href), path: '/' }).value ||
-              useCookie<string | null>('woocommerce-session', { path: '/' }).value
-            : null;
+        const sessionCookie = import.meta.client
+          ? useCookie<string | null>('woocommerce-session', { 
+              domain: getDomain(window.location.href), 
+              path: '/',
+              maxAge: 60 * 60 * 24 * 14,
+              sameSite: 'lax' as const,
+              secure: true
+            }).value ||
+            useCookie<string | null>('woocommerce-session', { 
+              path: '/',
+              maxAge: 60 * 60 * 24 * 14,
+              sameSite: 'lax' as const,
+              secure: true
+            }).value
+          : null;
 
           if (!sessionCookie) {
             updateCustomer({ billing: {}, shipping: {} } as Customer);
