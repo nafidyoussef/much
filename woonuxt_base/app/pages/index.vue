@@ -524,13 +524,4 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-:deep(.hero-overlay),
-:deep(.hero-banner::after),
-:deep([class*="hero"] .overlay),
-:deep([class*="hero"] .gradient) {
-  background: transparent !important;
-  background-image: none !important;
-  display: none !important;
-}
 </style>
