@@ -139,11 +139,11 @@ export default defineNuxtConfig({
     strategy: 'no_prefix',
   },
 
-  routeRules: {
-    '/wp-json/**': { 
-      proxy: 'https://api.much.ma/wp-json/**',
-      headers: { 'X-Forwarded-Host': 'much.ma' }
-    }
+   routeRules: {
+    '/': { swr: 3600 },
+    '/products/**': { swr: 3600 },
+    'product-category/**': { swr: 3600 },
+    'product/**': { swr: 3600 }
   },
 
  
@@ -178,7 +178,6 @@ export default defineNuxtConfig({
      
 
       try {
-        // 1. Requête pour les produits
      // 1. Requête pour les produits (Filtre "where" supprimé car implicite pour le public)
       const productsQuery = `
           query GetSitemapProducts($first: Int!, $after: String) {
