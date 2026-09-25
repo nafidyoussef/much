@@ -156,8 +156,8 @@ export default defineNuxtConfig({
    routeRules: {
     '/': { swr: 3600 },
     '/products/**': { swr: 3600 },
-    'product-category/**': { swr: 3600 },
-    'product/**': { swr: 3600 }
+    '/product-category/**': { swr: 3600 },
+    '/product/**': { swr: 3600 }
   },
 
  
