@@ -27,7 +27,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { lang: 'fr' }, // ✅ Corrigé en 'fr' puisque defaultLocale est fr_FR
+      htmlAttrs: { lang: 'fr' }, // Corrigé en 'fr' puisque defaultLocale est fr_FR
       link: [
         { rel: 'icon', href: '/logo.png', type: 'image/png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
@@ -54,7 +54,7 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
     '@vite-pwa/nuxt',
-    '@nuxtjs/sitemap', // ✅ 1. AJOUT DU MODULE SITEMAP
+    '@nuxtjs/sitemap', // 1. AJOUT DU MODULE SITEMAP
   ],
 
   css: [resolve('./app/assets/css/main.css')],
@@ -73,7 +73,7 @@ export default defineNuxtConfig({
             name: 'woocommerce-session',
             domain: '.much.ma',       // Parfait pour partager entre much.ma et api.much.ma
             maxAge: 60 * 60 * 24 * 14, // 14 jours (parfait)
-            sameSite: 'none',         // ⚠️ OBLIGATOIRE pour les requêtes fetch cross-sous-domaine sur iOS
+            sameSite: 'none',         // OBLIGATOIRE pour les requêtes fetch cross-sous-domaine sur iOS
             secure: true,             // OBLIGATOIRE quand sameSite est 'none'
             path: '/'                 // Bonne pratique pour s'assurer qu'il est envoyé partout
           }
@@ -116,18 +116,18 @@ export default defineNuxtConfig({
       navigateFallback: undefined,
       runtimeCaching: [
         {
-          urlPattern: /^https:\/\/api\.much\.ma\/graphql.*/i, // ✅ Corrigé l'URL (bazzaria -> much)
+          urlPattern: /^https:\/\/api\.much\.ma\/graphql.*/i, //Corrigé l'URL (bazzaria -> much)
           handler: 'NetworkOnly', 
         }
       ]
     },
     manifest: {
-      name: 'Much.ma', // ✅ Mis à jour
+      name: 'Much.ma', // Mis à jour
       short_name: 'Much',
       start_url: '/',
       display: 'standalone',
       background_color: '#ffffff',
-      theme_color: '#ff4f24', // ✅ Ta couleur primaire
+      theme_color: '#ff4f24', // Ta couleur primaire
     }
   },
 
@@ -160,7 +160,7 @@ export default defineNuxtConfig({
     'product/**': { swr: 3600 }
   },
 
- /*
+ 
  sitemap: {
     exclude: [
       '/my-account/**',
@@ -270,6 +270,6 @@ export default defineNuxtConfig({
       }
     },
   },
-*/
+
 
 });

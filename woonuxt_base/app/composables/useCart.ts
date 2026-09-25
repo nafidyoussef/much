@@ -221,10 +221,10 @@ export function useCart() {
   type CartSummaryQueryPayload = Partial<Pick<GetCartSummaryQuery, 'cart' | 'viewer'>>;
 
     const syncWooSession = (token?: string | null): void => {
-    console.log('🔍 [DEBUG] syncWooSession appelée avec le token:', token);
+   
     
     if (!token) {
-      console.warn('⚠️ [DEBUG] syncWooSession ignoré : le token est vide ou null');
+      console.warn('[DEBUG] syncWooSession ignoré : le token est vide ou null');
       return;
     }
     
@@ -232,16 +232,14 @@ export function useCart() {
     useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
     if (!import.meta.client) {
-      console.log('🔍 [DEBUG] Côté serveur (SSR), on skip le localStorage');
       return;
     }
     
     // 2. SAUVEGARDE GARANTIE DANS LOCALSTORAGE (Notre filet de sécurité)
     try {
       localStorage.setItem('woocommerce-session-fallback', token);
-      console.log('✅ [DEBUG] Token sauvegardé avec succès dans localStorage !');
     } catch (e) {
-      console.error('❌ [DEBUG] Échec de la sauvegarde dans localStorage:', e);
+      console.error('[DEBUG] Échec de la sauvegarde dans localStorage:', e);
     }
 
     // 3. Mise à jour du Cookie avec une durée de vie explicite de 14 jours
@@ -252,7 +250,7 @@ export function useCart() {
     
     const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
     sessionCookie.value = token;
-    console.log('✅ [DEBUG] Cookie woocommerce-session mis à jour avec maxAge 14 jours');
+    console.log('[DEBUG] Cookie woocommerce-session mis à jour avec maxAge 14 jours');
   };
 
   const applyCartSnapshot = (payload: CartQueryPayload): void => {
@@ -462,15 +460,15 @@ export function useCart() {
             const response = await gql.addToCart({ input: { ...input, quantity } });
             const newCart = response.addToCart?.cart ?? null;
 
-            // 🚨 NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
+            //  NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
             if (import.meta.client) {
               // On lit le cookie tel que le navigateur vient de le recevoir du serveur
               const currentSession = useCookie<string | null>('woocommerce-session', { path: '/' }).value;
               if (currentSession) {
                 localStorage.setItem('woocommerce-session-fallback', currentSession);
-                console.log('💾 [DEBUG] Session sauvegardée dans localStorage après addToCart (optimistic)');
+                
               } else {
-                console.warn('⚠️ [DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
+                console.warn('[DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
               }
             }
 
@@ -484,14 +482,13 @@ export function useCart() {
         const response = await gql.addToCart({ input: { ...input, quantity } });
         const newCart = response.addToCart?.cart ?? null;
 
-        // 🚨 NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
+        // NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
         if (import.meta.client) {
           const currentSession = useCookie<string | null>('woocommerce-session', { path: '/' }).value;
           if (currentSession) {
             localStorage.setItem('woocommerce-session-fallback', currentSession);
-            console.log('💾 [DEBUG] Session sauvegardée dans localStorage après addToCart');
           } else {
-            console.warn('⚠️ [DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
+            console.warn('[DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
           }
         }
 
