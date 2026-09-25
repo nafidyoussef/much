@@ -221,39 +221,38 @@ export function useCart() {
   type CartSummaryQueryPayload = Partial<Pick<GetCartSummaryQuery, 'cart' | 'viewer'>>;
 
     const syncWooSession = (token?: string | null): void => {
-    if (!token) return;
+    console.log('🔍 [DEBUG] syncWooSession appelée avec le token:', token);
     
+    if (!token) {
+      console.warn('⚠️ [DEBUG] syncWooSession ignoré : le token est vide ou null');
+      return;
+    }
+    
+    // 1. Mettre à jour les headers pour les prochaines requêtes
     useGqlHeaders({ 'woocommerce-session': `Session ${token}` });
 
-    if (!import.meta.client) return;
+    if (!import.meta.client) {
+      console.log('🔍 [DEBUG] Côté serveur (SSR), on skip le localStorage');
+      return;
+    }
     
+    // 2. SAUVEGARDE GARANTIE DANS LOCALSTORAGE (Notre filet de sécurité)
+    try {
+      localStorage.setItem('woocommerce-session-fallback', token);
+      console.log('✅ [DEBUG] Token sauvegardé avec succès dans localStorage !');
+    } catch (e) {
+      console.error('❌ [DEBUG] Échec de la sauvegarde dans localStorage:', e);
+    }
+
+    // 3. Mise à jour du Cookie avec une durée de vie explicite de 14 jours
     const domain = getDomain(window.location.href);
-    
-    // ✅ CONFIGURATION COMPLÈTE AVEC maxAge ET SECURE
     const cookieOptions = domain 
-      ? { 
-          domain, 
-          path: '/', 
-          maxAge: 60 * 60 * 24 * 14, // 14 jours en secondes
-          sameSite: 'lax' as const, 
-          secure: true 
-        } 
-      : { 
-          path: '/', 
-          maxAge: 60 * 60 * 24 * 14, // 14 jours en secondes
-          sameSite: 'lax' as const, 
-          secure: true 
-        };
+      ? { domain, path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true } 
+      : { path: '/', maxAge: 60 * 60 * 24 * 14, sameSite: 'lax' as const, secure: true };
     
     const sessionCookie = useCookie<string | null>('woocommerce-session', cookieOptions);
     sessionCookie.value = token;
-
-    // ✅ FALLBACK CRITIQUE POUR IOS : Sauvegarde dans le LocalStorage
-    try {
-      localStorage.setItem('woocommerce-session-fallback', token);
-    } catch (e) {
-      console.warn('LocalStorage non disponible pour la session WooCommerce', e);
-    }
+    console.log('✅ [DEBUG] Cookie woocommerce-session mis à jour avec maxAge 14 jours');
   };
 
   const applyCartSnapshot = (payload: CartQueryPayload): void => {
@@ -442,11 +441,10 @@ export function useCart() {
     if (nextState) refreshCartIfNeeded();
   }
 
-  // add an item to the cart
+    // add an item to the cart
   async function addToCart(input: AddToCartInput, optimistic?: OptimisticAddPayload): Promise<void> {
     isAddingToCart.value = true;
     const quantity = normalizeQuantity(input.quantity);
-    // cartMode controls whether we update UI immediately or wait for server confirmation.
     const canOptimistic = !!optimistic?.product && isOptimisticCartMode.value;
 
     if (!canOptimistic) {
@@ -461,17 +459,45 @@ export function useCart() {
             if (storeSettings.autoOpenCart && !isShowingCart.value) toggleCart(true);
           },
           async () => {
-            const { addToCart } = await gql.addToCart({ input: { ...input, quantity } });
-            return addToCart?.cart ?? null;
+            const response = await gql.addToCart({ input: { ...input, quantity } });
+            const newCart = response.addToCart?.cart ?? null;
+
+            // 🚨 NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
+            if (import.meta.client) {
+              // On lit le cookie tel que le navigateur vient de le recevoir du serveur
+              const currentSession = useCookie<string | null>('woocommerce-session', { path: '/' }).value;
+              if (currentSession) {
+                localStorage.setItem('woocommerce-session-fallback', currentSession);
+                console.log('💾 [DEBUG] Session sauvegardée dans localStorage après addToCart (optimistic)');
+              } else {
+                console.warn('⚠️ [DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
+              }
+            }
+
+            return newCart;
           },
         );
         return;
       }
 
       await enqueueCartMutation(async () => {
-        const { addToCart } = await gql.addToCart({ input: { ...input, quantity } });
-        return addToCart?.cart ?? null;
+        const response = await gql.addToCart({ input: { ...input, quantity } });
+        const newCart = response.addToCart?.cart ?? null;
+
+        // 🚨 NOUVEAU : Forcer la sauvegarde du cookie dans le localStorage après l'ajout
+        if (import.meta.client) {
+          const currentSession = useCookie<string | null>('woocommerce-session', { path: '/' }).value;
+          if (currentSession) {
+            localStorage.setItem('woocommerce-session-fallback', currentSession);
+            console.log('💾 [DEBUG] Session sauvegardée dans localStorage après addToCart');
+          } else {
+            console.warn('⚠️ [DEBUG] Aucun cookie woocommerce-session trouvé après addToCart');
+          }
+        }
+
+        return newCart;
       }, false);
+
       // Auto open the cart when an item is added to the cart if the setting is enabled
       if (!canOptimistic && storeSettings.autoOpenCart && !isShowingCart.value) toggleCart(true);
     } catch (error: unknown) {
