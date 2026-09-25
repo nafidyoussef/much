@@ -70,7 +70,7 @@ export default defineNuxtConfig({
           tokenStorage: {
             mode: 'cookie',
             cookieOptions: {
-              name: 'gql_session',      // Nom du cookie côté Nuxt
+              name: 'woocommerce-session',      // Nom du cookie côté Nuxt
               domain: '.much.ma',       // TRÈS IMPORTANT : partage le cookie entre much.ma et api.much.ma
               maxAge: 60 * 60 * 24 * 14, // Conserve le panier pendant 14 jours (au lieu de la session)
               sameSite: 'lax',
