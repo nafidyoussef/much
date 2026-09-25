@@ -11,6 +11,10 @@ const parsedCatalogIsrTtl = Number.parseInt(process.env.CATALOG_ISR_TTL || '3600
 const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTtl > 0 ? parsedCatalogIsrTtl : 3600;
 
 export default defineNuxtConfig({
+   image: {
+    provider: 'vercel',
+    domains: ['i0.wp.com'],
+  },
   compatibilityDate: '2026-07-10',
   experimental: { appManifest: false, asyncContext: true },
   
