@@ -59,22 +59,36 @@ export default defineNuxtConfig({
   css: [resolve('./app/assets/css/main.css')],
 
   runtimeConfig: {
-    public: {
-      'graphql-client': {
-        clients: {
-          default: {
-            host: GQL_HOST,
-            headers: { Origin: APP_HOST },
-            tokenStorage: false,
-            fetchOptions: {
-              mode: 'cors',
-              credentials: 'include', 
-            },
+  public: {
+    'graphql-client': {
+      clients: {
+        default: {
+          host: GQL_HOST,
+          headers: { Origin: APP_HOST },
+          
+          // 1. On remplace false par une configuration de stockage explicite
+          tokenStorage: {
+            mode: 'cookie',
+            cookieOptions: {
+              name: 'gql_session',      // Nom du cookie côté Nuxt
+              domain: '.much.ma',       // TRÈS IMPORTANT : partage le cookie entre much.ma et api.much.ma
+              maxAge: 60 * 60 * 24 * 14, // Conserve le panier pendant 14 jours (au lieu de la session)
+              sameSite: 'lax',
+              secure: true,             // Requis pour HTTPS
+            }
+          },
+          
+          // 2. Vos options fetch actuelles qui sont parfaites
+          fetchOptions: {
+            mode: 'cors',
+            credentials: 'include', 
           },
         },
       },
     },
   },
+},
+
 
   alias: {
     '#constants': resolve('./app/constants'),
