@@ -3,7 +3,7 @@ const { cart, toggleCart, isCartMutating } = useCart();
 const config = useRuntimeConfig();
 
 // Récupérer le seuil depuis .env (défaut 500)
-const freeShippingThreshold = Number(config.public.freeShippingThreshold) || 500;
+const freeShippingThreshold = Number(config.public.freeShippingThreshold) || 199;
 
 // Extraire le montant numérique du subtotal (qui est souvent une chaîne HTML comme "450.00 DH")
 const currentSubtotal = computed(() => {
@@ -50,7 +50,7 @@ const hasFreeShipping = computed(() => currentSubtotal.value >= freeShippingThre
     <ClientOnly>
       <template v-if="cart && !cart.isEmpty">
         
-        <!-- 🚀 BARRE DE PROGRESSION LIVRAISON GRATUITE 🚀 -->
+        <!--  BARRE DE PROGRESSION LIVRAISON GRATUITE -->
         <div class="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-semibold" :class="hasFreeShipping ? 'text-green-600' : 'text-gray-700'">
