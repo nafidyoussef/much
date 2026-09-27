@@ -234,15 +234,20 @@ const shipToDifferentAddress = computed<boolean>({
 });
 
 // --- Validation ---
+// --- Validation ---
 const isCheckoutDisabled = computed<boolean>(() => {
   if (isProcessingOrder.value || !selectedPaymentMethodId.value) return true;
   const b = formData.billing;
-  if (!b.phone || !b.fullName || !b.address1 || !b.city) return true;
+  
+  // ✅ MODIFICATION : On a retiré "!b.address1" de cette ligne
+  if (!b.phone || !b.fullName || !b.city) return true;
+  
   if (isInvalidEmail.value || isInvalidPhone.value) return true;
 
   if (shipToDifferentAddress.value) {
     const s = formData.shipping;
-    if (!s.fullName || !s.address1 || !s.city) return true;
+    // ✅ MODIFICATION : On a retiré "!s.address1" de cette ligne aussi
+    if (!s.fullName || !s.city) return true;
   }
   return !isActiveGatewayReady.value;
 });
@@ -372,10 +377,6 @@ const payNow = async () => {
     ...attributionMetaData
   ];
 
-  
-
-  // ✅ TRACKING : Capturer les données du panier AVANT processCheckout
-  // Car processCheckout fait une redirection et le code suivant ne s'exécute pas
    // ✅ TRACKING : Capturer les données du panier AVANT processCheckout
   if (cart.value && !cart.value.isEmpty) {
     const cleanAmount = (val: string | number | null | undefined) =>
@@ -616,8 +617,8 @@ useSeoMeta({ title: t('shop.checkout') });
 </div>
                 <!-- ✅ "Adresse 1" renommé en "Quartier" -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Quartier <span class="text-[#ff4f24]">*</span></label>
-                  <input v-model="formData.billing.address1" type="text" placeholder="Ex: Hay Riad ..." required 
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Quartier </label>
+                  <input v-model="formData.billing.address1" type="text" placeholder="Ex: Hay Riad ..."
                     class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white" />
                 </div>
                 
@@ -647,7 +648,7 @@ useSeoMeta({ title: t('shop.checkout') });
              
             </div>
 
-            <!-- Section: Note de commande -->
+            <!-- Section: 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
               <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Icon name="ion:document-text" class="text-[#ff4f24]" />
@@ -656,7 +657,7 @@ useSeoMeta({ title: t('shop.checkout') });
               <textarea v-model="orderInput.customerNote" rows="3" 
                 class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#ff4f24] focus:ring-4 focus:ring-[#ff4f24]/10 outline-none transition-all duration-200 bg-gray-50/50 focus:bg-white resize-none" 
                 ></textarea>
-            </div>
+            </div>Note de commande -->
           </div>
 
           <!-- Colonne Droite : Récapitulatif (Sticky) -->
