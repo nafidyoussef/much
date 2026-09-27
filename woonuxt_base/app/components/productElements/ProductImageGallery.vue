@@ -47,7 +47,7 @@ const changeImageByOffset = (offset: number) => {
   return false;
 };
 
-// ✅ NEW: Tap-to-navigate handler
+// ✅ Tap-to-navigate handler
 const mainImageContainer = ref<HTMLElement | null>(null);
 const handleImageTap = (event: MouseEvent | TouchEvent) => {
   if (!mainImageContainer.value || galleryImages.value.length <= 1) return;
@@ -58,7 +58,6 @@ const handleImageTap = (event: MouseEvent | TouchEvent) => {
   const containerWidth = rect.width;
   
   // Only trigger if clicked outside the arrow buttons (center 80% of the image)
-  // This prevents accidental navigation when trying to click arrows
   const leftThreshold = containerWidth * 0.3;
   const rightThreshold = containerWidth * 0.7;
   
@@ -79,7 +78,8 @@ watch(
   },
 );
 
-const imgWidth = 640;
+// ✅ CORRECTION 1 : Augmenté à 1200 pour fournir des images haute résolution aux écrans mobiles Retina (DPR x2/x3)
+const imgWidth = 1200;
 
 const thumbnailPosition = computed<ThumbnailPosition>(() => (storeSettings.productGalleryThumbnailsPosition === 'left' ? 'left' : 'bottom'));
 const showLeftThumbnails = computed(() => thumbnailPosition.value === 'left');
@@ -111,10 +111,11 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
     >
       <SaleBadge :node class="absolute text-base top-4 right-4 z-10" />
       
+      <!-- ✅ CORRECTION 2 : Attribut 'sizes' nettoyé pour mieux guider le navigateur mobile -->
       <NuxtPicture
         :width="imgWidth"
         :height="imgWidth"
-        sizes="412px:100vw sm:100vw md:50vw lg:50vw xl:640px"
+        sizes="100vw sm:100vw md:50vw lg:50vw xl:800px"
         :alt="imageToShow.altText || node.name"
         :title="imageToShow.title || node.name"
         :src="imageToShow.sourceUrl || FALLBACK_IMG"
@@ -122,7 +123,7 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
         :img-attrs="{ class: 'h-full w-full object-contain pointer-events-none' }" 
       />
 
-      <!-- Optional: Visual feedback zones (hidden by default, shown on hover) -->
+      <!-- Visual feedback zones (hidden by default, shown on hover) -->
       <div class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
         <div class="absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-black/5 to-transparent"></div>
         <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-black/5 to-transparent"></div>
@@ -162,6 +163,7 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
         <NuxtPicture
           :width="160"
           :height="160"
+          sizes="80px"
           :src="galleryImg.sourceUrl || FALLBACK_IMG"
           :alt="galleryImg.altText || node.name"
           loading="lazy"
