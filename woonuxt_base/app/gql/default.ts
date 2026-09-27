@@ -21,6 +21,24 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+/** A Field Group managed by ACF */
+export type AcfFieldGroup = {
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+};
+
+/** Fields associated with an ACF Field Group */
+export type AcfFieldGroupFields = {
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+};
+
 /** Input for the addCartItems mutation. */
 export type AddCartItemsInput = {
   /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
@@ -775,7 +793,7 @@ export type Category = DatabaseIdentifier & HierarchicalNode & HierarchicalTermN
   /** The ancestors of the node. Default ordered as lowest (closest to the child) to highest (closest to the root). */
   ancestors?: Maybe<CategoryToAncestorsCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   categoryId?: Maybe<Scalars['Int']['output']>;
@@ -869,6 +887,7 @@ export type CategoryEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -878,6 +897,7 @@ export type CategoryEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -1089,6 +1109,8 @@ export type CategoryToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -1113,6 +1135,8 @@ export type CategoryToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1185,6 +1209,8 @@ export type CategoryToPostConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -1221,6 +1247,8 @@ export type CategoryToPostConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1385,17 +1413,17 @@ export type CollectionStatsWhereArgs = {
 /** A response or reaction to content submitted by users. Comments are typically associated with a specific content entry. */
 export type Comment = DatabaseIdentifier & Node & UniformResourceIdentifiable & {
   __typename?: 'Comment';
-  /** User agent used to post the comment. This field is equivalent to WP_Comment-&gt;comment_agent and the value matching the &quot;comment_agent&quot; column in SQL. */
+  /** User agent (browser or client) used to post the comment. */
   agent?: Maybe<Scalars['String']['output']>;
   /**
-   * The approval status of the comment. This field is equivalent to WP_Comment-&gt;comment_approved and the value matching the &quot;comment_approved&quot; column in SQL.
+   * The approval status of the comment.
    * @deprecated Deprecated in favor of the `status` field
    */
   approved?: Maybe<Scalars['Boolean']['output']>;
   /** The author of the comment */
   author?: Maybe<CommentToCommenterConnectionEdge>;
   /**
-   * IP address for the author at the time of commenting. This field is equivalent to WP_Comment-&gt;comment_author_IP and the value matching the &quot;comment_author_IP&quot; column in SQL.
+   * IP address for the author at the time of commenting.
    * @deprecated Use the ipAddress field on the edge between the comment and author
    */
   authorIp?: Maybe<Scalars['String']['output']>;
@@ -1406,13 +1434,13 @@ export type Comment = DatabaseIdentifier & Node & UniformResourceIdentifiable & 
   commentId?: Maybe<Scalars['Int']['output']>;
   /** Connection between the Comment type and the ContentNode type */
   commentedOn?: Maybe<CommentToContentNodeConnectionEdge>;
-  /** Content of the comment. This field is equivalent to WP_Comment-&gt;comment_content and the value matching the &quot;comment_content&quot; column in SQL. */
+  /** Content of the comment. */
   content?: Maybe<Scalars['String']['output']>;
   /** The unique identifier stored in the database */
   databaseId: Scalars['Int']['output'];
-  /** Date the comment was posted in local time. This field is equivalent to WP_Comment-&gt;date and the value matching the &quot;date&quot; column in SQL. */
+  /** Date the comment was posted in local time. */
   date?: Maybe<Scalars['String']['output']>;
-  /** Date the comment was posted in GMT. This field is equivalent to WP_Comment-&gt;date_gmt and the value matching the &quot;date_gmt&quot; column in SQL. */
+  /** Date the comment was posted in GMT. */
   dateGmt?: Maybe<Scalars['String']['output']>;
   /** The globally unique identifier for the comment object */
   id: Scalars['ID']['output'];
@@ -1428,7 +1456,7 @@ export type Comment = DatabaseIdentifier & Node & UniformResourceIdentifiable & 
   isRestricted?: Maybe<Scalars['Boolean']['output']>;
   /** Whether the node is a Term */
   isTermNode: Scalars['Boolean']['output'];
-  /** Karma value for the comment. This field is equivalent to WP_Comment-&gt;comment_karma and the value matching the &quot;comment_karma&quot; column in SQL. */
+  /** Karma value for the comment. */
   karma?: Maybe<Scalars['Int']['output']>;
   /** The permalink of the comment */
   link?: Maybe<Scalars['String']['output']>;
@@ -1440,9 +1468,9 @@ export type Comment = DatabaseIdentifier & Node & UniformResourceIdentifiable & 
   parentId?: Maybe<Scalars['ID']['output']>;
   /** Connection between the Comment type and the Comment type */
   replies?: Maybe<CommentToCommentConnection>;
-  /** The approval status of the comment. This field is equivalent to WP_Comment-&gt;comment_approved and the value matching the &quot;comment_approved&quot; column in SQL. */
+  /** The approval status of the comment. */
   status?: Maybe<CommentStatusEnum>;
-  /** Type of comment. This field is equivalent to WP_Comment-&gt;comment_type and the value matching the &quot;comment_type&quot; column in SQL. */
+  /** Type of comment. */
   type?: Maybe<Scalars['String']['output']>;
   /** The unique resource identifier path */
   uri?: Maybe<Scalars['String']['output']>;
@@ -1649,7 +1677,7 @@ export type CommentToCommenterConnectionEdge = CommenterConnectionEdge & Edge & 
   cursor?: Maybe<Scalars['String']['output']>;
   /** Email address representing the author for this particular comment */
   email?: Maybe<Scalars['String']['output']>;
-  /** IP address of the author at the time of making this comment. This field is equivalent to WP_Comment-&gt;comment_author_IP and the value matching the &quot;comment_author_IP&quot; column in SQL. */
+  /** IP address of the author at the time of making this comment. */
   ipAddress?: Maybe<Scalars['String']['output']>;
   /** The display name of the comment author for this particular comment */
   name?: Maybe<Scalars['String']['output']>;
@@ -1833,7 +1861,7 @@ export type ContentNode = {
   enqueuedScripts?: Maybe<ContentNodeToEnqueuedScriptConnection>;
   /** Connection between the ContentNode type and the EnqueuedStylesheet type */
   enqueuedStylesheets?: Maybe<ContentNodeToEnqueuedStylesheetConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** The globally unique ID for the object */
   id: Scalars['ID']['output'];
@@ -1861,9 +1889,9 @@ export type ContentNode = {
   modifiedGmt?: Maybe<Scalars['String']['output']>;
   /** The database id of the preview node */
   previewRevisionDatabaseId?: Maybe<Scalars['Int']['output']>;
-  /** Whether the object is a node in the preview state */
+  /** The globally unique ID of the preview node */
   previewRevisionId?: Maybe<Scalars['ID']['output']>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
+  /** The URL-friendly, human-readable identifier for the content node, used in its permalink. */
   slug?: Maybe<Scalars['String']['output']>;
   /** The current status of the object */
   status?: Maybe<Scalars['String']['output']>;
@@ -1880,6 +1908,7 @@ export type ContentNodeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -1889,6 +1918,7 @@ export type ContentNodeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 /** A paginated collection of ContentNode Nodes, Supports cursor-based pagination and filtering to efficiently retrieve sets of ContentNode Nodes */
@@ -1993,6 +2023,12 @@ export type ContentNodeToEnqueuedScriptConnectionPageInfo = EnqueuedScriptConnec
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the ContentNodeToEnqueuedScriptConnection connection */
+export type ContentNodeToEnqueuedScriptConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Connection between the ContentNode type and the EnqueuedStylesheet type */
 export type ContentNodeToEnqueuedStylesheetConnection = Connection & EnqueuedStylesheetConnection & {
   __typename?: 'ContentNodeToEnqueuedStylesheetConnection';
@@ -2026,11 +2062,23 @@ export type ContentNodeToEnqueuedStylesheetConnectionPageInfo = EnqueuedStyleshe
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the ContentNodeToEnqueuedStylesheetConnection connection */
+export type ContentNodeToEnqueuedStylesheetConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** A layout pattern that can help inform how content might be structured and displayed. Templates can define specialized layouts for different types of content. */
 export type ContentTemplate = {
   /** The name of the template */
   templateName?: Maybe<Scalars['String']['output']>;
 };
+
+/** The templates that can be assigned to content. Used to filter a connection by the template its content uses. */
+export enum ContentTemplateEnum {
+  /** The default template, applied when no specific template is assigned. */
+  DefaultTemplate = 'DEFAULT_TEMPLATE'
+}
 
 /** An Post Type object */
 export type ContentType = Node & UniformResourceIdentifiable & {
@@ -2157,8 +2205,6 @@ export enum ContentTypeEnum {
   /** The Type of Content object */
   Attachment = 'ATTACHMENT',
   /** The Type of Content object */
-  GraphqlDocument = 'GRAPHQL_DOCUMENT',
-  /** The Type of Content object */
   Page = 'PAGE',
   /** The Type of Content object */
   Post = 'POST',
@@ -2221,6 +2267,8 @@ export type ContentTypeToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -2245,6 +2293,8 @@ export type ContentTypeToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2286,12 +2336,6 @@ export type ContentTypeToTaxonomyConnectionPageInfo = PageInfo & TaxonomyConnect
 export enum ContentTypesOfCategoryEnum {
   /** The Type of Content object */
   Post = 'POST'
-}
-
-/** Allowed Content Types of the GraphqlDocumentGroup taxonomy. */
-export enum ContentTypesOfGraphqlDocumentGroupEnum {
-  /** The Type of Content object */
-  GraphqlDocument = 'GRAPHQL_DOCUMENT'
 }
 
 /** Allowed Content Types of the PaColor taxonomy. */
@@ -3421,68 +3465,6 @@ export type CreateCouponPayload = {
   clientMutationId?: Maybe<Scalars['String']['output']>;
   code?: Maybe<Scalars['String']['output']>;
   coupon?: Maybe<Coupon>;
-};
-
-/** Input for the createGraphqlDocumentGroup mutation. */
-export type CreateGraphqlDocumentGroupInput = {
-  /** The slug that the graphql_document_group will be an alias of */
-  aliasOf?: InputMaybe<Scalars['String']['input']>;
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** The description of the graphql_document_group object */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The name of the graphql_document_group object to mutate */
-  name: Scalars['String']['input'];
-  /** If this argument exists then the slug will be checked to see if it is not an existing valid term. If that check succeeds (it is not a valid term), then it is added and the term id is given. If it fails, then a check is made to whether the taxonomy is hierarchical and the parent argument is not empty. If the second check succeeds, the term will be inserted and the term id will be given. If the slug argument is empty, then it will be calculated from the term name. */
-  slug?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The payload for the createGraphqlDocumentGroup mutation. */
-export type CreateGraphqlDocumentGroupPayload = {
-  __typename?: 'CreateGraphqlDocumentGroupPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The created graphql_document_group */
-  graphqlDocumentGroup?: Maybe<GraphqlDocumentGroup>;
-};
-
-/** Input for the createGraphqlDocument mutation. */
-export type CreateGraphqlDocumentInput = {
-  /** Alias names for saved GraphQL query documents */
-  alias?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** The content of the object */
-  content?: InputMaybe<Scalars['String']['input']>;
-  /** The date of the object. Preferable to enter as year/month/day (e.g. 01/31/2017) as it will rearrange date as fit if it is not specified. Incomplete dates may have unintended results for example, "2017" as the input will use current date with timestamp 20:17  */
-  date?: InputMaybe<Scalars['String']['input']>;
-  /** Description for the saved GraphQL document */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** Allow, deny or default access grant for specific query */
-  grant?: InputMaybe<Scalars['String']['input']>;
-  /** Set connections between the graphqlDocument and graphqlDocumentGroups */
-  graphqlDocumentGroups?: InputMaybe<GraphqlDocumentGraphqlDocumentGroupsInput>;
-  /** HTTP Cache-Control max-age directive for a saved GraphQL document */
-  maxAgeHeader?: InputMaybe<Scalars['Int']['input']>;
-  /** A field used for ordering posts. This is typically used with nav menu items or for special ordering of hierarchical content types. */
-  menuOrder?: InputMaybe<Scalars['Int']['input']>;
-  /** The password used to protect the content of the object */
-  password?: InputMaybe<Scalars['String']['input']>;
-  /** The slug of the object */
-  slug?: InputMaybe<Scalars['String']['input']>;
-  /** The status of the object */
-  status?: InputMaybe<PostStatusEnum>;
-  /** The title of the object */
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The payload for the createGraphqlDocument mutation. */
-export type CreateGraphqlDocumentPayload = {
-  __typename?: 'CreateGraphqlDocumentPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The Post object mutation type. */
-  graphqlDocument?: Maybe<GraphqlDocument>;
 };
 
 /** Input for the createMediaItem mutation. */
@@ -5129,48 +5111,6 @@ export type DeleteCouponPayload = {
   coupon?: Maybe<Coupon>;
 };
 
-/** Input for the deleteGraphqlDocumentGroup mutation. */
-export type DeleteGraphqlDocumentGroupInput = {
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the graphqlDocumentGroup to delete */
-  id: Scalars['ID']['input'];
-};
-
-/** The payload for the deleteGraphqlDocumentGroup mutation. */
-export type DeleteGraphqlDocumentGroupPayload = {
-  __typename?: 'DeleteGraphqlDocumentGroupPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The ID of the deleted object */
-  deletedId?: Maybe<Scalars['ID']['output']>;
-  /** The deleted term object */
-  graphqlDocumentGroup?: Maybe<GraphqlDocumentGroup>;
-};
-
-/** Input for the deleteGraphqlDocument mutation. */
-export type DeleteGraphqlDocumentInput = {
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** Whether the object should be force deleted instead of being moved to the trash */
-  forceDelete?: InputMaybe<Scalars['Boolean']['input']>;
-  /** The ID of the graphqlDocument to delete */
-  id: Scalars['ID']['input'];
-  /** Override the edit lock when another user is editing the post */
-  ignoreEditLock?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-/** The payload for the deleteGraphqlDocument mutation. */
-export type DeleteGraphqlDocumentPayload = {
-  __typename?: 'DeleteGraphqlDocumentPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The ID of the deleted object */
-  deletedId?: Maybe<Scalars['ID']['output']>;
-  /** The object before it was deleted */
-  graphqlDocument?: Maybe<GraphqlDocument>;
-};
-
 /** Input for the deleteMediaItem mutation. */
 export type DeleteMediaItemInput = {
   /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
@@ -5713,12 +5653,14 @@ export enum DiscountTypeEnum {
 }
 
 /** The discussion setting type */
-export type DiscussionSettings = {
+export type DiscussionSettings = Node & {
   __typename?: 'DiscussionSettings';
   /** Allow people to submit comments on new posts. */
   defaultCommentStatus?: Maybe<Scalars['String']['output']>;
   /** Allow link notifications from other blogs (pingbacks and trackbacks) on new articles. */
   defaultPingStatus?: Maybe<Scalars['String']['output']>;
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
 };
 
 /** A downloadable item */
@@ -6063,7 +6005,7 @@ export type ExternalProduct = ContentNode & DatabaseIdentifier & MenuItemLinkabl
   galleryImages?: Maybe<ProductToMediaItemConnection>;
   /** Connection between the ProductWithAttributes type and the GlobalProductAttribute type */
   globalAttributes?: Maybe<ProductWithAttributesToGlobalProductAttributeConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the product object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -6118,7 +6060,7 @@ export type ExternalProduct = ContentNode & DatabaseIdentifier & MenuItemLinkabl
   /** Connection between the Product type and the productCategory type */
   productCategories?: Maybe<ProductToProductCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productId: Scalars['Int']['output'];
@@ -6255,6 +6197,7 @@ export type ExternalProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -6264,6 +6207,7 @@ export type ExternalProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -6452,6 +6396,52 @@ export type ExternalProductVisibleProductsArgs = {
   where?: InputMaybe<ProductToVisibleProductConnectionWhereArgs>;
 };
 
+/** The &quot;ExternalUrl&quot; Field Group. Added to the Schema by &quot;WPGraphQL for ACF&quot;. */
+export type ExternalUrl = AcfFieldGroup & AcfFieldGroupFields & ExternalUrl_Fields & {
+  __typename?: 'ExternalUrl';
+  /** Field of the &quot;url&quot; Field Type added to the schema as part of the &quot;ExternalUrl&quot; Field Group */
+  externalUrl?: Maybe<Scalars['String']['output']>;
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+};
+
+/** Interface representing fields of the ACF &quot;ExternalUrl&quot; Field Group */
+export type ExternalUrl_Fields = {
+  /** Field of the &quot;url&quot; Field Type added to the schema as part of the &quot;ExternalUrl&quot; Field Group */
+  externalUrl?: Maybe<Scalars['String']['output']>;
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+};
+
+/** The &quot;ExtraFields&quot; Field Group. Added to the Schema by &quot;WPGraphQL for ACF&quot;. */
+export type ExtraFields = AcfFieldGroup & AcfFieldGroupFields & ExtraFields_Fields & {
+  __typename?: 'ExtraFields';
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+  /** Field of the &quot;text&quot; Field Type added to the schema as part of the &quot;ExtraFields&quot; Field Group */
+  subTitle?: Maybe<Scalars['String']['output']>;
+};
+
+/** Interface representing fields of the ACF &quot;ExtraFields&quot; Field Group */
+export type ExtraFields_Fields = {
+  /**
+   * The name of the field group
+   * @deprecated Use __typename instead
+   */
+  fieldGroupName?: Maybe<Scalars['String']['output']>;
+  /** Field of the &quot;text&quot; Field Type added to the schema as part of the &quot;ExtraFields&quot; Field Group */
+  subTitle?: Maybe<Scalars['String']['output']>;
+};
+
 /** The Login client options for the facebook provider. */
 export type FacebookClientOptions = LoginClientOptions & {
   __typename?: 'FacebookClientOptions';
@@ -6614,7 +6604,7 @@ export type ForgetSessionPayload = {
 };
 
 /** The general setting type */
-export type GeneralSettings = {
+export type GeneralSettings = Node & {
   __typename?: 'GeneralSettings';
   /** A date format for all date strings. */
   dateFormat?: Maybe<Scalars['String']['output']>;
@@ -6622,6 +6612,10 @@ export type GeneralSettings = {
   description?: Maybe<Scalars['String']['output']>;
   /** This address is used for admin purposes, like new user notification. */
   email?: Maybe<Scalars['String']['output']>;
+  /** The address at which visitors reach the site&#039;s front end. Can differ from the `url` field when the front end and the content management backend are served from different addresses, such as on headless or decoupled installs. */
+  homeUrl?: Maybe<Scalars['String']['output']>;
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
   /** WordPress locale code. */
   language?: Maybe<Scalars['String']['output']>;
   /** The media item representing the site icon configured in site settings, used as the site&#039;s favicon and app icon. */
@@ -6877,738 +6871,6 @@ export enum GoogleProviderPromptTypeEnum {
   SelectAccount = 'SELECT_ACCOUNT'
 }
 
-/** Saved GraphQL Documents */
-export type GraphqlDocument = ContentNode & DatabaseIdentifier & Node & NodeWithContentEditor & NodeWithTemplate & NodeWithTitle & UniformResourceIdentifiable & {
-  __typename?: 'GraphqlDocument';
-  /** Alias names for saved GraphQL query documents */
-  alias?: Maybe<Array<Scalars['String']['output']>>;
-  /**
-   * The ancestors of the content node.
-   * @deprecated This content type is not hierarchical and typically will not have ancestors
-   */
-  ancestors?: Maybe<GraphqlDocumentToGraphqlDocumentConnection>;
-  /** The content of the post. */
-  content?: Maybe<Scalars['String']['output']>;
-  /** Connection between the ContentNode type and the ContentType type */
-  contentType?: Maybe<ContentNodeToContentTypeConnectionEdge>;
-  /** The name of the Content Type the node belongs to */
-  contentTypeName: Scalars['String']['output'];
-  /** The unique identifier stored in the database */
-  databaseId: Scalars['Int']['output'];
-  /** Post publishing date. */
-  date?: Maybe<Scalars['String']['output']>;
-  /** The publishing date set in GMT. */
-  dateGmt?: Maybe<Scalars['String']['output']>;
-  /** Description for the saved GraphQL document */
-  description?: Maybe<Scalars['String']['output']>;
-  /** The desired slug of the post */
-  desiredSlug?: Maybe<Scalars['String']['output']>;
-  /** If a user has edited the node within the past 15 seconds, this will return the user that last edited. Null if the edit lock doesn&#039;t exist or is greater than 15 seconds */
-  editingLockedBy?: Maybe<ContentNodeToEditLockConnectionEdge>;
-  /** The RSS enclosure for the object */
-  enclosure?: Maybe<Scalars['String']['output']>;
-  /** Connection between the ContentNode type and the EnqueuedScript type */
-  enqueuedScripts?: Maybe<ContentNodeToEnqueuedScriptConnection>;
-  /** Connection between the ContentNode type and the EnqueuedStylesheet type */
-  enqueuedStylesheets?: Maybe<ContentNodeToEnqueuedStylesheetConnection>;
-  /** Allow, deny or default access grant for specific query */
-  grant?: Maybe<Scalars['String']['output']>;
-  /** Connection between the GraphqlDocument type and the graphqlDocumentGroup type */
-  graphqlDocumentGroups?: Maybe<GraphqlDocumentToGraphqlDocumentGroupConnection>;
-  /**
-   * The id field matches the WP_Post-&gt;ID field.
-   * @deprecated Deprecated in favor of the databaseId field
-   */
-  graphqlDocumentId: Scalars['Int']['output'];
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
-  guid?: Maybe<Scalars['String']['output']>;
-  /** Whether the graphql_document object is password protected. */
-  hasPassword?: Maybe<Scalars['Boolean']['output']>;
-  /** The globally unique identifier of the graphql_document object. */
-  id: Scalars['ID']['output'];
-  /** Whether the node is a Comment */
-  isComment: Scalars['Boolean']['output'];
-  /** Whether the node is a Content Node */
-  isContentNode: Scalars['Boolean']['output'];
-  /** Whether the node represents the front page. */
-  isFrontPage: Scalars['Boolean']['output'];
-  /** Whether  the node represents the blog page. */
-  isPostsPage: Scalars['Boolean']['output'];
-  /** Whether the object is a node in the preview state */
-  isPreview?: Maybe<Scalars['Boolean']['output']>;
-  /** Whether the object is restricted from the current viewer */
-  isRestricted?: Maybe<Scalars['Boolean']['output']>;
-  /** Whether the node is a Term */
-  isTermNode: Scalars['Boolean']['output'];
-  /** The user that most recently edited the node */
-  lastEditedBy?: Maybe<ContentNodeToEditLastConnectionEdge>;
-  /** The permalink of the post */
-  link?: Maybe<Scalars['String']['output']>;
-  /** HTTP Cache-Control max-age directive for a saved GraphQL document */
-  maxAgeHeader?: Maybe<Scalars['Int']['output']>;
-  /** The local modified time for a post. If a post was recently updated the modified field will change to match the corresponding time. */
-  modified?: Maybe<Scalars['String']['output']>;
-  /** The GMT modified time for a post. If a post was recently updated the modified field will change to match the corresponding time in GMT. */
-  modifiedGmt?: Maybe<Scalars['String']['output']>;
-  /**
-   * The parent of the content node.
-   * @deprecated This content type is not hierarchical and typically will not have a parent
-   */
-  parent?: Maybe<GraphqlDocumentToParentConnectionEdge>;
-  /** The password for the graphql_document object. */
-  password?: Maybe<Scalars['String']['output']>;
-  /**
-   * Connection between the graphqlDocument type and the graphqlDocument type
-   * @deprecated The &quot;GraphqlDocument&quot; Type is not publicly queryable and does not support previews. This field will be removed in the future.
-   */
-  preview?: Maybe<GraphqlDocumentToPreviewConnectionEdge>;
-  /** The database id of the preview node */
-  previewRevisionDatabaseId?: Maybe<Scalars['Int']['output']>;
-  /** Whether the object is a node in the preview state */
-  previewRevisionId?: Maybe<Scalars['ID']['output']>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
-  slug?: Maybe<Scalars['String']['output']>;
-  /** The current status of the object */
-  status?: Maybe<Scalars['String']['output']>;
-  /** The template assigned to the node */
-  template?: Maybe<ContentTemplate>;
-  /** Connection between the GraphqlDocument type and the TermNode type */
-  terms?: Maybe<GraphqlDocumentToTermNodeConnection>;
-  /** The title of the post. This is currently just the raw title. An amendment to support rendered title needs to be made. */
-  title?: Maybe<Scalars['String']['output']>;
-  /** The unique resource identifier path */
-  uri?: Maybe<Scalars['String']['output']>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentAncestorsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentContentArgs = {
-  format?: InputMaybe<PostObjectFieldFormatEnum>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentEnqueuedScriptsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentEnqueuedStylesheetsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentGraphqlDocumentGroupsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<GraphqlDocumentToGraphqlDocumentGroupConnectionWhereArgs>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentTermsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<GraphqlDocumentToTermNodeConnectionWhereArgs>;
-};
-
-
-/** Saved GraphQL Documents */
-export type GraphqlDocumentTitleArgs = {
-  format?: InputMaybe<PostObjectFieldFormatEnum>;
-};
-
-/** A paginated collection of graphqlDocument Nodes, Supports cursor-based pagination and filtering to efficiently retrieve sets of graphqlDocument Nodes */
-export type GraphqlDocumentConnection = {
-  /** A list of edges (relational context) between RootQuery and connected graphqlDocument Nodes */
-  edges: Array<GraphqlDocumentConnectionEdge>;
-  /** A list of connected graphqlDocument Nodes */
-  nodes: Array<GraphqlDocument>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentConnectionPageInfo;
-};
-
-/** Represents a connection to a graphqlDocument. Contains both the graphqlDocument Node and metadata about the relationship. */
-export type GraphqlDocumentConnectionEdge = {
-  /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The connected graphqlDocument Node */
-  node: GraphqlDocument;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentConnectionEdge&quot; collections. Provides cursors and flags for navigating through sets of &quot;GraphqlDocumentConnectionEdge&quot; Nodes. */
-export type GraphqlDocumentConnectionPageInfo = {
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Set relationships between the graphqlDocument to graphqlDocumentGroups */
-export type GraphqlDocumentGraphqlDocumentGroupsInput = {
-  /** If true, this will append the graphqlDocumentGroup to existing related graphqlDocumentGroups. If false, this will replace existing relationships. Default true. */
-  append?: InputMaybe<Scalars['Boolean']['input']>;
-  /** The input list of items to set. */
-  nodes?: InputMaybe<Array<InputMaybe<GraphqlDocumentGraphqlDocumentGroupsNodeInput>>>;
-};
-
-/** List of graphqlDocumentGroups to connect the graphqlDocument to. If an ID is set, it will be used to create the connection. If not, it will look for a slug. If neither are valid existing terms, and the site is configured to allow terms to be created during post mutations, a term will be created using the Name if it exists in the input, then fallback to the slug if it exists. */
-export type GraphqlDocumentGraphqlDocumentGroupsNodeInput = {
-  /** The description of the graphqlDocumentGroup. This field is used to set a description of the graphqlDocumentGroup if a new one is created during the mutation. */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the graphqlDocumentGroup. If present, this will be used to connect to the graphqlDocument. If no existing graphqlDocumentGroup exists with this ID, no connection will be made. */
-  id?: InputMaybe<Scalars['ID']['input']>;
-  /** The name of the graphqlDocumentGroup. This field is used to create a new term, if term creation is enabled in nested mutations, and if one does not already exist with the provided slug or ID or if a slug or ID is not provided. If no name is included and a term is created, the creation will fallback to the slug field. */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** The slug of the graphqlDocumentGroup. If no ID is present, this field will be used to make a connection. If no existing term exists with this slug, this field will be used as a fallback to the Name field when creating a new term to connect to, if term creation is enabled as a nested mutation. */
-  slug?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Tag the saved query document with other queries as a &quot;group&quot;. */
-export type GraphqlDocumentGroup = DatabaseIdentifier & Node & TermNode & UniformResourceIdentifiable & {
-  __typename?: 'GraphqlDocumentGroup';
-  /** Connection between the GraphqlDocumentGroup type and the ContentNode type */
-  contentNodes?: Maybe<GraphqlDocumentGroupToContentNodeConnection>;
-  /** The number of objects connected to the object */
-  count?: Maybe<Scalars['Int']['output']>;
-  /** The unique identifier stored in the database */
-  databaseId: Scalars['Int']['output'];
-  /** The description of the object */
-  description?: Maybe<Scalars['String']['output']>;
-  /** Connection between the TermNode type and the EnqueuedScript type */
-  enqueuedScripts?: Maybe<TermNodeToEnqueuedScriptConnection>;
-  /** Connection between the TermNode type and the EnqueuedStylesheet type */
-  enqueuedStylesheets?: Maybe<TermNodeToEnqueuedStylesheetConnection>;
-  /**
-   * The id field matches the WP_Post-&gt;ID field.
-   * @deprecated Deprecated in favor of databaseId
-   */
-  graphqlDocumentGroupId?: Maybe<Scalars['Int']['output']>;
-  /** Connection between the GraphqlDocumentGroup type and the graphqlDocument type */
-  graphqlDocuments?: Maybe<GraphqlDocumentGroupToGraphqlDocumentConnection>;
-  /** The globally unique ID for the object */
-  id: Scalars['ID']['output'];
-  /** Whether the node is a Comment */
-  isComment: Scalars['Boolean']['output'];
-  /** Whether the node is a Content Node */
-  isContentNode: Scalars['Boolean']['output'];
-  /** Whether the node represents the front page. */
-  isFrontPage: Scalars['Boolean']['output'];
-  /** Whether  the node represents the blog page. */
-  isPostsPage: Scalars['Boolean']['output'];
-  /** Whether the object is restricted from the current viewer */
-  isRestricted?: Maybe<Scalars['Boolean']['output']>;
-  /** Whether the node is a Term */
-  isTermNode: Scalars['Boolean']['output'];
-  /** The link to the term */
-  link?: Maybe<Scalars['String']['output']>;
-  /** The human friendly name of the object. */
-  name?: Maybe<Scalars['String']['output']>;
-  /** An alphanumeric identifier for the object unique to its type. */
-  slug?: Maybe<Scalars['String']['output']>;
-  /** Connection between the GraphqlDocumentGroup type and the Taxonomy type */
-  taxonomy?: Maybe<GraphqlDocumentGroupToTaxonomyConnectionEdge>;
-  /** The name of the taxonomy that the object is associated with */
-  taxonomyName?: Maybe<Scalars['String']['output']>;
-  /** The ID of the term group that this term object belongs to */
-  termGroupId?: Maybe<Scalars['Int']['output']>;
-  /** The taxonomy ID that the object is associated with */
-  termTaxonomyId?: Maybe<Scalars['Int']['output']>;
-  /** The unique resource identifier path */
-  uri?: Maybe<Scalars['String']['output']>;
-};
-
-
-/** Tag the saved query document with other queries as a &quot;group&quot;. */
-export type GraphqlDocumentGroupContentNodesArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<GraphqlDocumentGroupToContentNodeConnectionWhereArgs>;
-};
-
-
-/** Tag the saved query document with other queries as a &quot;group&quot;. */
-export type GraphqlDocumentGroupEnqueuedScriptsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-/** Tag the saved query document with other queries as a &quot;group&quot;. */
-export type GraphqlDocumentGroupEnqueuedStylesheetsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-/** Tag the saved query document with other queries as a &quot;group&quot;. */
-export type GraphqlDocumentGroupGraphqlDocumentsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<GraphqlDocumentGroupToGraphqlDocumentConnectionWhereArgs>;
-};
-
-/** A paginated collection of graphqlDocumentGroup Nodes, Supports cursor-based pagination and filtering to efficiently retrieve sets of graphqlDocumentGroup Nodes */
-export type GraphqlDocumentGroupConnection = {
-  /** A list of edges (relational context) between RootQuery and connected graphqlDocumentGroup Nodes */
-  edges: Array<GraphqlDocumentGroupConnectionEdge>;
-  /** A list of connected graphqlDocumentGroup Nodes */
-  nodes: Array<GraphqlDocumentGroup>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentGroupConnectionPageInfo;
-};
-
-/** Represents a connection to a graphqlDocumentGroup. Contains both the graphqlDocumentGroup Node and metadata about the relationship. */
-export type GraphqlDocumentGroupConnectionEdge = {
-  /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The connected graphqlDocumentGroup Node */
-  node: GraphqlDocumentGroup;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentGroupConnectionEdge&quot; collections. Provides cursors and flags for navigating through sets of &quot;GraphqlDocumentGroupConnectionEdge&quot; Nodes. */
-export type GraphqlDocumentGroupConnectionPageInfo = {
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Identifier types for retrieving a specific GraphqlDocumentGroup. Determines which unique property (global ID, database ID, slug, etc.) is used to locate the GraphqlDocumentGroup. */
-export enum GraphqlDocumentGroupIdType {
-  /** The Database ID for the node */
-  DatabaseId = 'DATABASE_ID',
-  /** The hashed Global ID */
-  Id = 'ID',
-  /** The name of the node */
-  Name = 'NAME',
-  /** Url friendly name of the node */
-  Slug = 'SLUG',
-  /** The URI for the node */
-  Uri = 'URI'
-}
-
-/** Connection between the GraphqlDocumentGroup type and the ContentNode type */
-export type GraphqlDocumentGroupToContentNodeConnection = Connection & ContentNodeConnection & {
-  __typename?: 'GraphqlDocumentGroupToContentNodeConnection';
-  /** Edges for the GraphqlDocumentGroupToContentNodeConnection connection */
-  edges: Array<GraphqlDocumentGroupToContentNodeConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<ContentNode>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentGroupToContentNodeConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type GraphqlDocumentGroupToContentNodeConnectionEdge = ContentNodeConnectionEdge & Edge & {
-  __typename?: 'GraphqlDocumentGroupToContentNodeConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: ContentNode;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentGroupToContentNodeConnection&quot; collections. Provides cursors and flags for navigating through sets of GraphqlDocumentGroupToContentNodeConnection Nodes. */
-export type GraphqlDocumentGroupToContentNodeConnectionPageInfo = ContentNodeConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'GraphqlDocumentGroupToContentNodeConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the GraphqlDocumentGroupToContentNodeConnection connection */
-export type GraphqlDocumentGroupToContentNodeConnectionWhereArgs = {
-  /** The Types of content to filter */
-  contentTypes?: InputMaybe<Array<InputMaybe<ContentTypesOfGraphqlDocumentGroupEnum>>>;
-  /** Filter the connection based on dates */
-  dateQuery?: InputMaybe<DateQueryInput>;
-  /** True for objects with passwords; False for objects without passwords; null for all objects with or without passwords */
-  hasPassword?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Specific database ID of the object */
-  id?: InputMaybe<Scalars['Int']['input']>;
-  /** Array of IDs for the objects to retrieve */
-  in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Get objects with a specific mimeType property */
-  mimeType?: InputMaybe<MimeTypeEnum>;
-  /** Slug / post_name of the object */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Specify objects to retrieve. Use slugs */
-  nameIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Specify IDs NOT to retrieve. If this is used in the same query as "in", it will be ignored */
-  notIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** What parameter to use to order the objects by. */
-  orderby?: InputMaybe<Array<InputMaybe<PostObjectsConnectionOrderbyInput>>>;
-  /** Use ID to return only children. Use 0 to return only top-level items */
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  /** Specify objects whose parent is in an array */
-  parentIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Specify posts whose parent is not in an array */
-  parentNotIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Show posts with a specific password. */
-  password?: InputMaybe<Scalars['String']['input']>;
-  /** Show Posts based on a keyword search */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Retrieve posts where post status is in an array. */
-  stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
-  /** Show posts with a specific status. */
-  status?: InputMaybe<PostStatusEnum>;
-  /** Title of the object */
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Connection between the GraphqlDocumentGroup type and the graphqlDocument type */
-export type GraphqlDocumentGroupToGraphqlDocumentConnection = Connection & GraphqlDocumentConnection & {
-  __typename?: 'GraphqlDocumentGroupToGraphqlDocumentConnection';
-  /** Edges for the GraphqlDocumentGroupToGraphqlDocumentConnection connection */
-  edges: Array<GraphqlDocumentGroupToGraphqlDocumentConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<GraphqlDocument>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentGroupToGraphqlDocumentConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type GraphqlDocumentGroupToGraphqlDocumentConnectionEdge = Edge & GraphqlDocumentConnectionEdge & {
-  __typename?: 'GraphqlDocumentGroupToGraphqlDocumentConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: GraphqlDocument;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentGroupToGraphqlDocumentConnection&quot; collections. Provides cursors and flags for navigating through sets of GraphqlDocumentGroupToGraphqlDocumentConnection Nodes. */
-export type GraphqlDocumentGroupToGraphqlDocumentConnectionPageInfo = GraphqlDocumentConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'GraphqlDocumentGroupToGraphqlDocumentConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the GraphqlDocumentGroupToGraphqlDocumentConnection connection */
-export type GraphqlDocumentGroupToGraphqlDocumentConnectionWhereArgs = {
-  /** Filter the connection based on dates */
-  dateQuery?: InputMaybe<DateQueryInput>;
-  /** True for objects with passwords; False for objects without passwords; null for all objects with or without passwords */
-  hasPassword?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Specific database ID of the object */
-  id?: InputMaybe<Scalars['Int']['input']>;
-  /** Array of IDs for the objects to retrieve */
-  in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Get objects with a specific mimeType property */
-  mimeType?: InputMaybe<MimeTypeEnum>;
-  /** Slug / post_name of the object */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Specify objects to retrieve. Use slugs */
-  nameIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Specify IDs NOT to retrieve. If this is used in the same query as "in", it will be ignored */
-  notIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** What parameter to use to order the objects by. */
-  orderby?: InputMaybe<Array<InputMaybe<PostObjectsConnectionOrderbyInput>>>;
-  /** Use ID to return only children. Use 0 to return only top-level items */
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  /** Specify objects whose parent is in an array */
-  parentIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Specify posts whose parent is not in an array */
-  parentNotIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Show posts with a specific password. */
-  password?: InputMaybe<Scalars['String']['input']>;
-  /** Show Posts based on a keyword search */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Retrieve posts where post status is in an array. */
-  stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
-  /** Show posts with a specific status. */
-  status?: InputMaybe<PostStatusEnum>;
-  /** Title of the object */
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Connection between the GraphqlDocumentGroup type and the Taxonomy type */
-export type GraphqlDocumentGroupToTaxonomyConnectionEdge = Edge & OneToOneConnection & TaxonomyConnectionEdge & {
-  __typename?: 'GraphqlDocumentGroupToTaxonomyConnectionEdge';
-  /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The node of the connection, without the edges */
-  node: Taxonomy;
-};
-
-/** Identifier types for retrieving a specific GraphqlDocument. Specifies which unique attribute is used to find an exact GraphqlDocument. */
-export enum GraphqlDocumentIdType {
-  /** Identify a resource by the Database ID. */
-  DatabaseId = 'DATABASE_ID',
-  /** Identify a resource by the (hashed) Global ID. */
-  Id = 'ID',
-  /** Identify a resource by the slug. Available to non-hierarchcial Types where the slug is a unique identifier. */
-  Slug = 'SLUG',
-  /** Identify a resource by the URI. */
-  Uri = 'URI'
-}
-
-/** Connection between the graphqlDocument type and the graphqlDocument type */
-export type GraphqlDocumentToGraphqlDocumentConnection = Connection & GraphqlDocumentConnection & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentConnection';
-  /** Edges for the GraphqlDocumentToGraphqlDocumentConnection connection */
-  edges: Array<GraphqlDocumentToGraphqlDocumentConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<GraphqlDocument>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentToGraphqlDocumentConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type GraphqlDocumentToGraphqlDocumentConnectionEdge = Edge & GraphqlDocumentConnectionEdge & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentConnectionEdge';
-  /**
-   * A cursor for use in pagination
-   * @deprecated This content type is not hierarchical and typically will not have ancestors
-   */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /**
-   * The item at the end of the edge
-   * @deprecated This content type is not hierarchical and typically will not have ancestors
-   */
-  node: GraphqlDocument;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentToGraphqlDocumentConnection&quot; collections. Provides cursors and flags for navigating through sets of GraphqlDocumentToGraphqlDocumentConnection Nodes. */
-export type GraphqlDocumentToGraphqlDocumentConnectionPageInfo = GraphqlDocumentConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Connection between the GraphqlDocument type and the graphqlDocumentGroup type */
-export type GraphqlDocumentToGraphqlDocumentGroupConnection = Connection & GraphqlDocumentGroupConnection & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentGroupConnection';
-  /** Edges for the GraphqlDocumentToGraphqlDocumentGroupConnection connection */
-  edges: Array<GraphqlDocumentToGraphqlDocumentGroupConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<GraphqlDocumentGroup>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentToGraphqlDocumentGroupConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type GraphqlDocumentToGraphqlDocumentGroupConnectionEdge = Edge & GraphqlDocumentGroupConnectionEdge & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentGroupConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: GraphqlDocumentGroup;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentToGraphqlDocumentGroupConnection&quot; collections. Provides cursors and flags for navigating through sets of GraphqlDocumentToGraphqlDocumentGroupConnection Nodes. */
-export type GraphqlDocumentToGraphqlDocumentGroupConnectionPageInfo = GraphqlDocumentGroupConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'GraphqlDocumentToGraphqlDocumentGroupConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the GraphqlDocumentToGraphqlDocumentGroupConnection connection */
-export type GraphqlDocumentToGraphqlDocumentGroupConnectionWhereArgs = {
-  /** Unique cache key to be produced when this query is stored in an object cache. Default is 'core'. */
-  cacheDomain?: InputMaybe<Scalars['String']['input']>;
-  /** Term ID to retrieve child terms of. If multiple taxonomies are passed, $child_of is ignored. Default 0. */
-  childOf?: InputMaybe<Scalars['Int']['input']>;
-  /** True to limit results to terms that have no children. This parameter has no effect on non-hierarchical taxonomies. Default false. */
-  childless?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Retrieve terms where the description is LIKE the input value. Default empty. */
-  descriptionLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of term ids to exclude. If $include is non-empty, $exclude is ignored. Default empty array. */
-  exclude?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of term ids to exclude along with all of their descendant terms. If $include is non-empty, $exclude_tree is ignored. Default empty array. */
-  excludeTree?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to hide terms not assigned to any posts. Accepts true or false. Default false */
-  hideEmpty?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default true. */
-  hierarchical?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Array of term ids to include. Default empty array. */
-  include?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of names to return term(s) for. Default empty. */
-  name?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Retrieve terms where the name is LIKE the input value. Default empty. */
-  nameLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of object IDs. Results will be limited to terms associated with these objects. */
-  objectIds?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Direction the connection should be ordered in */
-  order?: InputMaybe<OrderEnum>;
-  /** Field(s) to order terms by. Defaults to 'name'. */
-  orderby?: InputMaybe<TermObjectsConnectionOrderbyEnum>;
-  /** Whether to pad the quantity of a term's children in the quantity of each term's "count" object variable. Default false. */
-  padCounts?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Parent term ID to retrieve direct-child terms of. Default empty. */
-  parent?: InputMaybe<Scalars['Int']['input']>;
-  /** Search criteria to match terms. Will be SQL-formatted with wildcards before and after. Default empty. */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Array of slugs to return term(s) for. Default empty. */
-  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Array of term taxonomy IDs, to match when querying terms. */
-  termTaxonomyId?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to prime meta caches for matched terms. Default true. */
-  updateTermMetaCache?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-/** Connection between the graphqlDocument type and the graphqlDocument type */
-export type GraphqlDocumentToParentConnectionEdge = Edge & GraphqlDocumentConnectionEdge & OneToOneConnection & {
-  __typename?: 'GraphqlDocumentToParentConnectionEdge';
-  /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /**
-   * The node of the connection, without the edges
-   * @deprecated This content type is not hierarchical and typically will not have a parent
-   */
-  node: GraphqlDocument;
-};
-
-/** Connection between the graphqlDocument type and the graphqlDocument type */
-export type GraphqlDocumentToPreviewConnectionEdge = Edge & GraphqlDocumentConnectionEdge & OneToOneConnection & {
-  __typename?: 'GraphqlDocumentToPreviewConnectionEdge';
-  /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /**
-   * The node of the connection, without the edges
-   * @deprecated The &quot;GraphqlDocument&quot; Type is not publicly queryable and does not support previews. This field will be removed in the future.
-   */
-  node: GraphqlDocument;
-};
-
-/** Connection between the GraphqlDocument type and the TermNode type */
-export type GraphqlDocumentToTermNodeConnection = Connection & TermNodeConnection & {
-  __typename?: 'GraphqlDocumentToTermNodeConnection';
-  /** Edges for the GraphqlDocumentToTermNodeConnection connection */
-  edges: Array<GraphqlDocumentToTermNodeConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<TermNode>;
-  /** Information about pagination in a connection. */
-  pageInfo: GraphqlDocumentToTermNodeConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type GraphqlDocumentToTermNodeConnectionEdge = Edge & TermNodeConnectionEdge & {
-  __typename?: 'GraphqlDocumentToTermNodeConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: TermNode;
-};
-
-/** Pagination metadata specific to &quot;GraphqlDocumentToTermNodeConnection&quot; collections. Provides cursors and flags for navigating through sets of GraphqlDocumentToTermNodeConnection Nodes. */
-export type GraphqlDocumentToTermNodeConnectionPageInfo = PageInfo & TermNodeConnectionPageInfo & WpPageInfo & {
-  __typename?: 'GraphqlDocumentToTermNodeConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the GraphqlDocumentToTermNodeConnection connection */
-export type GraphqlDocumentToTermNodeConnectionWhereArgs = {
-  /** Unique cache key to be produced when this query is stored in an object cache. Default is 'core'. */
-  cacheDomain?: InputMaybe<Scalars['String']['input']>;
-  /** Term ID to retrieve child terms of. If multiple taxonomies are passed, $child_of is ignored. Default 0. */
-  childOf?: InputMaybe<Scalars['Int']['input']>;
-  /** True to limit results to terms that have no children. This parameter has no effect on non-hierarchical taxonomies. Default false. */
-  childless?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Retrieve terms where the description is LIKE the input value. Default empty. */
-  descriptionLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of term ids to exclude. If $include is non-empty, $exclude is ignored. Default empty array. */
-  exclude?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of term ids to exclude along with all of their descendant terms. If $include is non-empty, $exclude_tree is ignored. Default empty array. */
-  excludeTree?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to hide terms not assigned to any posts. Accepts true or false. Default false */
-  hideEmpty?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default true. */
-  hierarchical?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Array of term ids to include. Default empty array. */
-  include?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of names to return term(s) for. Default empty. */
-  name?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Retrieve terms where the name is LIKE the input value. Default empty. */
-  nameLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of object IDs. Results will be limited to terms associated with these objects. */
-  objectIds?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Direction the connection should be ordered in */
-  order?: InputMaybe<OrderEnum>;
-  /** Field(s) to order terms by. Defaults to 'name'. */
-  orderby?: InputMaybe<TermObjectsConnectionOrderbyEnum>;
-  /** Whether to pad the quantity of a term's children in the quantity of each term's "count" object variable. Default false. */
-  padCounts?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Parent term ID to retrieve direct-child terms of. Default empty. */
-  parent?: InputMaybe<Scalars['Int']['input']>;
-  /** Search criteria to match terms. Will be SQL-formatted with wildcards before and after. Default empty. */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Array of slugs to return term(s) for. Default empty. */
-  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** The Taxonomy to filter terms by */
-  taxonomies?: InputMaybe<Array<InputMaybe<TaxonomyEnum>>>;
-  /** Array of term taxonomy IDs, to match when querying terms. */
-  termTaxonomyId?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to prime meta caches for matched terms. Default true. */
-  updateTermMetaCache?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
 /** A group product object */
 export type GroupProduct = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & NodeWithComments & NodeWithContentEditor & NodeWithExcerpt & NodeWithFeaturedImage & NodeWithTemplate & NodeWithTitle & Previewable & Product & ProductUnion & ProductWithAttributes & ProductWithPricing & UniformResourceIdentifiable & {
   __typename?: 'GroupProduct';
@@ -7680,7 +6942,7 @@ export type GroupProduct = ContentNode & DatabaseIdentifier & MenuItemLinkable &
   galleryImages?: Maybe<ProductToMediaItemConnection>;
   /** Connection between the ProductWithAttributes type and the GlobalProductAttribute type */
   globalAttributes?: Maybe<ProductWithAttributesToGlobalProductAttributeConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the product object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -7735,7 +6997,7 @@ export type GroupProduct = ContentNode & DatabaseIdentifier & MenuItemLinkable &
   /** Connection between the Product type and the productCategory type */
   productCategories?: Maybe<ProductToProductCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productId: Scalars['Int']['output'];
@@ -7874,6 +7136,7 @@ export type GroupProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -7883,6 +7146,7 @@ export type GroupProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -8209,7 +7473,7 @@ export type GroupProductToProductUnionConnectionWhereArgs = {
 };
 
 /** The helloElementorSettings setting type */
-export type HelloElementorSettingsSettings = {
+export type HelloElementorSettingsSettings = Node & {
   __typename?: 'HelloElementorSettingsSettings';
   /** The string Settings Group */
   helloElementorSettingsDescriptionMetaTag?: Maybe<Scalars['String']['output']>;
@@ -8223,6 +7487,8 @@ export type HelloElementorSettingsSettings = {
   helloElementorSettingsPageTitle?: Maybe<Scalars['String']['output']>;
   /** The string Settings Group */
   helloElementorSettingsSkipLink?: Maybe<Scalars['String']['output']>;
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
 };
 
 /** Content that can be organized in a parent-child structure. Provides fields for navigating up and down the hierarchy and maintaining structured relationships. */
@@ -8251,7 +7517,7 @@ export type HierarchicalContentNode = {
   enqueuedScripts?: Maybe<ContentNodeToEnqueuedScriptConnection>;
   /** Connection between the ContentNode type and the EnqueuedStylesheet type */
   enqueuedStylesheets?: Maybe<ContentNodeToEnqueuedStylesheetConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** The globally unique ID for the object */
   id: Scalars['ID']['output'];
@@ -8285,9 +7551,9 @@ export type HierarchicalContentNode = {
   parentId?: Maybe<Scalars['ID']['output']>;
   /** The database id of the preview node */
   previewRevisionDatabaseId?: Maybe<Scalars['Int']['output']>;
-  /** Whether the object is a node in the preview state */
+  /** The globally unique ID of the preview node */
   previewRevisionId?: Maybe<Scalars['ID']['output']>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
+  /** The URL-friendly, human-readable identifier for the content node, used in its permalink. */
   slug?: Maybe<Scalars['String']['output']>;
   /** The current status of the object */
   status?: Maybe<Scalars['String']['output']>;
@@ -8324,6 +7590,7 @@ export type HierarchicalContentNodeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -8333,6 +7600,7 @@ export type HierarchicalContentNodeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 /** Connection between the HierarchicalContentNode type and the ContentNode type */
@@ -8380,6 +7648,8 @@ export type HierarchicalContentNodeToContentNodeAncestorsConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -8404,6 +7674,8 @@ export type HierarchicalContentNodeToContentNodeAncestorsConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -8453,6 +7725,8 @@ export type HierarchicalContentNodeToContentNodeChildrenConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -8477,6 +7751,8 @@ export type HierarchicalContentNodeToContentNodeChildrenConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -8555,6 +7831,7 @@ export type HierarchicalTermNodeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -8564,6 +7841,7 @@ export type HierarchicalTermNodeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 /** The Login client options for the instagram provider. */
@@ -9168,7 +8446,7 @@ export type MediaItem = ContentNode & DatabaseIdentifier & HierarchicalContentNo
   filePath?: Maybe<Scalars['String']['output']>;
   /** The filesize in bytes of the resource */
   fileSize?: Maybe<Scalars['Int']['output']>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the attachment object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -9195,7 +8473,7 @@ export type MediaItem = ContentNode & DatabaseIdentifier & HierarchicalContentNo
   /** Details about the mediaItem */
   mediaDetails?: Maybe<MediaDetails>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   mediaItemId: Scalars['Int']['output'];
@@ -9219,11 +8497,11 @@ export type MediaItem = ContentNode & DatabaseIdentifier & HierarchicalContentNo
   password?: Maybe<Scalars['String']['output']>;
   /** The database id of the preview node */
   previewRevisionDatabaseId?: Maybe<Scalars['Int']['output']>;
-  /** Whether the object is a node in the preview state */
+  /** The globally unique ID of the preview node */
   previewRevisionId?: Maybe<Scalars['ID']['output']>;
   /** The sizes attribute value for an image. */
   sizes?: Maybe<Scalars['String']['output']>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
+  /** The URL-friendly, human-readable identifier for the content node, used in its permalink. */
   slug?: Maybe<Scalars['String']['output']>;
   /** Url of the mediaItem */
   sourceUrl?: Maybe<Scalars['String']['output']>;
@@ -9288,6 +8566,7 @@ export type MediaItemEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -9297,6 +8576,7 @@ export type MediaItemEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -9584,9 +8864,9 @@ export type Menu = DatabaseIdentifier & Node & {
   menuId?: Maybe<Scalars['Int']['output']>;
   /** Connection between the Menu type and the MenuItem type */
   menuItems?: Maybe<MenuToMenuItemConnection>;
-  /** Display name of the menu. Equivalent to WP_Term-&gt;name. */
+  /** Display name of the menu. */
   name?: Maybe<Scalars['String']['output']>;
-  /** The url friendly name of the menu. Equivalent to WP_Term-&gt;slug */
+  /** The url friendly name of the menu. */
   slug?: Maybe<Scalars['String']['output']>;
 };
 
@@ -11100,7 +10380,7 @@ export type PaColor = DatabaseIdentifier & Node & TermNode & UniformResourceIden
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   paColorId?: Maybe<Scalars['Int']['output']>;
@@ -11139,6 +10419,7 @@ export type PaColorEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -11148,6 +10429,7 @@ export type PaColorEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -11259,6 +10541,8 @@ export type PaColorToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -11283,6 +10567,8 @@ export type PaColorToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -11350,6 +10636,8 @@ export type PaColorToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -11418,6 +10706,8 @@ export type PaColorToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -11600,7 +10890,7 @@ export type PaRange = DatabaseIdentifier & Node & TermNode & UniformResourceIden
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   paRangeId?: Maybe<Scalars['Int']['output']>;
@@ -11639,6 +10929,7 @@ export type PaRangeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -11648,6 +10939,7 @@ export type PaRangeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -11759,6 +11051,8 @@ export type PaRangeToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -11783,6 +11077,8 @@ export type PaRangeToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -11850,6 +11146,8 @@ export type PaRangeToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -11918,6 +11216,8 @@ export type PaRangeToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -12100,7 +11400,7 @@ export type PaSize = DatabaseIdentifier & Node & TermNode & UniformResourceIdent
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   paSizeId?: Maybe<Scalars['Int']['output']>;
@@ -12139,6 +11439,7 @@ export type PaSizeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -12148,6 +11449,7 @@ export type PaSizeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -12259,6 +11561,8 @@ export type PaSizeToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -12283,6 +11587,8 @@ export type PaSizeToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -12350,6 +11656,8 @@ export type PaSizeToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -12418,6 +11726,8 @@ export type PaSizeToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -12615,7 +11925,7 @@ export type Page = ContentNode & DatabaseIdentifier & HierarchicalContentNode & 
   featuredImageDatabaseId?: Maybe<Scalars['Int']['output']>;
   /** Globally unique ID of the featured image assigned to the node */
   featuredImageId?: Maybe<Scalars['ID']['output']>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the page object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -12650,7 +11960,7 @@ export type Page = ContentNode & DatabaseIdentifier & HierarchicalContentNode & 
   /** The GMT modified time for a post. If a post was recently updated the modified field will change to match the corresponding time in GMT. */
   modifiedGmt?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   pageId: Scalars['Int']['output'];
@@ -12666,13 +11976,13 @@ export type Page = ContentNode & DatabaseIdentifier & HierarchicalContentNode & 
   preview?: Maybe<PageToPreviewConnectionEdge>;
   /** The database id of the preview node */
   previewRevisionDatabaseId?: Maybe<Scalars['Int']['output']>;
-  /** Whether the object is a node in the preview state */
+  /** The globally unique ID of the preview node */
   previewRevisionId?: Maybe<Scalars['ID']['output']>;
   /** If the current node is a revision, this field exposes the node this is a revision of. Returns null if the node is not a revision of another node. */
   revisionOf?: Maybe<NodeWithRevisionsToContentNodeConnectionEdge>;
   /** Connection between the Page type and the page type */
   revisions?: Maybe<PageToRevisionConnection>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
+  /** The URL-friendly, human-readable identifier for the content node, used in its permalink. */
   slug?: Maybe<Scalars['String']['output']>;
   /** The current status of the object */
   status?: Maybe<Scalars['String']['output']>;
@@ -12727,6 +12037,7 @@ export type PageEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -12736,6 +12047,7 @@ export type PageEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -12967,6 +12279,8 @@ export type PageToRevisionConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -12991,6 +12305,8 @@ export type PageToRevisionConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -13124,6 +12440,19 @@ export type PaymentTokenInterface = {
   type: Scalars['String']['output'];
 };
 
+/** The permalink setting type */
+export type PermalinkSettings = Node & {
+  __typename?: 'PermalinkSettings';
+  /** The prefix used in the URLs of category archive pages. */
+  categoryBase?: Maybe<Scalars['String']['output']>;
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
+  /** The structure used to build the URLs for content on the site. */
+  structure?: Maybe<Scalars['String']['output']>;
+  /** The prefix used in the URLs of tag archive pages. */
+  tagBase?: Maybe<Scalars['String']['output']>;
+};
+
 /** An plugin object */
 export type Plugin = Node & {
   __typename?: 'Plugin';
@@ -13196,7 +12525,7 @@ export enum PluginStatusEnum {
 }
 
 /** A chronological content entry typically used for blog posts, news articles, or similar date-based content. */
-export type Post = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & NodeWithAuthor & NodeWithComments & NodeWithContentEditor & NodeWithExcerpt & NodeWithFeaturedImage & NodeWithRevisions & NodeWithTemplate & NodeWithTitle & NodeWithTrackbacks & Previewable & UniformResourceIdentifiable & {
+export type Post = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & NodeWithAuthor & NodeWithComments & NodeWithContentEditor & NodeWithExcerpt & NodeWithFeaturedImage & NodeWithRevisions & NodeWithTemplate & NodeWithTitle & NodeWithTrackbacks & Previewable & UniformResourceIdentifiable & WithAcfExternalUrl & WithAcfExtraFields & {
   __typename?: 'Post';
   /**
    * The ancestors of the content node.
@@ -13241,13 +12570,17 @@ export type Post = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & 
   enqueuedStylesheets?: Maybe<ContentNodeToEnqueuedStylesheetConnection>;
   /** The excerpt of the post. */
   excerpt?: Maybe<Scalars['String']['output']>;
+  /** Fields of the ExternalUrl ACF Field Group */
+  externalUrl?: Maybe<ExternalUrl>;
+  /** Fields of the ExtraFields ACF Field Group */
+  extraFields?: Maybe<ExtraFields>;
   /** Connection between the NodeWithFeaturedImage type and the MediaItem type */
   featuredImage?: Maybe<NodeWithFeaturedImageToMediaItemConnectionEdge>;
   /** The database identifier for the featured image node assigned to the content node */
   featuredImageDatabaseId?: Maybe<Scalars['Int']['output']>;
   /** Globally unique ID of the featured image assigned to the node */
   featuredImageId?: Maybe<Scalars['ID']['output']>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the post object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -13293,7 +12626,7 @@ export type Post = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & 
   /** Connection between the Post type and the postFormat type */
   postFormats?: Maybe<PostToPostFormatConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   postId: Scalars['Int']['output'];
@@ -13307,7 +12640,7 @@ export type Post = ContentNode & DatabaseIdentifier & MenuItemLinkable & Node & 
   revisionOf?: Maybe<NodeWithRevisionsToContentNodeConnectionEdge>;
   /** Connection between the Post type and the post type */
   revisions?: Maybe<PostToRevisionConnection>;
-  /** The uri slug for the post. This is equivalent to the WP_Post-&gt;post_name field and the post_name column in the database for the &quot;post_objects&quot; table. */
+  /** The URL-friendly, human-readable identifier for the content node, used in its permalink. */
   slug?: Maybe<Scalars['String']['output']>;
   /** The current status of the object */
   status?: Maybe<Scalars['String']['output']>;
@@ -13367,6 +12700,7 @@ export type PostEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -13376,6 +12710,7 @@ export type PostEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -13514,7 +12849,7 @@ export type PostFormat = DatabaseIdentifier & Node & TermNode & UniformResourceI
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   postFormatId?: Maybe<Scalars['Int']['output']>;
@@ -13551,6 +12886,7 @@ export type PostFormatEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -13560,6 +12896,7 @@ export type PostFormatEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -13661,6 +12998,8 @@ export type PostFormatToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -13685,6 +13024,8 @@ export type PostFormatToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -13748,6 +13089,8 @@ export type PostFormatToPostConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -13784,6 +13127,8 @@ export type PostFormatToPostConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -13879,6 +13224,8 @@ export type PostPostFormatsNodeInput = {
 
 /** Publishing status that controls the visibility and editorial state of content. Determines whether content is published, pending review, in draft state, or private. */
 export enum PostStatusEnum {
+  /** Objects with the acf-disabled status */
+  AcfDisabled = 'ACF_DISABLED',
   /** Automatically saved content that has not been manually saved */
   AutoDraft = 'AUTO_DRAFT',
   /** Content that is saved but not yet published or visible to the public */
@@ -14118,10 +13465,7 @@ export type PostToParentConnectionEdge = Edge & OneToOneConnection & PostConnect
   __typename?: 'PostToParentConnectionEdge';
   /** Opaque reference to the nodes position in the connection. Value can be used with pagination args. */
   cursor?: Maybe<Scalars['String']['output']>;
-  /**
-   * The node of the connection, without the edges
-   * @deprecated This content type is not hierarchical and typically will not have a parent
-   */
+  /** The node of the connection, without the edges */
   node: Post;
 };
 
@@ -14139,15 +13483,9 @@ export type PostToPostConnection = Connection & PostConnection & {
 /** An edge in a connection */
 export type PostToPostConnectionEdge = Edge & PostConnectionEdge & {
   __typename?: 'PostToPostConnectionEdge';
-  /**
-   * A cursor for use in pagination
-   * @deprecated This content type is not hierarchical and typically will not have ancestors
-   */
+  /** A cursor for use in pagination */
   cursor?: Maybe<Scalars['String']['output']>;
-  /**
-   * The item at the end of the edge
-   * @deprecated This content type is not hierarchical and typically will not have ancestors
-   */
+  /** The item at the end of the edge */
   node: Post;
 };
 
@@ -14309,6 +13647,8 @@ export type PostToRevisionConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -14345,6 +13685,8 @@ export type PostToRevisionConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -14683,7 +14025,7 @@ export type Product = {
   fullYoastHead?: Maybe<Scalars['String']['output']>;
   /** Connection between the Product type and the MediaItem type */
   galleryImages?: Maybe<ProductToMediaItemConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the product object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -14734,7 +14076,7 @@ export type Product = {
   /** Connection between the Product type and the productCategory type */
   productCategories?: Maybe<ProductToProductCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productId: Scalars['Int']['output'];
@@ -14844,6 +14186,7 @@ export type ProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -14853,6 +14196,7 @@ export type ProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -15363,7 +14707,7 @@ export type ProductBrand = DatabaseIdentifier & HierarchicalNode & HierarchicalT
   /** The globally unique identifier of the parent node. */
   parentId?: Maybe<Scalars['ID']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   productBrandId?: Maybe<Scalars['Int']['output']>;
@@ -15419,6 +14763,7 @@ export type ProductBrandEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -15428,6 +14773,7 @@ export type ProductBrandEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -15562,6 +14908,8 @@ export type ProductBrandToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -15586,6 +14934,8 @@ export type ProductBrandToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -15739,6 +15089,8 @@ export type ProductBrandToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -15807,6 +15159,8 @@ export type ProductBrandToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -15880,7 +15234,7 @@ export type ProductCategory = DatabaseIdentifier & HierarchicalNode & Hierarchic
   /** Connection between the ProductCategory type and the GlobalProductAttribute type */
   productAttributes?: Maybe<ProductCategoryToGlobalProductAttributeConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   productCategoryId?: Maybe<Scalars['Int']['output']>;
@@ -15936,6 +15290,7 @@ export type ProductCategoryEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -15945,6 +15300,7 @@ export type ProductCategoryEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -16100,6 +15456,8 @@ export type ProductCategoryToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -16124,6 +15482,8 @@ export type ProductCategoryToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -16310,6 +15670,8 @@ export type ProductCategoryToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -16378,6 +15740,8 @@ export type ProductCategoryToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -16528,7 +15892,7 @@ export type ProductTag = DatabaseIdentifier & MenuItemLinkable & Node & TermNode
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   productTagId?: Maybe<Scalars['Int']['output']>;
@@ -16565,6 +15929,7 @@ export type ProductTagEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -16574,6 +15939,7 @@ export type ProductTagEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -16675,6 +16041,8 @@ export type ProductTagToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -16699,6 +16067,8 @@ export type ProductTagToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -16766,6 +16136,8 @@ export type ProductTagToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -16834,6 +16206,8 @@ export type ProductTagToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -17137,6 +16511,8 @@ export type ProductToMediaItemConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -17161,6 +16537,8 @@ export type ProductToMediaItemConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -18326,7 +17704,7 @@ export type ProductType = DatabaseIdentifier & Node & TermNode & UniformResource
   /** The human friendly name of the object. */
   name?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   productTypeId?: Maybe<Scalars['Int']['output']>;
@@ -18363,6 +17741,7 @@ export type ProductTypeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -18372,6 +17751,7 @@ export type ProductTypeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -18473,6 +17853,8 @@ export type ProductTypeToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -18497,6 +17879,8 @@ export type ProductTypeToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -18564,6 +17948,8 @@ export type ProductTypeToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -18632,6 +18018,8 @@ export type ProductTypeToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -18835,7 +18223,7 @@ export type ProductVariation = {
   featuredImageDatabaseId?: Maybe<Scalars['Int']['output']>;
   /** Globally unique ID of the featured image assigned to the node */
   featuredImageId?: Maybe<Scalars['ID']['output']>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Does product variation have any visible attributes */
   hasAttributes?: Maybe<Scalars['Boolean']['output']>;
@@ -18894,7 +18282,7 @@ export type ProductVariation = {
   /** Product&#039;s active price */
   price?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productVariationId: Scalars['Int']['output'];
@@ -18980,6 +18368,7 @@ export type ProductVariationEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -18989,6 +18378,7 @@ export type ProductVariationEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -19970,8 +19360,10 @@ export type RatingCount = {
 };
 
 /** The reading setting type */
-export type ReadingSettings = {
+export type ReadingSettings = Node & {
   __typename?: 'ReadingSettings';
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
   /** The ID of the page that should display the latest posts */
   pageForPosts?: Maybe<Scalars['Int']['output']>;
   /** The ID of the page that should be displayed on the front page */
@@ -20385,10 +19777,6 @@ export type RootMutation = {
   createComment?: Maybe<CreateCommentPayload>;
   /** The createCoupon mutation */
   createCoupon?: Maybe<CreateCouponPayload>;
-  /** The createGraphqlDocument mutation */
-  createGraphqlDocument?: Maybe<CreateGraphqlDocumentPayload>;
-  /** The createGraphqlDocumentGroup mutation */
-  createGraphqlDocumentGroup?: Maybe<CreateGraphqlDocumentGroupPayload>;
   /** The createMediaItem mutation */
   createMediaItem?: Maybe<CreateMediaItemPayload>;
   /** The createOrder mutation */
@@ -20445,10 +19833,6 @@ export type RootMutation = {
   deleteComment?: Maybe<DeleteCommentPayload>;
   /** The deleteCoupon mutation */
   deleteCoupon?: Maybe<DeleteCouponPayload>;
-  /** The deleteGraphqlDocument mutation */
-  deleteGraphqlDocument?: Maybe<DeleteGraphqlDocumentPayload>;
-  /** The deleteGraphqlDocumentGroup mutation */
-  deleteGraphqlDocumentGroup?: Maybe<DeleteGraphqlDocumentGroupPayload>;
   /** The deleteMediaItem mutation */
   deleteMediaItem?: Maybe<DeleteMediaItemPayload>;
   /** The deleteOrder mutation */
@@ -20555,10 +19939,6 @@ export type RootMutation = {
   updateCoupon?: Maybe<UpdateCouponPayload>;
   /** The updateCustomer mutation */
   updateCustomer?: Maybe<UpdateCustomerPayload>;
-  /** The updateGraphqlDocument mutation */
-  updateGraphqlDocument?: Maybe<UpdateGraphqlDocumentPayload>;
-  /** The updateGraphqlDocumentGroup mutation */
-  updateGraphqlDocumentGroup?: Maybe<UpdateGraphqlDocumentGroupPayload>;
   /** The updateItemQuantities mutation */
   updateItemQuantities?: Maybe<UpdateItemQuantitiesPayload>;
   /** The updateMediaItem mutation */
@@ -20683,18 +20063,6 @@ export type RootMutationCreateCommentArgs = {
 /** The root mutation */
 export type RootMutationCreateCouponArgs = {
   input: CreateCouponInput;
-};
-
-
-/** The root mutation */
-export type RootMutationCreateGraphqlDocumentArgs = {
-  input: CreateGraphqlDocumentInput;
-};
-
-
-/** The root mutation */
-export type RootMutationCreateGraphqlDocumentGroupArgs = {
-  input: CreateGraphqlDocumentGroupInput;
 };
 
 
@@ -20863,18 +20231,6 @@ export type RootMutationDeleteCommentArgs = {
 /** The root mutation */
 export type RootMutationDeleteCouponArgs = {
   input: DeleteCouponInput;
-};
-
-
-/** The root mutation */
-export type RootMutationDeleteGraphqlDocumentArgs = {
-  input: DeleteGraphqlDocumentInput;
-};
-
-
-/** The root mutation */
-export type RootMutationDeleteGraphqlDocumentGroupArgs = {
-  input: DeleteGraphqlDocumentGroupInput;
 };
 
 
@@ -21197,18 +20553,6 @@ export type RootMutationUpdateCustomerArgs = {
 
 
 /** The root mutation */
-export type RootMutationUpdateGraphqlDocumentArgs = {
-  input: UpdateGraphqlDocumentInput;
-};
-
-
-/** The root mutation */
-export type RootMutationUpdateGraphqlDocumentGroupArgs = {
-  input: UpdateGraphqlDocumentGroupInput;
-};
-
-
-/** The root mutation */
 export type RootMutationUpdateItemQuantitiesArgs = {
   input: UpdateItemQuantitiesInput;
 };
@@ -21457,19 +20801,6 @@ export type RootQuery = {
   externalProduct?: Maybe<ExternalProduct>;
   /** Fields of the &#039;GeneralSettings&#039; settings group */
   generalSettings?: Maybe<GeneralSettings>;
-  /** An object of the graphqlDocument Type. Saved GraphQL Documents */
-  graphqlDocument?: Maybe<GraphqlDocument>;
-  /**
-   * A graphqlDocument object
-   * @deprecated Deprecated in favor of using the single entry point for this type with ID and IDType fields. For example, instead of postBy( id: &quot;&quot; ), use post(id: &quot;&quot; idType: &quot;&quot;)
-   */
-  graphqlDocumentBy?: Maybe<GraphqlDocument>;
-  /** A 0bject */
-  graphqlDocumentGroup?: Maybe<GraphqlDocumentGroup>;
-  /** Connection between the RootQuery type and the graphqlDocumentGroup type */
-  graphqlDocumentGroups?: Maybe<RootQueryToGraphqlDocumentGroupConnection>;
-  /** Connection between the RootQuery type and the graphqlDocument type */
-  graphqlDocuments?: Maybe<RootQueryToGraphqlDocumentConnection>;
   /**
    * A grouped product object
    * @deprecated Use &quot;product&quot; instead.
@@ -21523,6 +20854,8 @@ export type RootQuery = {
   pages?: Maybe<RootQueryToPageConnection>;
   /** Connection between the RootQuery type and the PaymentGateway type */
   paymentGateways?: Maybe<RootQueryToPaymentGatewayConnection>;
+  /** Fields of the &#039;PermalinkSettings&#039; settings group */
+  permalinkSettings?: Maybe<PermalinkSettings>;
   /** A WordPress plugin */
   plugin?: Maybe<Plugin>;
   /** Connection between the RootQuery type and the Plugin type */
@@ -21742,7 +21075,6 @@ export type RootQueryCommentsArgs = {
 
 /** The root entry point into the Graph */
 export type RootQueryContentNodeArgs = {
-  asPreview?: InputMaybe<Scalars['Boolean']['input']>;
   contentType?: InputMaybe<ContentTypeEnum>;
   id: Scalars['ID']['input'];
   idType?: InputMaybe<ContentNodeIdTypeEnum>;
@@ -21823,50 +21155,6 @@ export type RootQueryExternalProductArgs = {
 
 
 /** The root entry point into the Graph */
-export type RootQueryGraphqlDocumentArgs = {
-  asPreview?: InputMaybe<Scalars['Boolean']['input']>;
-  id: Scalars['ID']['input'];
-  idType?: InputMaybe<GraphqlDocumentIdType>;
-};
-
-
-/** The root entry point into the Graph */
-export type RootQueryGraphqlDocumentByArgs = {
-  graphqlDocumentId?: InputMaybe<Scalars['Int']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  slug?: InputMaybe<Scalars['String']['input']>;
-  uri?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-/** The root entry point into the Graph */
-export type RootQueryGraphqlDocumentGroupArgs = {
-  id: Scalars['ID']['input'];
-  idType?: InputMaybe<GraphqlDocumentGroupIdType>;
-};
-
-
-/** The root entry point into the Graph */
-export type RootQueryGraphqlDocumentGroupsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<RootQueryToGraphqlDocumentGroupConnectionWhereArgs>;
-};
-
-
-/** The root entry point into the Graph */
-export type RootQueryGraphqlDocumentsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  where?: InputMaybe<RootQueryToGraphqlDocumentConnectionWhereArgs>;
-};
-
-
-/** The root entry point into the Graph */
 export type RootQueryGroupedProductArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
   idType?: InputMaybe<ProductIdTypeEnum>;
@@ -21881,7 +21169,6 @@ export type RootQueryLoginClientArgs = {
 
 /** The root entry point into the Graph */
 export type RootQueryMediaItemArgs = {
-  asPreview?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   idType?: InputMaybe<MediaItemIdType>;
 };
@@ -21992,7 +21279,6 @@ export type RootQueryPaSizeArgs = {
 
 /** The root entry point into the Graph */
 export type RootQueryPageArgs = {
-  asPreview?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   idType?: InputMaybe<PageIdType>;
 };
@@ -22044,7 +21330,6 @@ export type RootQueryPluginsArgs = {
 
 /** The root entry point into the Graph */
 export type RootQueryPostArgs = {
-  asPreview?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   idType?: InputMaybe<PostIdType>;
 };
@@ -22220,6 +21505,7 @@ export type RootQueryRegisteredScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<RootQueryToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -22229,6 +21515,7 @@ export type RootQueryRegisteredStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<RootQueryToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -22676,6 +21963,8 @@ export type RootQueryToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -22700,6 +21989,8 @@ export type RootQueryToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -22874,6 +22165,12 @@ export type RootQueryToEnqueuedScriptConnectionPageInfo = EnqueuedScriptConnecti
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the RootQueryToEnqueuedScriptConnection connection */
+export type RootQueryToEnqueuedScriptConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Connection between the RootQuery type and the EnqueuedStylesheet type */
 export type RootQueryToEnqueuedStylesheetConnection = Connection & EnqueuedStylesheetConnection & {
   __typename?: 'RootQueryToEnqueuedStylesheetConnection';
@@ -22907,6 +22204,12 @@ export type RootQueryToEnqueuedStylesheetConnectionPageInfo = EnqueuedStylesheet
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the RootQueryToEnqueuedStylesheetConnection connection */
+export type RootQueryToEnqueuedStylesheetConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Connection between the RootQuery type and the GlobalProductAttribute type */
 export type RootQueryToGlobalProductAttributeConnection = Connection & GlobalProductAttributeConnection & {
   __typename?: 'RootQueryToGlobalProductAttributeConnection';
@@ -22938,154 +22241,6 @@ export type RootQueryToGlobalProductAttributeConnectionPageInfo = GlobalProductA
   hasPreviousPage: Scalars['Boolean']['output'];
   /** When paginating backwards, the cursor to continue. */
   startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Connection between the RootQuery type and the graphqlDocument type */
-export type RootQueryToGraphqlDocumentConnection = Connection & GraphqlDocumentConnection & {
-  __typename?: 'RootQueryToGraphqlDocumentConnection';
-  /** Edges for the RootQueryToGraphqlDocumentConnection connection */
-  edges: Array<RootQueryToGraphqlDocumentConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<GraphqlDocument>;
-  /** Information about pagination in a connection. */
-  pageInfo: RootQueryToGraphqlDocumentConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type RootQueryToGraphqlDocumentConnectionEdge = Edge & GraphqlDocumentConnectionEdge & {
-  __typename?: 'RootQueryToGraphqlDocumentConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: GraphqlDocument;
-};
-
-/** Pagination metadata specific to &quot;RootQueryToGraphqlDocumentConnection&quot; collections. Provides cursors and flags for navigating through sets of RootQueryToGraphqlDocumentConnection Nodes. */
-export type RootQueryToGraphqlDocumentConnectionPageInfo = GraphqlDocumentConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'RootQueryToGraphqlDocumentConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the RootQueryToGraphqlDocumentConnection connection */
-export type RootQueryToGraphqlDocumentConnectionWhereArgs = {
-  /** Filter the connection based on dates */
-  dateQuery?: InputMaybe<DateQueryInput>;
-  /** True for objects with passwords; False for objects without passwords; null for all objects with or without passwords */
-  hasPassword?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Specific database ID of the object */
-  id?: InputMaybe<Scalars['Int']['input']>;
-  /** Array of IDs for the objects to retrieve */
-  in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Get objects with a specific mimeType property */
-  mimeType?: InputMaybe<MimeTypeEnum>;
-  /** Slug / post_name of the object */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** Specify objects to retrieve. Use slugs */
-  nameIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Specify IDs NOT to retrieve. If this is used in the same query as "in", it will be ignored */
-  notIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** What parameter to use to order the objects by. */
-  orderby?: InputMaybe<Array<InputMaybe<PostObjectsConnectionOrderbyInput>>>;
-  /** Use ID to return only children. Use 0 to return only top-level items */
-  parent?: InputMaybe<Scalars['ID']['input']>;
-  /** Specify objects whose parent is in an array */
-  parentIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Specify posts whose parent is not in an array */
-  parentNotIn?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Show posts with a specific password. */
-  password?: InputMaybe<Scalars['String']['input']>;
-  /** Show Posts based on a keyword search */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Retrieve posts where post status is in an array. */
-  stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
-  /** Show posts with a specific status. */
-  status?: InputMaybe<PostStatusEnum>;
-  /** Title of the object */
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Connection between the RootQuery type and the graphqlDocumentGroup type */
-export type RootQueryToGraphqlDocumentGroupConnection = Connection & GraphqlDocumentGroupConnection & {
-  __typename?: 'RootQueryToGraphqlDocumentGroupConnection';
-  /** Edges for the RootQueryToGraphqlDocumentGroupConnection connection */
-  edges: Array<RootQueryToGraphqlDocumentGroupConnectionEdge>;
-  /** The nodes of the connection, without the edges */
-  nodes: Array<GraphqlDocumentGroup>;
-  /** Information about pagination in a connection. */
-  pageInfo: RootQueryToGraphqlDocumentGroupConnectionPageInfo;
-};
-
-/** An edge in a connection */
-export type RootQueryToGraphqlDocumentGroupConnectionEdge = Edge & GraphqlDocumentGroupConnectionEdge & {
-  __typename?: 'RootQueryToGraphqlDocumentGroupConnectionEdge';
-  /** A cursor for use in pagination */
-  cursor?: Maybe<Scalars['String']['output']>;
-  /** The item at the end of the edge */
-  node: GraphqlDocumentGroup;
-};
-
-/** Pagination metadata specific to &quot;RootQueryToGraphqlDocumentGroupConnection&quot; collections. Provides cursors and flags for navigating through sets of RootQueryToGraphqlDocumentGroupConnection Nodes. */
-export type RootQueryToGraphqlDocumentGroupConnectionPageInfo = GraphqlDocumentGroupConnectionPageInfo & PageInfo & WpPageInfo & {
-  __typename?: 'RootQueryToGraphqlDocumentGroupConnectionPageInfo';
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['String']['output']>;
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean']['output'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']['output']>;
-};
-
-/** Arguments for filtering the RootQueryToGraphqlDocumentGroupConnection connection */
-export type RootQueryToGraphqlDocumentGroupConnectionWhereArgs = {
-  /** Unique cache key to be produced when this query is stored in an object cache. Default is 'core'. */
-  cacheDomain?: InputMaybe<Scalars['String']['input']>;
-  /** Term ID to retrieve child terms of. If multiple taxonomies are passed, $child_of is ignored. Default 0. */
-  childOf?: InputMaybe<Scalars['Int']['input']>;
-  /** True to limit results to terms that have no children. This parameter has no effect on non-hierarchical taxonomies. Default false. */
-  childless?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Retrieve terms where the description is LIKE the input value. Default empty. */
-  descriptionLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of term ids to exclude. If $include is non-empty, $exclude is ignored. Default empty array. */
-  exclude?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of term ids to exclude along with all of their descendant terms. If $include is non-empty, $exclude_tree is ignored. Default empty array. */
-  excludeTree?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to hide terms not assigned to any posts. Accepts true or false. Default false */
-  hideEmpty?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Whether to include terms that have non-empty descendants (even if $hide_empty is set to true). Default true. */
-  hierarchical?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Array of term ids to include. Default empty array. */
-  include?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Array of names to return term(s) for. Default empty. */
-  name?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Retrieve terms where the name is LIKE the input value. Default empty. */
-  nameLike?: InputMaybe<Scalars['String']['input']>;
-  /** Array of object IDs. Results will be limited to terms associated with these objects. */
-  objectIds?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Direction the connection should be ordered in */
-  order?: InputMaybe<OrderEnum>;
-  /** Field(s) to order terms by. Defaults to 'name'. */
-  orderby?: InputMaybe<TermObjectsConnectionOrderbyEnum>;
-  /** Whether to pad the quantity of a term's children in the quantity of each term's "count" object variable. Default false. */
-  padCounts?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Parent term ID to retrieve direct-child terms of. Default empty. */
-  parent?: InputMaybe<Scalars['Int']['input']>;
-  /** Search criteria to match terms. Will be SQL-formatted with wildcards before and after. Default empty. */
-  search?: InputMaybe<Scalars['String']['input']>;
-  /** Array of slugs to return term(s) for. Default empty. */
-  slug?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  /** Array of term taxonomy IDs, to match when querying terms. */
-  termTaxonomyId?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  /** Whether to prime meta caches for matched terms. Default true. */
-  updateTermMetaCache?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 /** Connection between the RootQuery type and the mediaItem type */
@@ -23139,6 +22294,8 @@ export type RootQueryToMediaItemConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -23163,6 +22320,8 @@ export type RootQueryToMediaItemConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -23600,6 +22759,8 @@ export type RootQueryToPageConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -23624,6 +22785,8 @@ export type RootQueryToPageConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -23769,6 +22932,8 @@ export type RootQueryToPostConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -23805,6 +22970,8 @@ export type RootQueryToPostConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -24548,6 +23715,8 @@ export type RootQueryToRevisionsConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -24572,6 +23741,8 @@ export type RootQueryToRevisionsConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -25277,53 +24448,61 @@ export type SetDefaultPaymentMethodPayload = {
 /** All of the registered settings */
 export type Settings = {
   __typename?: 'Settings';
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   discussionSettingsDefaultCommentStatus?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   discussionSettingsDefaultPingStatus?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsDateFormat?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsDescription?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsEmail?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
+  generalSettingsHomeUrl?: Maybe<Scalars['String']['output']>;
+  /** Settings of the string Settings Group */
   generalSettingsLanguage?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the integer Settings Group */
+  /** Settings of the integer Settings Group */
   generalSettingsStartOfWeek?: Maybe<Scalars['Int']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsTimeFormat?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsTimezone?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsTitle?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   generalSettingsUrl?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsDescriptionMetaTag?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsHeaderFooter?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsHelloStyle?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsHelloTheme?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsPageTitle?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   helloElementorSettingsSettingsHelloElementorSettingsSkipLink?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the integer Settings Group */
+  /** Settings of the string Settings Group */
+  permalinkSettingsCategoryBase?: Maybe<Scalars['String']['output']>;
+  /** Settings of the string Settings Group */
+  permalinkSettingsStructure?: Maybe<Scalars['String']['output']>;
+  /** Settings of the string Settings Group */
+  permalinkSettingsTagBase?: Maybe<Scalars['String']['output']>;
+  /** Settings of the integer Settings Group */
   readingSettingsPageForPosts?: Maybe<Scalars['Int']['output']>;
-  /** Settings of the the integer Settings Group */
+  /** Settings of the integer Settings Group */
   readingSettingsPageOnFront?: Maybe<Scalars['Int']['output']>;
-  /** Settings of the the integer Settings Group */
+  /** Settings of the integer Settings Group */
   readingSettingsPostsPerPage?: Maybe<Scalars['Int']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   readingSettingsShowOnFront?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the integer Settings Group */
+  /** Settings of the integer Settings Group */
   writingSettingsDefaultCategory?: Maybe<Scalars['Int']['output']>;
-  /** Settings of the the string Settings Group */
+  /** Settings of the string Settings Group */
   writingSettingsDefaultPostFormat?: Maybe<Scalars['String']['output']>;
-  /** Settings of the the boolean Settings Group */
+  /** Settings of the boolean Settings Group */
   writingSettingsUseSmilies?: Maybe<Scalars['Boolean']['output']>;
 };
 
@@ -25365,7 +24544,7 @@ export type ShippingClass = DatabaseIdentifier & Node & TermNode & UniformResour
   /** Connection between the ShippingClass type and the Product type */
   products?: Maybe<ShippingClassToProductConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   shippingClassId?: Maybe<Scalars['Int']['output']>;
@@ -25400,6 +24579,7 @@ export type ShippingClassEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -25409,6 +24589,7 @@ export type ShippingClassEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -25520,6 +24701,8 @@ export type ShippingClassToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -25544,6 +24727,8 @@ export type ShippingClassToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -25611,6 +24796,8 @@ export type ShippingClassToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -25679,6 +24866,8 @@ export type ShippingClassToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -25734,6 +24923,8 @@ export type ShippingClassToProductVariationConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -25758,6 +24949,8 @@ export type ShippingClassToProductVariationConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -26235,7 +25428,7 @@ export type SimpleProduct = ContentNode & DatabaseIdentifier & DownloadableProdu
   galleryImages?: Maybe<ProductToMediaItemConnection>;
   /** Connection between the ProductWithAttributes type and the GlobalProductAttribute type */
   globalAttributes?: Maybe<ProductWithAttributesToGlobalProductAttributeConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the product object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -26298,7 +25491,7 @@ export type SimpleProduct = ContentNode & DatabaseIdentifier & DownloadableProdu
   /** Connection between the Product type and the productCategory type */
   productCategories?: Maybe<ProductToProductCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productId: Scalars['Int']['output'];
@@ -26460,6 +25653,7 @@ export type SimpleProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -26469,6 +25663,7 @@ export type SimpleProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -26839,7 +26034,7 @@ export type SimpleProductVariation = ContentNode & DatabaseIdentifier & Download
   featuredImageDatabaseId?: Maybe<Scalars['Int']['output']>;
   /** Globally unique ID of the featured image assigned to the node */
   featuredImageId?: Maybe<Scalars['ID']['output']>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Does product variation have any visible attributes */
   hasAttributes?: Maybe<Scalars['Boolean']['output']>;
@@ -26898,7 +26093,7 @@ export type SimpleProductVariation = ContentNode & DatabaseIdentifier & Download
   /** Product&#039;s active price */
   price?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productVariationId: Scalars['Int']['output'];
@@ -26984,6 +26179,7 @@ export type SimpleProductVariationEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -26993,6 +26189,7 @@ export type SimpleProductVariationEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -27148,7 +26345,7 @@ export type Tag = DatabaseIdentifier & MenuItemLinkable & Node & TermNode & Unif
   /** An alphanumeric identifier for the object unique to its type. */
   slug?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   tagId?: Maybe<Scalars['Int']['output']>;
@@ -27181,6 +26378,7 @@ export type TagEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -27190,6 +26388,7 @@ export type TagEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -27291,6 +26490,8 @@ export type TagToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -27315,6 +26516,8 @@ export type TagToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -27378,6 +26581,8 @@ export type TagToPostConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -27414,6 +26619,8 @@ export type TagToPostConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -27646,7 +26853,7 @@ export type Taxonomy = Node & {
   connectedContentTypes?: Maybe<TaxonomyToContentTypeConnection>;
   /** List of Term Nodes associated with the Taxonomy */
   connectedTerms?: Maybe<TaxonomyToTermNodeConnection>;
-  /** Description of the taxonomy. This field is equivalent to WP_Taxonomy-&gt;description */
+  /** Description of the taxonomy. */
   description?: Maybe<Scalars['String']['output']>;
   /** The plural name of the post type within the GraphQL Schema. */
   graphqlPluralName?: Maybe<Scalars['String']['output']>;
@@ -27660,7 +26867,7 @@ export type Taxonomy = Node & {
   isRestricted?: Maybe<Scalars['Boolean']['output']>;
   /** Name of the taxonomy shown in the menu. Usually plural. */
   label?: Maybe<Scalars['String']['output']>;
-  /** The display name of the taxonomy. This field is equivalent to WP_Taxonomy-&gt;label */
+  /** The display name of the taxonomy. */
   name?: Maybe<Scalars['String']['output']>;
   /** Whether the taxonomy is publicly queryable */
   public?: Maybe<Scalars['Boolean']['output']>;
@@ -27668,7 +26875,7 @@ export type Taxonomy = Node & {
   restBase?: Maybe<Scalars['String']['output']>;
   /** The REST Controller class assigned to handling this content type. */
   restControllerClass?: Maybe<Scalars['String']['output']>;
-  /** Whether to show the taxonomy as part of a tag cloud widget. This field is equivalent to WP_Taxonomy-&gt;show_tagcloud */
+  /** Whether to show the taxonomy as part of a tag cloud widget. */
   showCloud?: Maybe<Scalars['Boolean']['output']>;
   /** Whether to display a column for the taxonomy on its post type listing screens. */
   showInAdminColumn?: Maybe<Scalars['Boolean']['output']>;
@@ -27738,8 +26945,6 @@ export type TaxonomyConnectionPageInfo = {
 export enum TaxonomyEnum {
   /** Taxonomy enum category */
   Category = 'CATEGORY',
-  /** Taxonomy enum graphql_document_group */
-  Graphqldocumentgroup = 'GRAPHQLDOCUMENTGROUP',
   /** Taxonomy enum pa_color */
   Pacolor = 'PACOLOR',
   /** Taxonomy enum pa_range */
@@ -27896,6 +27101,7 @@ export type TermNodeEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -27905,6 +27111,7 @@ export type TermNodeEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 /** A paginated collection of TermNode Nodes, Supports cursor-based pagination and filtering to efficiently retrieve sets of TermNode Nodes */
@@ -27984,6 +27191,12 @@ export type TermNodeToEnqueuedScriptConnectionPageInfo = EnqueuedScriptConnectio
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the TermNodeToEnqueuedScriptConnection connection */
+export type TermNodeToEnqueuedScriptConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Connection between the TermNode type and the EnqueuedStylesheet type */
 export type TermNodeToEnqueuedStylesheetConnection = Connection & EnqueuedStylesheetConnection & {
   __typename?: 'TermNodeToEnqueuedStylesheetConnection';
@@ -28017,6 +27230,12 @@ export type TermNodeToEnqueuedStylesheetConnectionPageInfo = EnqueuedStylesheetC
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the TermNodeToEnqueuedStylesheetConnection connection */
+export type TermNodeToEnqueuedStylesheetConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Sorting attributes for taxonomy term collections. Determines which property of taxonomy terms is used for ordering results. */
 export enum TermObjectsConnectionOrderbyEnum {
   /** Ordering by number of associated content items. */
@@ -28038,27 +27257,27 @@ export enum TermObjectsConnectionOrderbyEnum {
 /** A theme object */
 export type Theme = Node & {
   __typename?: 'Theme';
-  /** Name of the theme author(s), could also be a company name. This field is equivalent to WP_Theme-&gt;get( &quot;Author&quot; ). */
+  /** Name of the theme author(s), could also be a company name. */
   author?: Maybe<Scalars['String']['output']>;
-  /** URI for the author/company website. This field is equivalent to WP_Theme-&gt;get( &quot;AuthorURI&quot; ). */
+  /** URI for the author/company website. */
   authorUri?: Maybe<Scalars['String']['output']>;
-  /** The description of the theme. This field is equivalent to WP_Theme-&gt;get( &quot;Description&quot; ). */
+  /** The description of the theme. */
   description?: Maybe<Scalars['String']['output']>;
   /** The globally unique identifier of the theme object. */
   id: Scalars['ID']['output'];
   /** Whether the object is restricted from the current viewer */
   isRestricted?: Maybe<Scalars['Boolean']['output']>;
-  /** Display name of the theme. This field is equivalent to WP_Theme-&gt;get( &quot;Name&quot; ). */
+  /** Display name of the theme. */
   name?: Maybe<Scalars['String']['output']>;
-  /** The URL of the screenshot for the theme. The screenshot is intended to give an overview of what the theme looks like. This field is equivalent to WP_Theme-&gt;get_screenshot(). */
+  /** The URL of the screenshot for the theme. The screenshot is intended to give an overview of what the theme looks like. */
   screenshot?: Maybe<Scalars['String']['output']>;
-  /** The theme slug is used to internally match themes. Theme slugs can have subdirectories like: my-theme/sub-theme. This field is equivalent to WP_Theme-&gt;get_stylesheet(). */
+  /** The theme slug is used to internally match themes. Theme slugs can have subdirectories like: my-theme/sub-theme. */
   slug?: Maybe<Scalars['String']['output']>;
-  /** URI for the author/company website. This field is equivalent to WP_Theme-&gt;get( &quot;Tags&quot; ). */
+  /** A list of tags associated with the theme, typically describing its features (e.g. custom-logo, accessibility-ready, full-site-editing). */
   tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  /** A URI if the theme has a website associated with it. The Theme URI is handy for directing users to a theme site for support etc. This field is equivalent to WP_Theme-&gt;get( &quot;ThemeURI&quot; ). */
+  /** A URI if the theme has a website associated with it. The Theme URI is handy for directing users to a theme site for support etc. */
   themeUri?: Maybe<Scalars['String']['output']>;
-  /** The current version of the theme. This field is equivalent to WP_Theme-&gt;get( &quot;Version&quot; ). */
+  /** The current version of the theme. */
   version?: Maybe<Scalars['String']['output']>;
 };
 
@@ -28293,74 +27512,6 @@ export type UpdateCustomerPayload = {
   customer?: Maybe<Customer>;
   /** A JWT token that can be used in future requests to get a refreshed jwtAuthToken. If the refresh token used in a request is revoked or otherwise invalid, a valid Auth token will NOT be issued in the response headers. */
   refreshToken?: Maybe<Scalars['String']['output']>;
-};
-
-/** Input for the updateGraphqlDocumentGroup mutation. */
-export type UpdateGraphqlDocumentGroupInput = {
-  /** The slug that the graphql_document_group will be an alias of */
-  aliasOf?: InputMaybe<Scalars['String']['input']>;
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** The description of the graphql_document_group object */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** The ID of the graphqlDocumentGroup object to update */
-  id: Scalars['ID']['input'];
-  /** The name of the graphql_document_group object to mutate */
-  name?: InputMaybe<Scalars['String']['input']>;
-  /** If this argument exists then the slug will be checked to see if it is not an existing valid term. If that check succeeds (it is not a valid term), then it is added and the term id is given. If it fails, then a check is made to whether the taxonomy is hierarchical and the parent argument is not empty. If the second check succeeds, the term will be inserted and the term id will be given. If the slug argument is empty, then it will be calculated from the term name. */
-  slug?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The payload for the updateGraphqlDocumentGroup mutation. */
-export type UpdateGraphqlDocumentGroupPayload = {
-  __typename?: 'UpdateGraphqlDocumentGroupPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The created graphql_document_group */
-  graphqlDocumentGroup?: Maybe<GraphqlDocumentGroup>;
-};
-
-/** Input for the updateGraphqlDocument mutation. */
-export type UpdateGraphqlDocumentInput = {
-  /** Alias names for saved GraphQL query documents */
-  alias?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /** The content of the object */
-  content?: InputMaybe<Scalars['String']['input']>;
-  /** The date of the object. Preferable to enter as year/month/day (e.g. 01/31/2017) as it will rearrange date as fit if it is not specified. Incomplete dates may have unintended results for example, "2017" as the input will use current date with timestamp 20:17  */
-  date?: InputMaybe<Scalars['String']['input']>;
-  /** Description for the saved GraphQL document */
-  description?: InputMaybe<Scalars['String']['input']>;
-  /** Allow, deny or default access grant for specific query */
-  grant?: InputMaybe<Scalars['String']['input']>;
-  /** Set connections between the graphqlDocument and graphqlDocumentGroups */
-  graphqlDocumentGroups?: InputMaybe<GraphqlDocumentGraphqlDocumentGroupsInput>;
-  /** The ID of the graphqlDocument object */
-  id: Scalars['ID']['input'];
-  /** Override the edit lock when another user is editing the post */
-  ignoreEditLock?: InputMaybe<Scalars['Boolean']['input']>;
-  /** HTTP Cache-Control max-age directive for a saved GraphQL document */
-  maxAgeHeader?: InputMaybe<Scalars['Int']['input']>;
-  /** A field used for ordering posts. This is typically used with nav menu items or for special ordering of hierarchical content types. */
-  menuOrder?: InputMaybe<Scalars['Int']['input']>;
-  /** The password used to protect the content of the object */
-  password?: InputMaybe<Scalars['String']['input']>;
-  /** The slug of the object */
-  slug?: InputMaybe<Scalars['String']['input']>;
-  /** The status of the object */
-  status?: InputMaybe<PostStatusEnum>;
-  /** The title of the object */
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** The payload for the updateGraphqlDocument mutation. */
-export type UpdateGraphqlDocumentPayload = {
-  __typename?: 'UpdateGraphqlDocumentPayload';
-  /** If a &#039;clientMutationId&#039; input is provided to the mutation, it will be returned as output on the mutation. This ID can be used by the client to track the progress of mutations and catch possible duplicate mutation submissions. */
-  clientMutationId?: Maybe<Scalars['String']['output']>;
-  /** The Post object mutation type. */
-  graphqlDocument?: Maybe<GraphqlDocument>;
 };
 
 /** Input for the updateItemQuantities mutation. */
@@ -29108,8 +28259,6 @@ export type UpdateSettingsInput = {
   generalSettingsTimezone?: InputMaybe<Scalars['String']['input']>;
   /** Site title. */
   generalSettingsTitle?: InputMaybe<Scalars['String']['input']>;
-  /** Site URL. */
-  generalSettingsUrl?: InputMaybe<Scalars['String']['input']>;
   helloElementorSettingsSettingsHelloElementorSettingsDescriptionMetaTag?: InputMaybe<Scalars['String']['input']>;
   helloElementorSettingsSettingsHelloElementorSettingsHeaderFooter?: InputMaybe<Scalars['String']['input']>;
   helloElementorSettingsSettingsHelloElementorSettingsHelloStyle?: InputMaybe<Scalars['String']['input']>;
@@ -29145,6 +28294,8 @@ export type UpdateSettingsPayload = {
   generalSettings?: Maybe<GeneralSettings>;
   /** Update the HelloElementorSettingsSettings setting. */
   helloElementorSettingsSettings?: Maybe<HelloElementorSettingsSettings>;
+  /** Update the PermalinkSettings setting. */
+  permalinkSettings?: Maybe<PermalinkSettings>;
   /** Update the ReadingSettings setting. */
   readingSettings?: Maybe<ReadingSettings>;
   /** Update the WritingSettings setting. */
@@ -29426,15 +28577,15 @@ export type User = Commenter & DatabaseIdentifier & Node & UniformResourceIdenti
   databaseId: Scalars['Int']['output'];
   /** Description of the user. */
   description?: Maybe<Scalars['String']['output']>;
-  /** Email address of the user. This is equivalent to the WP_User-&gt;user_email property. */
+  /** Email address of the user. */
   email?: Maybe<Scalars['String']['output']>;
   /** Connection between the User type and the EnqueuedScript type */
   enqueuedScripts?: Maybe<UserToEnqueuedScriptConnection>;
   /** Connection between the User type and the EnqueuedStylesheet type */
   enqueuedStylesheets?: Maybe<UserToEnqueuedStylesheetConnection>;
-  /** A complete list of capabilities including capabilities inherited from a role. This is equivalent to the array keys of WP_User-&gt;allcaps. */
+  /** A complete list of capabilities including capabilities inherited from a role. */
   extraCapabilities?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  /** First name of the user. This is equivalent to the WP_User-&gt;user_first_name property. */
+  /** First name of the user. */
   firstName?: Maybe<Scalars['String']['output']>;
   /** Whether the user has enabled keyboard shortcuts for comment moderation. Defaults to false. */
   hasCommentShortcutsEnabled?: Maybe<Scalars['Boolean']['output']>;
@@ -29456,15 +28607,15 @@ export type User = Commenter & DatabaseIdentifier & Node & UniformResourceIdenti
   isRestricted?: Maybe<Scalars['Boolean']['output']>;
   /** Whether the node is a Term */
   isTermNode: Scalars['Boolean']['output'];
-  /** Last name of the user. This is equivalent to the WP_User-&gt;user_last_name property. */
+  /** Last name of the user. */
   lastName?: Maybe<Scalars['String']['output']>;
   /** The preferred language locale set for the user. Value derived from get_user_locale(). */
   locale?: Maybe<Scalars['String']['output']>;
   /** Connection between the User type and the mediaItem type */
   mediaItems?: Maybe<UserToMediaItemConnection>;
-  /** Display name of the user. This is equivalent to the WP_User-&gt;display_name property. */
+  /** Display name of the user. */
   name?: Maybe<Scalars['String']['output']>;
-  /** The nicename for the user. This field is equivalent to WP_User-&gt;user_nicename */
+  /** The url friendly name for the user, used to reference the user in a public url. */
   nicename?: Maybe<Scalars['String']['output']>;
   /** Nickname of the user. */
   nickname?: Maybe<Scalars['String']['output']>;
@@ -29482,7 +28633,7 @@ export type User = Commenter & DatabaseIdentifier & Node & UniformResourceIdenti
   savedPaymentMethods?: Maybe<Array<Maybe<SavedPaymentMethod>>>;
   /** Whether the Toolbar should be displayed when the user is viewing the site. */
   shouldShowAdminToolbar?: Maybe<Scalars['Boolean']['output']>;
-  /** The slug for the user. This field is equivalent to WP_User-&gt;user_nicename */
+  /** The url friendly identifier for the user. */
   slug?: Maybe<Scalars['String']['output']>;
   /** Stripe customer ID for the authenticated user, if mapped. */
   stripeCustomerId?: Maybe<Scalars['String']['output']>;
@@ -29491,11 +28642,11 @@ export type User = Commenter & DatabaseIdentifier & Node & UniformResourceIdenti
   /** A website url that is associated with the user. */
   url?: Maybe<Scalars['String']['output']>;
   /**
-   * The Id of the user. Equivalent to WP_User-&gt;ID
+   * The unique numeric identifier for the user.
    * @deprecated Deprecated in favor of the databaseId field
    */
   userId?: Maybe<Scalars['Int']['output']>;
-  /** Username for the user. This field is equivalent to WP_User-&gt;user_login. */
+  /** Username for the user. This is the unique identifier the user provides to log in. */
   username?: Maybe<Scalars['String']['output']>;
   /** A JWT token that can be used in future requests to for WooCommerce session identification */
   wooSessionToken?: Maybe<Scalars['String']['output']>;
@@ -29526,6 +28677,7 @@ export type UserEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<UserToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -29535,6 +28687,7 @@ export type UserEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<UserToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -29679,15 +28832,15 @@ export type UserRoleConnectionPageInfo = {
 
 /** Permission levels for user accounts. Defines the standard access levels that control what actions users can perform within the system. */
 export enum UserRoleEnum {
-  /** User role with specific capabilities */
+  /** Full system access with ability to manage all aspects of the site. */
   Administrator = 'ADMINISTRATOR',
-  /** User role with specific capabilities */
+  /** Can publish and manage their own content. */
   Author = 'AUTHOR',
-  /** User role with specific capabilities */
+  /** Can write and manage their own content but cannot publish. */
   Contributor = 'CONTRIBUTOR',
   /** User role with specific capabilities */
   Customer = 'CUSTOMER',
-  /** User role with specific capabilities */
+  /** Content management access without administrative capabilities. */
   Editor = 'EDITOR',
   /** User role with specific capabilities */
   OutletManager = 'OUTLET_MANAGER',
@@ -29699,7 +28852,7 @@ export enum UserRoleEnum {
   SeoManager = 'SEO_MANAGER',
   /** User role with specific capabilities */
   ShopManager = 'SHOP_MANAGER',
-  /** User role with specific capabilities */
+  /** Can only manage their profile and read content. */
   Subscriber = 'SUBSCRIBER'
 }
 
@@ -29831,6 +28984,12 @@ export type UserToEnqueuedScriptConnectionPageInfo = EnqueuedScriptConnectionPag
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Arguments for filtering the UserToEnqueuedScriptConnection connection */
+export type UserToEnqueuedScriptConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Connection between the User type and the EnqueuedStylesheet type */
 export type UserToEnqueuedStylesheetConnection = Connection & EnqueuedStylesheetConnection & {
   __typename?: 'UserToEnqueuedStylesheetConnection';
@@ -29862,6 +29021,12 @@ export type UserToEnqueuedStylesheetConnectionPageInfo = EnqueuedStylesheetConne
   hasPreviousPage: Scalars['Boolean']['output'];
   /** When paginating backwards, the cursor to continue. */
   startCursor?: Maybe<Scalars['String']['output']>;
+};
+
+/** Arguments for filtering the UserToEnqueuedStylesheetConnection connection */
+export type UserToEnqueuedStylesheetConnectionWhereArgs = {
+  /** Limit results to assets whose handle is in the provided list. Handles that do not match an asset are ignored. An empty list matches no assets, while omitting the argument (or passing null) leaves the connection unfiltered. */
+  handlesIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 /** Connection between the User type and the mediaItem type */
@@ -29915,6 +29080,8 @@ export type UserToMediaItemConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -29939,6 +29106,8 @@ export type UserToMediaItemConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -29994,6 +29163,8 @@ export type UserToPageConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -30018,6 +29189,8 @@ export type UserToPageConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -30081,6 +29254,8 @@ export type UserToPostConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -30117,6 +29292,8 @@ export type UserToPostConnectionWhereArgs = {
   tagSlugAnd?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Array of tag slugs, used to include objects in ANY specified tags */
   tagSlugIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -30166,6 +29343,8 @@ export type UserToRevisionsConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -30190,6 +29369,8 @@ export type UserToRevisionsConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -30342,7 +29523,7 @@ export type VariableProduct = ContentNode & DatabaseIdentifier & InventoriedProd
   galleryImages?: Maybe<ProductToMediaItemConnection>;
   /** Connection between the ProductWithAttributes type and the GlobalProductAttribute type */
   globalAttributes?: Maybe<ProductWithAttributesToGlobalProductAttributeConnection>;
-  /** The global unique identifier for this post. This currently matches the value stored in WP_Post-&gt;guid and the guid column in the &quot;post_objects&quot; database table. */
+  /** The global unique identifier for this content node. This is a stable, unique identifier for the node that does not change even if the node is moved or its url changes. */
   guid?: Maybe<Scalars['String']['output']>;
   /** Whether the product object is password protected. */
   hasPassword?: Maybe<Scalars['Boolean']['output']>;
@@ -30405,7 +29586,7 @@ export type VariableProduct = ContentNode & DatabaseIdentifier & InventoriedProd
   /** Connection between the Product type and the productCategory type */
   productCategories?: Maybe<ProductToProductCategoryConnection>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the content node.
    * @deprecated Deprecated in favor of the databaseId field
    */
   productId: Scalars['Int']['output'];
@@ -30569,6 +29750,7 @@ export type VariableProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -30578,6 +29760,7 @@ export type VariableProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<ContentNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -30998,7 +30181,7 @@ export type VisibleProduct = DatabaseIdentifier & Node & TermNode & UniformResou
   /** The unique resource identifier path */
   uri?: Maybe<Scalars['String']['output']>;
   /**
-   * The id field matches the WP_Post-&gt;ID field.
+   * The unique numeric identifier for the term.
    * @deprecated Deprecated in favor of databaseId
    */
   visibleProductId?: Maybe<Scalars['Int']['output']>;
@@ -31021,6 +30204,7 @@ export type VisibleProductEnqueuedScriptsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedScriptConnectionWhereArgs>;
 };
 
 
@@ -31030,6 +30214,7 @@ export type VisibleProductEnqueuedStylesheetsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<TermNodeToEnqueuedStylesheetConnectionWhereArgs>;
 };
 
 
@@ -31141,6 +30326,8 @@ export type VisibleProductToContentNodeConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -31165,6 +30352,8 @@ export type VisibleProductToContentNodeConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -31232,6 +30421,8 @@ export type VisibleProductToProductConnectionWhereArgs = {
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   /** Limit result set to specific ids. */
   include?: InputMaybe<Array<InputMaybe<Scalars['Int']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Limit result set to products based on a maximum price. */
   maxPrice?: InputMaybe<Scalars['Float']['input']>;
   /** Get objects with a specific mimeType property */
@@ -31300,6 +30491,8 @@ export type VisibleProductToProductConnectionWhereArgs = {
   tagNotIn?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   /** Limit result set with complex set of taxonomy filters. */
   taxonomyFilter?: InputMaybe<ProductTaxonomyInput>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
   /** Limit result set to products assigned a specific type. */
@@ -31355,6 +30548,8 @@ export type VisibleProductToProductVariationConnectionWhereArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   /** Array of IDs for the objects to retrieve */
   in?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  /** True to limit the results to sticky posts; false to exclude sticky posts. Note: this filters the result set, it does not float sticky posts to the top of the results. */
+  isSticky?: InputMaybe<Scalars['Boolean']['input']>;
   /** Get objects with a specific mimeType property */
   mimeType?: InputMaybe<MimeTypeEnum>;
   /** Slug / post_name of the object */
@@ -31379,6 +30574,8 @@ export type VisibleProductToProductVariationConnectionWhereArgs = {
   stati?: InputMaybe<Array<InputMaybe<PostStatusEnum>>>;
   /** Show posts with a specific status. */
   status?: InputMaybe<PostStatusEnum>;
+  /** Filter the connection to content assigned a specific template. */
+  template?: InputMaybe<ContentTemplateEnum>;
   /** Title of the object */
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -31596,6 +30793,18 @@ export type WpPageInfo = {
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
+/** Provides access to fields of the &quot;ExternalUrl&quot; ACF Field Group via the &quot;externalUrl&quot; field */
+export type WithAcfExternalUrl = {
+  /** Fields of the ExternalUrl ACF Field Group */
+  externalUrl?: Maybe<ExternalUrl>;
+};
+
+/** Provides access to fields of the &quot;ExtraFields&quot; ACF Field Group via the &quot;extraFields&quot; field */
+export type WithAcfExtraFields = {
+  /** Fields of the ExtraFields ACF Field Group */
+  extraFields?: Maybe<ExtraFields>;
+};
+
 /** Woonuxt Social Items */
 export type WooNuxtSocialItems = {
   __typename?: 'WooNuxtSocialItems';
@@ -31687,12 +30896,14 @@ export type WriteReviewPayload = {
 };
 
 /** The writing setting type */
-export type WritingSettings = {
+export type WritingSettings = Node & {
   __typename?: 'WritingSettings';
   /** Default post category. */
   defaultCategory?: Maybe<Scalars['Int']['output']>;
   /** Default post format. */
   defaultPostFormat?: Maybe<Scalars['String']['output']>;
+  /** The globally unique identifier of the settings group. */
+  id: Scalars['ID']['output'];
   /** Convert emoticons like :-) and :-P to graphics on display. */
   useSmilies?: Maybe<Scalars['Boolean']['output']>;
 };
@@ -31705,7 +30916,7 @@ export type AddToCartMutationVariables = Exact<{
 export type AddToCartMutation = { __typename?: 'RootMutation', addToCart?: { __typename?: 'AddToCartPayload', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
@@ -31717,7 +30928,7 @@ export type ApplyCouponMutationVariables = Exact<{
 export type ApplyCouponMutation = { __typename?: 'RootMutation', applyCoupon?: { __typename?: 'ApplyCouponPayload', applied?: { __typename?: 'AppliedCoupon', code: string, description?: string | null, discountTax: string, discountAmount: string } | null, cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
@@ -31739,7 +30950,7 @@ export type ChangeShippingMethodMutationVariables = Exact<{
 export type ChangeShippingMethodMutation = { __typename?: 'RootMutation', updateShippingMethod?: { __typename?: 'UpdateShippingMethodPayload', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
@@ -31771,14 +30982,14 @@ export type EmptyCartMutationVariables = Exact<{ [key: string]: never; }>;
 export type EmptyCartMutation = { __typename?: 'RootMutation', emptyCart?: { __typename?: 'EmptyCartPayload', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
 export type CartFragment = { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
           | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
          } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null };
 
@@ -31901,11 +31112,10 @@ export type ProductStockFragment =
 
 export type ProductVariationFragment = { __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null };
 
-export type SimpleProductFragment = { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null };
+export type SimpleProductFragment = { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null };
 
 type Terms_ExternalProduct_Fragment = { __typename?: 'ExternalProduct', terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-      | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -31921,7 +31131,6 @@ type Terms_ExternalProduct_Fragment = { __typename?: 'ExternalProduct', terms?: 
 
 type Terms_GroupProduct_Fragment = { __typename?: 'GroupProduct', terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-      | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -31937,7 +31146,6 @@ type Terms_GroupProduct_Fragment = { __typename?: 'GroupProduct', terms?: { __ty
 
 type Terms_SimpleProduct_Fragment = { __typename?: 'SimpleProduct', terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-      | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -31953,7 +31161,6 @@ type Terms_SimpleProduct_Fragment = { __typename?: 'SimpleProduct', terms?: { __
 
 type Terms_VariableProduct_Fragment = { __typename?: 'VariableProduct', terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-      | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
       | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -31991,7 +31198,6 @@ export type GetAllTermsQueryVariables = Exact<{
 
 export type GetAllTermsQuery = { __typename?: 'RootQuery', terms?: { __typename?: 'RootQueryToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', taxonomyName?: string | null, name?: string | null, slug?: string | null, count?: number | null }
-      | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, name?: string | null, slug?: string | null, count?: number | null }
       | { __typename?: 'PaColor', taxonomyName?: string | null, name?: string | null, slug?: string | null, count?: number | null }
       | { __typename?: 'PaRange', taxonomyName?: string | null, name?: string | null, slug?: string | null, count?: number | null }
       | { __typename?: 'PaSize', taxonomyName?: string | null, name?: string | null, slug?: string | null, count?: number | null }
@@ -32016,7 +31222,7 @@ export type GetCartQueryVariables = Exact<{ [key: string]: never; }>;
 export type GetCartQuery = { __typename?: 'RootQuery', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
             | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
             | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-            | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+            | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
             | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
            } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null, customer?: { __typename?: 'Customer', lastName?: string | null, email?: string | null, firstName?: string | null, username?: string | null, databaseId?: number | null, sessionToken?: string | null, isPayingCustomer?: boolean | null, date?: string | null, billing?: { __typename?: 'CustomerAddress', address1?: string | null, address2?: string | null, city?: string | null, country?: CountriesEnum | null, email?: string | null, firstName?: string | null, lastName?: string | null, phone?: string | null, postcode?: string | null, company?: string | null, state?: string | null } | null, shipping?: { __typename?: 'CustomerAddress', address1?: string | null, address2?: string | null, city?: string | null, country?: CountriesEnum | null, email?: string | null, firstName?: string | null, lastName?: string | null, phone?: string | null, postcode?: string | null, company?: string | null, state?: string | null } | null } | null, viewer?: { __typename?: 'User', lastName?: string | null, email?: string | null, databaseId: number, id: string, firstName?: string | null, username?: string | null, nicename?: string | null, wooSessionToken?: string | null, stripeCustomerId?: string | null, savedPaymentMethods?: Array<{ __typename?: 'SavedPaymentMethod', id?: number | null, token?: string | null, customerId?: string | null, last4?: string | null, expiryMonth?: string | null, expiryYear?: string | null, cardType?: string | null, isDefault?: boolean | null } | null> | null, avatar?: { __typename?: 'Avatar', url?: string | null } | null } | null, paymentGateways?: { __typename?: 'RootQueryToPaymentGatewayConnection', nodes: Array<{ __typename?: 'PaymentGateway', title?: string | null, id: string, description?: string | null, icon?: string | null }> } | null, loginClients?: Array<{ __typename?: 'LoginClient', name?: string | null, provider?: LoginProviderEnum | null, isEnabled?: boolean | null, authorizationUrl?: string | null } | null> | null };
 
@@ -32121,7 +31327,7 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
     | { __typename?: 'ExternalProduct', name?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, fullYoastHead?: string | null, slug?: string | null, sku?: string | null, description?: string | null, shortDescription?: string | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawDescription?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, metaData?: Array<{ __typename?: 'MetaData', id?: string | null, key: string, value?: string | null } | null> | null, related?: { __typename?: 'ProductToProductUnionConnection', nodes: Array<
           | { __typename?: 'ExternalProduct', externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'GroupProduct' }
-          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'SimpleProductVariation' }
           | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
         > } | null, reviews?: { __typename?: 'ProductToCommentConnection', averageRating?: number | null, edges: Array<{ __typename?: 'ProductToCommentConnectionEdge', rating?: number | null, node: { __typename?: 'Comment', content?: string | null, id: string, date?: string | null, author?: { __typename?: 'CommentToCommenterConnectionEdge', node:
@@ -32130,7 +31336,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
                } | null } }> } | null, attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
           | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
                 | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-                | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32146,7 +31351,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
           | { __typename?: 'LocalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum }
         > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
           | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-          | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32162,7 +31366,7 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
     | { __typename?: 'GroupProduct', name?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, fullYoastHead?: string | null, slug?: string | null, sku?: string | null, description?: string | null, shortDescription?: string | null, rawDescription?: string | null, metaData?: Array<{ __typename?: 'MetaData', id?: string | null, key: string, value?: string | null } | null> | null, related?: { __typename?: 'ProductToProductUnionConnection', nodes: Array<
           | { __typename?: 'ExternalProduct', externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'GroupProduct' }
-          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'SimpleProductVariation' }
           | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
         > } | null, reviews?: { __typename?: 'ProductToCommentConnection', averageRating?: number | null, edges: Array<{ __typename?: 'ProductToCommentConnectionEdge', rating?: number | null, node: { __typename?: 'Comment', content?: string | null, id: string, date?: string | null, author?: { __typename?: 'CommentToCommenterConnectionEdge', node:
@@ -32171,7 +31375,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
                } | null } }> } | null, attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
           | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
                 | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-                | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32187,7 +31390,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
           | { __typename?: 'LocalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum }
         > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
           | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-          | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32203,7 +31405,7 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
     | { __typename?: 'SimpleProduct', name?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, fullYoastHead?: string | null, slug?: string | null, sku?: string | null, description?: string | null, shortDescription?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawDescription?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, metaData?: Array<{ __typename?: 'MetaData', id?: string | null, key: string, value?: string | null } | null> | null, related?: { __typename?: 'ProductToProductUnionConnection', nodes: Array<
           | { __typename?: 'ExternalProduct', externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'GroupProduct' }
-          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'SimpleProductVariation' }
           | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
         > } | null, reviews?: { __typename?: 'ProductToCommentConnection', averageRating?: number | null, edges: Array<{ __typename?: 'ProductToCommentConnectionEdge', rating?: number | null, node: { __typename?: 'Comment', content?: string | null, id: string, date?: string | null, author?: { __typename?: 'CommentToCommenterConnectionEdge', node:
@@ -32212,7 +31414,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
                } | null } }> } | null, attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
           | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
                 | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-                | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32228,7 +31429,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
           | { __typename?: 'LocalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum }
         > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
           | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-          | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32240,11 +31440,11 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
           | { __typename?: 'ShippingClass', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'Tag', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'VisibleProduct', taxonomyName?: string | null, slug?: string | null }
-        > } | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+        > } | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
     | { __typename?: 'VariableProduct', name?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, fullYoastHead?: string | null, slug?: string | null, sku?: string | null, description?: string | null, shortDescription?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawDescription?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, metaData?: Array<{ __typename?: 'MetaData', id?: string | null, key: string, value?: string | null } | null> | null, related?: { __typename?: 'ProductToProductUnionConnection', nodes: Array<
           | { __typename?: 'ExternalProduct', externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'GroupProduct' }
-          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
           | { __typename?: 'SimpleProductVariation' }
           | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
         > } | null, reviews?: { __typename?: 'ProductToCommentConnection', averageRating?: number | null, edges: Array<{ __typename?: 'ProductToCommentConnectionEdge', rating?: number | null, node: { __typename?: 'Comment', content?: string | null, id: string, date?: string | null, author?: { __typename?: 'CommentToCommenterConnectionEdge', node:
@@ -32253,7 +31453,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
                } | null } }> } | null, attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
           | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
                 | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-                | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
                 | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32269,7 +31468,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
           | { __typename?: 'LocalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum }
         > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
           | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-          | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
           | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32287,7 +31485,6 @@ export type GetProductQuery = { __typename?: 'RootQuery', product?:
 type ProductWithAttributes_ExternalProduct_Fragment = { __typename?: 'ExternalProduct', attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
       | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-            | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32306,7 +31503,6 @@ type ProductWithAttributes_ExternalProduct_Fragment = { __typename?: 'ExternalPr
 type ProductWithAttributes_GroupProduct_Fragment = { __typename?: 'GroupProduct', attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
       | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-            | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32325,7 +31521,6 @@ type ProductWithAttributes_GroupProduct_Fragment = { __typename?: 'GroupProduct'
 type ProductWithAttributes_SimpleProduct_Fragment = { __typename?: 'SimpleProduct', attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
       | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-            | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32344,7 +31539,6 @@ type ProductWithAttributes_SimpleProduct_Fragment = { __typename?: 'SimpleProduc
 type ProductWithAttributes_VariableProduct_Fragment = { __typename?: 'VariableProduct', attributes?: { __typename?: 'ProductWithAttributesToProductAttributeConnection', nodes: Array<
       | { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-            | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
             | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32369,7 +31563,6 @@ export type ProductWithAttributesFragment =
 
 type ProductAttribute_GlobalProductAttribute_Fragment = { __typename?: 'GlobalProductAttribute', variation?: boolean | null, name?: string | null, id: string, options?: Array<string | null> | null, label?: string | null, scope: ProductAttributeTypesEnum, terms?: { __typename?: 'GlobalProductAttributeToTermNodeConnection', nodes: Array<
       | { __typename?: 'Category', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
-      | { __typename?: 'GraphqlDocumentGroup', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
       | { __typename?: 'PaColor', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
       | { __typename?: 'PaRange', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
       | { __typename?: 'PaSize', name?: string | null, slug?: string | null, taxonomyName?: string | null, databaseId: number }
@@ -32408,7 +31601,6 @@ export type GetProductsQueryVariables = Exact<{
 export type GetProductsQuery = { __typename?: 'RootQuery', products?: { __typename?: 'RootQueryToProductConnection', pageInfo: { __typename?: 'RootQueryToProductConnectionPageInfo', hasNextPage: boolean, endCursor?: string | null }, nodes: Array<
       | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, averageRating?: number | null, reviewCount?: number | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-            | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32423,7 +31615,6 @@ export type GetProductsQuery = { __typename?: 'RootQuery', products?: { __typena
           > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
       | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, averageRating?: number | null, reviewCount?: number | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-            | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32438,7 +31629,6 @@ export type GetProductsQuery = { __typename?: 'RootQuery', products?: { __typena
           > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null }
       | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, averageRating?: number | null, reviewCount?: number | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-            | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32450,10 +31640,9 @@ export type GetProductsQuery = { __typename?: 'RootQuery', products?: { __typena
             | { __typename?: 'ShippingClass', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'Tag', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'VisibleProduct', taxonomyName?: string | null, slug?: string | null }
-          > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+          > } | null, productCategories?: { __typename?: 'ProductToProductCategoryConnection', nodes: Array<{ __typename?: 'ProductCategory', databaseId: number, slug?: string | null, name?: string | null, count?: number | null }> } | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
       | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, type?: ProductTypesEnum | null, databaseId: number, id: string, averageRating?: number | null, reviewCount?: number | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, terms?: { __typename?: 'ProductToTermNodeConnection', nodes: Array<
             | { __typename?: 'Category', taxonomyName?: string | null, slug?: string | null }
-            | { __typename?: 'GraphqlDocumentGroup', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaColor', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaRange', taxonomyName?: string | null, slug?: string | null }
             | { __typename?: 'PaSize', taxonomyName?: string | null, slug?: string | null }
@@ -32531,7 +31720,7 @@ export type RemoveCouponsMutationVariables = Exact<{
 export type RemoveCouponsMutation = { __typename?: 'RootMutation', removeCoupons?: { __typename?: 'RemoveCouponsPayload', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
@@ -32560,7 +31749,7 @@ export type UpDateCartQuantityMutationVariables = Exact<{
 export type UpDateCartQuantityMutation = { __typename?: 'RootMutation', updateItemQuantities?: { __typename?: 'UpdateItemQuantitiesPayload', cart?: { __typename?: 'Cart', total?: string | null, subtotal?: string | null, totalTax?: string | null, discountTotal?: string | null, shippingTotal?: string | null, needsShippingAddress?: boolean | null, chosenShippingMethods?: Array<string | null> | null, isEmpty?: boolean | null, rawTotal?: string | null, rawDiscountTotal?: string | null, availableShippingMethods?: Array<{ __typename?: 'ShippingPackage', rates?: Array<{ __typename?: 'ShippingRate', cost?: string | null, id: string, label?: string | null } | null> | null } | null> | null, appliedCoupons?: Array<{ __typename?: 'AppliedCoupon', description?: string | null, discountTax: string, discountAmount: string, code: string } | null> | null, contents?: { __typename?: 'CartToCartItemConnection', itemCount?: number | null, productCount?: number | null, nodes: Array<{ __typename?: 'SimpleCartItem', quantity?: number | null, key: string, product?: { __typename?: 'CartItemToProductConnectionEdge', node:
               | { __typename?: 'ExternalProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, externalUrl?: string | null, buttonText?: string | null, onSale?: boolean | null, price?: string | null, regularPrice?: string | null, salePrice?: string | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'GroupProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null }
-              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
+              | { __typename?: 'SimpleProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, averageRating?: number | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, reviewCount?: number | null, virtual?: boolean | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', altText?: string | null, title?: string | null, databaseId: number, sourceUrl?: string | null, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
               | { __typename?: 'VariableProduct', name?: string | null, slug?: string | null, sku?: string | null, databaseId: number, type?: ProductTypesEnum | null, price?: string | null, date?: string | null, regularPrice?: string | null, salePrice?: string | null, stockStatus?: StockStatusEnum | null, stockQuantity?: number | null, lowStockAmount?: number | null, onSale?: boolean | null, weight?: string | null, length?: string | null, width?: string | null, height?: string | null, averageRating?: number | null, reviewCount?: number | null, totalSales?: number | null, rawPrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, defaultAttributes?: { __typename?: 'ProductWithAttributesToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null, variations?: { __typename?: 'ProductWithVariationsToProductVariationConnection', nodes: Array<{ __typename?: 'SimpleProductVariation', name?: string | null, databaseId: number, price?: string | null, regularPrice?: string | null, salePrice?: string | null, slug?: string | null, stockQuantity?: number | null, stockStatus?: StockStatusEnum | null, hasAttributes?: boolean | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null, databaseId: number, cartSourceUrl?: string | null, productCardSourceUrl?: string | null } | null, attributes?: { __typename?: 'ProductVariationToVariationAttributeConnection', nodes: Array<{ __typename?: 'VariationAttribute', name?: string | null, attributeId?: number | null, value?: string | null, label?: string | null }> } | null }> } | null, galleryImages?: { __typename?: 'ProductToMediaItemConnection', nodes: Array<{ __typename?: 'MediaItem', databaseId: number, sourceUrl?: string | null, altText?: string | null, title?: string | null }> } | null }
              } | null, variation?: { __typename?: 'CartItemToProductVariationConnectionEdge', node: { __typename?: 'SimpleProductVariation', name?: string | null, slug?: string | null, price?: string | null, stockStatus?: StockStatusEnum | null, regularPrice?: string | null, salePrice?: string | null, rawRegularPrice?: string | null, rawSalePrice?: string | null, image?: { __typename?: 'MediaItem', sourceUrl?: string | null, altText?: string | null, title?: string | null } | null } } | null }> } | null } | null } | null };
 
@@ -32627,7 +31816,7 @@ export const SimpleProductFragmentDoc = gql`
   reviewCount
   virtual
   image {
-    sourceUrl
+    sourceUrl: sourceUrl(size: LARGE)
     altText
     title
     databaseId

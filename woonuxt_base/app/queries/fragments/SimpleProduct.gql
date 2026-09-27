@@ -20,7 +20,7 @@ fragment SimpleProduct on SimpleProduct {
   reviewCount
   virtual
   image {
-    sourceUrl
+    sourceUrl: sourceUrl(size: LARGE)
     altText
     title
     databaseId
