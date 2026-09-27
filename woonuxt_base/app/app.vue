@@ -4,7 +4,6 @@ import AppToolBar from './components/generalElements/AppToolBar.vue';
 const route = useRoute();
 const { isShowingCart, toggleCart } = useCart();
 const { isShowingMobileMenu, toggleMobileMenu, addBodyClass, removeBodyClass } = useHelpers();
-const { siteName } = useAppConfig();
 const config = useRuntimeConfig();
 
 const primaryColor = computed(() => config.public.PRIMARY_COLOR || '#7f54b2');
@@ -29,7 +28,7 @@ watch(
 
 useHead({
   // 1. Titre de la page
-  titleTemplate: `%s - ${siteName}`,
+  titleTemplate: `%s`,
   
   // 2. Couleur primaire dynamique
   style: [

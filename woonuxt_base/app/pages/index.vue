@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Product } from '#types/gql';
 
-const { siteName, description, shortDescription, siteImage } = useAppConfig();
+const { siteName, siteImage } = useAppConfig();
 const runtimeConfig = useRuntimeConfig();
 
 // ==========================================
@@ -18,15 +18,54 @@ useHead({
 });
 
 // ==========================================
-// 1. SEO
+// 1. SEO & Schema.org (JSON-LD)
 // ==========================================
 useSeoMeta({
-  title: 'Accueil',
+  title: 'Much.ma – Achat en Ligne au Maroc | Maison, Tech, Mode',
   ogTitle: () => siteName,
-  description: () => description,
-  ogDescription: () => shortDescription,
+  description: () => 'Much.ma : achetez en ligne au Maroc parmi des milliers de produits maison, tech, mode et plus. Paiement à la livraison, livraison partout au Maroc',
+  ogDescription: () => "Much.ma : achetez en ligne au Maroc parmi des milliers de produits maison, tech, mode et plus. Paiement à la livraison, livraison partout au Maroc",
   ogImage: () => siteImage,
   twitterCard: 'summary_large_image'
+});
+
+// AJOUTEZ CE BLOC POUR LE JSON-LD FAQ
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Comment commander sur Much.ma ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Parcourez nos catégories ou la page Tous les produits, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Le paiement à la livraison est-il disponible ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, vous payez directement au livreur au moment de la réception de votre commande, partout au Maroc."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Livrez-vous dans toutes les villes du Maroc ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, Much.ma livre dans l'ensemble du territoire marocain."
+            }
+          }
+        ]
+      })
+    }
+  ]
 });
 
 // ==========================================
@@ -513,6 +552,74 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
         <p class="text-sm text-gray-400">Tous les produits ont été chargés</p>
       </div>
     </section>
+       <!-- ========================================== -->
+    <!-- SECTION SEO : Pourquoi acheter sur Much.ma -->
+<section class="container py-4 md:py-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+    <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Pourquoi acheter sur Much.ma ?</h2>
+
+    <div class="space-y-3 md:space-y-4 text-sm md:text-base text-gray-700">
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Une marketplace marocaine à votre portée</h3>
+        <p class="leading-relaxed">
+          Much.ma est une <strong>marketplace marocaine</strong> où vous pouvez <strong>acheter en ligne</strong> des produits pour la maison, la cuisine, la mode, la tech, la beauté et plus encore. Que vous cherchiez un cadeau, un objet pratique pour la maison ou le dernier gadget tendance. Ne ratez pas l'occasion et profitez de nos <a href="https://www.much.ma/product-category/vente-flash" class="text-[#ff4f24] hover:underline font-semibold">Ventes Flash</a> sur une sélection de produits en promotions.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Commander en toute simplicité</h3>
+        <p class="leading-relaxed">
+          Commander sur Much.ma est simple : parcourez nos univers, ajoutez vos articles préférés au panier, et profitez du <strong>paiement à la livraison</strong>, disponible <strong>partout au Maroc</strong>. Notre équipe est basée localement pour répondre à vos questions.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Découvrez nos univers</h3>
+        <p class="leading-relaxed">
+          Envie de renouveler votre intérieur, d'équiper votre cuisine, de compléter votre garde-robe ou de trouver des accessoires pour vos enfants ? Explorez nos univers
+          <a href="https://www.much.ma/product-category/maison" class="text-[#ff4f24] hover:underline">Maison</a>,
+          <a href="https://www.much.ma/product-category/cuisine" class="text-[#ff4f24] hover:underline">Cuisine</a>,
+          <a href="https://www.much.ma/product-category/tech" class="text-[#ff4f24] hover:underline">Tech</a>,
+          <a href="https://www.much.ma/product-category/beaute" class="text-[#ff4f24] hover:underline">Beauté</a>,
+          <a href="https://www.much.ma/product-category/mode" class="text-[#ff4f24] hover:underline">Mode</a>,
+          <a href="https://www.much.ma/product-category/auto" class="text-[#ff4f24] hover:underline">Auto</a>,
+          <a href="https://www.much.ma/product-category/kids" class="text-[#ff4f24] hover:underline">Kids</a> et
+          <a href="https://www.much.ma/product-category/sport" class="text-[#ff4f24] hover:underline">Sport</a>,
+          et découvrez de nouvelles trouvailles à chaque visite.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- SECTION FAQ -->
+<section class="container py-4 md:py-6 mb-6 md:mb-10">
+  <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+    <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Questions fréquentes</h2>
+
+    <div class="space-y-3 md:space-y-4">
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Comment commander sur Much.ma ?</h3>
+        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
+          Parcourez nos <a href="https://www.much.ma/products" class="text-[#ff4f24] hover:underline">catégories ou la page Tous les produits</a>, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Le paiement à la livraison est-il disponible ?</h3>
+        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
+          Oui, vous payez directement au livreur au moment de la réception de votre commande, <strong>partout au Maroc</strong>.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Livrez-vous dans toutes les villes du Maroc ?</h3>
+        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
+          Oui, Much.ma livre dans l'ensemble du territoire marocain.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
   </main>
 </template>
 

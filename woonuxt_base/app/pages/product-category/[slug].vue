@@ -2,18 +2,28 @@
 import type { Product } from '#types/gql';
 import { ProductsOrderByEnum } from '#gql/default';
 import { useRouter } from 'vue-router';
-
-const { formatProduct, track } = useTracking();
-
-const hasLoadedOnce = ref(false);
 const route = useRoute();
 const router = useRouter();
-const { storeSettings } = useAppConfig();
-const { cache, save, isValid, clear } = useProductCache();
-
 const routeSlug = route.params.slug ?? route.params.categorySlug;
 const slug = Array.isArray(routeSlug) ? routeSlug[0] : routeSlug;
 
+const { formatProduct, track } = useTracking();
+
+
+// ==========================================
+// CONFIGURATION SEO PAR CATÉGORIE
+// ==========================================
+// ==========================================
+// 2. SEO DYNAMIQUE (via le composable)
+// ==========================================
+const { currentSEO } = useCategorySEO(slug);
+// ==========================================
+// LOGIQUE EXISTANTE (inchangée)
+// ==========================================
+const hasLoadedOnce = ref(false);
+
+const { storeSettings } = useAppConfig();
+const { cache, save, isValid, clear } = useProductCache();
 const products = ref<Product[]>([]);
 const allFetchedProducts = ref<Product[]>([]);
 const loading = ref(false);
@@ -106,10 +116,6 @@ const getProductsQuery = `
 `;
 
 const buildVariables = (afterCursor: string | null = null, isPriceFiltered: boolean) => {
-  // 🚀 ASTUCE : Si un filtre de prix est actif, on demande 150 produits d'un coup 
-  // au lieu de 12. Comme le serveur ne sait pas filtrer les prix (bug texte), 
-  // on lui demande un large échantillon pour que le JS puisse trouver les bons.
-  // 150 produits JSON = ~80 Ko, téléchargé en 50ms.
   const batchSize = isPriceFiltered ? 150 : 12;
 
   const variables: any = {
@@ -163,7 +169,6 @@ const buildVariables = (afterCursor: string | null = null, isPriceFiltered: bool
   return variables;
 };
 
-// ✅ FILTRAGE JS : Il fonctionne parfaitement car il compare de vrais nombres
 const filterProductsByPrice = (productsList: Product[]) => {
   const filterString = route.query.filter ? String(route.query.filter) : '';
   const priceMatch = /price\[([^\]]+)\]/.exec(filterString);
@@ -171,7 +176,6 @@ const filterProductsByPrice = (productsList: Product[]) => {
   if (!priceMatch) return productsList;
   
   const priceRange = priceMatch[1] || '';
-  // Gère "10,1177" ou "10-1177"
   const cleanRange = priceRange.replace(/\s/g, '');
   const parts = cleanRange.includes('-') ? cleanRange.split('-') : cleanRange.split(',');
   
@@ -183,7 +187,6 @@ const filterProductsByPrice = (productsList: Product[]) => {
   if (isNaN(minPrice) || isNaN(maxPrice)) return productsList;
   
   return productsList.filter(product => {
-    // On utilise rawSalePrice ou rawRegularPrice qui sont des chaînes propres (ex: "199")
     const rawPrice = (product as any).rawSalePrice || (product as any).rawRegularPrice || '0';
     const cleanPrice = parseFloat(String(rawPrice).replace(',', '.')) || 0;
     return cleanPrice >= minPrice && cleanPrice <= maxPrice;
@@ -214,10 +217,6 @@ const fetchProducts = async (append = false) => {
 
   try {
     const cursor = append ? endCursor.value : null;
-    
-    // On détecte s'il y a un filtre de prix pour adapter la taille du lot
-   
-    // ✅ CORRECTION : On force le type boolean strict avec Boolean()
     const filterString = route.query.filter ? String(route.query.filter) : '';
     const hasPriceFilter: boolean = Boolean(filterString.includes('price['));
     
@@ -240,14 +239,11 @@ const fetchProducts = async (append = false) => {
       allFetchedProducts.value = newProducts;
     }
     
-    // ✅ Le filtrage se fait ici, en 1 milliseconde, sur le lot reçu
     const filteredProducts = filterProductsByPrice(allFetchedProducts.value);
     products.value = filteredProducts;
     
     endCursor.value = pageInfo?.endCursor || null;
     
-    // ⚠️ Si on a filtré par prix et qu'on a reçu moins de produits que demandé, 
-    // on considère qu'il n'y a plus de pages pertinentes pour ce filtre.
     if (hasPriceFilter && !append && filteredProducts.length === 0) {
       hasNextPage.value = false;
     } else {
@@ -288,7 +284,7 @@ const setupObserver = () => {
           fetchProducts(true);
         }
       },
-      { rootMargin: '400px' }
+      { rootMargin: '500px' }
     );
     observer.observe(sentinelRef.value);
   }
@@ -345,19 +341,12 @@ const handleProductClick = (product: Product) => {
     items: [item]
   });
 };
-
-useHead({
-  title: slug ? `${slug} - Produits` : 'Produits',
-  meta: [{ name: 'description', content: 'Découvrez nos produits' }],
-});
 </script>
 
-<!-- Le template reste exactement le même -->
 <template>
   <main class="container">
-    <!-- ... (Ton template existant reste ici sans changement) ... -->
+    <!-- Sous-catégories (ton code existant) -->
     <div v-if="subcategories.length" class="bg-white/95 backdrop-blur-md border-b border-gray-100 -mx-1 px-2 md:mx-0 md:px-0 py-3 md:py-4 mb-1 group">
-      <!-- ... contenu des sous-catégories ... -->
       <div class="relative">
         <button @click="scrollSubcategories('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 hover:bg-[#ff4f24] hover:border-[#ff4f24] hover:text-white transition-all duration-300 opacity-0 group-hover:opacity-100" aria-label="Scroll left">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
@@ -377,6 +366,7 @@ useHead({
       </div>
     </div>
 
+    <!-- Produits (ton code existant) -->
     <div class="flex items-start gap-10">
       <Filters v-if="storeSettings.showFilters" :hide-categories="true" />
       <div class="w-full">
@@ -418,11 +408,40 @@ useHead({
         </div>
       </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION SEO SPÉCIFIQUE À LA CATÉGORIE -->
+    <!-- ========================================== -->
+    <section v-if="currentSEO" class="container py-4 md:py-6 mt-8 md:mt-12">
+      <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+        <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">{{ currentSEO.h2Title }}</h2>
+
+        <div class="space-y-3 md:space-y-4 text-sm md:text-base text-gray-700">
+          <div v-for="(section, index) in currentSEO.h3Sections" :key="index">
+            <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1" v-html="section.title"></h3>
+            <p class="leading-relaxed" v-html="section.content"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION FAQ -->
+    <section v-if="currentSEO" class="container py-4 md:py-6 mb-6 md:mb-10">
+      <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+        <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Questions fréquentes</h2>
+
+        <div class="space-y-3 md:space-y-4">
+          <div v-for="(faq, index) in currentSEO.faq" :key="index">
+            <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">{{ faq.question }}</h3>
+            <p class="text-sm md:text-base text-gray-700 leading-relaxed">{{ faq.answer }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
 <style scoped>
-/* ... tes styles existants ... */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }

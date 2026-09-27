@@ -276,19 +276,13 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 // ✅ CONFIGURATION SEO NATIVE NUXT 3
 // ==========================================
 
-// 1. Fonction pour nettoyer la description (enlève le HTML et limite à 155 caractères)
-const stripHtmlAndTruncate = (html: string | null | undefined, maxLength: number = 155): string => {
-  if (!html) return '';
-  const text = html.replace(/<[^>]*>/g, ' '); 
-  const cleanText = text.replace(/\s+/g, ' ').trim(); 
-  return cleanText.length > maxLength ? cleanText.substring(0, maxLength).trim() + '...' : cleanText;
-};
+
 
 // 2. Valeurs dynamiques pour le SEO
 const siteName = 'Much.ma';
 const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`); 
-const seoTitle = computed(() => `${siteName} - ${product.value?.name || 'Produit'}`);
-const seoDescription = computed(() => stripHtmlAndTruncate(product.value?.description || product.value?.description));
+const seoTitle = computed(() => `${product.value?.name || 'Produit'} | Mach.ma `);
+const seoDescription = computed(() => `${product.value?.name || 'Produit'} – Much.ma : paiement à la livraison, livraison partout au Maroc `);
 const seoImage = computed(() => displayProduct.value?.image?.sourceUrl || 'https://www.much.ma/images/placeholder.jpg');
 
 // 3. Injection des balises Meta (Title, Description, Open Graph, Twitter)
@@ -306,7 +300,7 @@ useSeoMeta({
   twitterImage: seoImage,
 });
 
-// 4. Injection du lien Canonique et du Schema.org (JSON-LD)
+
 // 4. Injection du lien Canonique et du Schema.org (JSON-LD)
 useHead({
   link: [
@@ -554,7 +548,7 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
+/*  Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
