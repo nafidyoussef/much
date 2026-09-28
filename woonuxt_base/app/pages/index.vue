@@ -142,7 +142,7 @@ const productQuery = `
         onSale
         image {
           altText
-          productCardSourceUrl: sourceUrl(size: MEDIUM)
+          productCardSourceUrl: sourceUrl(size: LARGE)
         }
         ... on InventoriedProduct { stockStatus }
         ... on ProductWithPricing {
