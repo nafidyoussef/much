@@ -255,7 +255,6 @@ const selectCategory = (slug: string) => {
   homeState.value.hasMore = true;
   homeState.value.scrollPosition = 0;
   
-  window.scrollTo({ top: 0, behavior: 'smooth' });
   loadInitialProducts(true);
 };
 
