@@ -29,7 +29,6 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 });
 
-// AJOUTEZ CE BLOC POUR LE JSON-LD FAQ
 useHead({
   script: [
     {
@@ -93,17 +92,31 @@ const categories = [
   { slug: 'sport', name: 'Sport' },
 ];
 
-const activeCategory = ref('all');
 const productsPerPage = 12;
 
 // ==========================================
-// 4. État réactif des produits
+// 4. État réactif PERSISTANT (useState)
 // ==========================================
-const allProducts = ref<Product[]>([]);
-const endCursor = ref<string | null>(null);
-const hasMore = ref(true);
-const isLoading = ref(false);         // Pour le chargement initial ou changement de catégorie
-const isLoadMoreLoading = ref(false); // Pour le bouton "Charger plus"
+// Cet état reste en mémoire lors de la navigation, empêchant la perte des données et du scroll
+const homeState = useState('home-products-state', () => ({
+  allProducts: [] as Product[],
+  endCursor: null as string | null,
+  hasMore: true,
+  activeCategory: 'all',
+  isInitialized: false,
+  scrollPosition: 0
+}));
+
+// On expose les valeurs via des computed pour une utilisation transparente dans le template
+const allProducts = computed(() => homeState.value.allProducts);
+const hasMore = computed(() => homeState.value.hasMore);
+const activeCategory = computed({
+  get: () => homeState.value.activeCategory,
+  set: (val: string) => { homeState.value.activeCategory = val; }
+});
+
+const isLoading = ref(false);
+const isLoadMoreLoading = ref(false);
 
 // ==========================================
 // 5. Requête GraphQL
@@ -154,7 +167,6 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
     order: 'DESC'
   };
   
-  // ⚠️ CRITIQUE : Ne pas envoyer 'all' comme slug à GraphQL, cela ne retourne rien
   if (categoryId !== 'all') {
     variables.slug = [categoryId]; 
   }
@@ -180,20 +192,26 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
 // ==========================================
 // 7. Actions Utilisateur
 // ==========================================
-const loadInitialProducts = async () => {
+const loadInitialProducts = async (force = false) => {
+  // Si déjà initialisé et qu'on ne force pas le rechargement, on ne fait rien (évite le double fetch au retour)
+  if (homeState.value.isInitialized && !force) {
+    isLoading.value = false;
+    return;
+  }
+
   isLoading.value = true;
-  allProducts.value = []; // On vide pour éviter d'anciens produits pendant le chargement
   
   try {
-    const response = await fetchProductsData(activeCategory.value, null);
+    const response = await fetchProductsData(homeState.value.activeCategory, null);
     
     if (response?.data?.products) {
       const nodes = response.data.products.nodes || [];
       const pageInfo = response.data.products.pageInfo;
       
-      allProducts.value = nodes;
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+      homeState.value.allProducts = nodes;
+      homeState.value.endCursor = pageInfo?.endCursor || null;
+      homeState.value.hasMore = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+      homeState.value.isInitialized = true;
     }
   } catch (err) {
     console.error('Erreur lors du chargement des produits:', err);
@@ -203,20 +221,21 @@ const loadInitialProducts = async () => {
 };
 
 const loadMoreProducts = async () => {
-  if (isLoadMoreLoading.value || !hasMore.value) return;
+  if (isLoadMoreLoading.value || !homeState.value.hasMore) return;
   
   isLoadMoreLoading.value = true;
   
   try {
-    const response = await fetchProductsData(activeCategory.value, endCursor.value);
+    const response = await fetchProductsData(homeState.value.activeCategory, homeState.value.endCursor);
     
     if (response?.data?.products) {
       const newProducts = response.data.products.nodes || [];
       const pageInfo = response.data.products.pageInfo;
       
-      allProducts.value.push(...newProducts);
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
+      // On ajoute les nouveaux produits à l'état persistant
+      homeState.value.allProducts.push(...newProducts);
+      homeState.value.endCursor = pageInfo?.endCursor || null;
+      homeState.value.hasMore = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
     }
   } catch (err) {
     console.error('Erreur lors du chargement des produits suivants:', err);
@@ -226,9 +245,18 @@ const loadMoreProducts = async () => {
 };
 
 const selectCategory = (slug: string) => {
-  if (activeCategory.value === slug) return;
-  activeCategory.value = slug;
-  loadInitialProducts();
+  if (homeState.value.activeCategory === slug) return;
+  
+  // Réinitialisation propre de l'état pour la nouvelle catégorie
+  homeState.value.activeCategory = slug;
+  homeState.value.isInitialized = false;
+  homeState.value.allProducts = [];
+  homeState.value.endCursor = null;
+  homeState.value.hasMore = true;
+  homeState.value.scrollPosition = 0;
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  loadInitialProducts(true);
 };
 
 // ==========================================
@@ -243,30 +271,55 @@ const scrollNewIn = (direction: 'left' | 'right') => {
     behavior: 'smooth',
   });
 };
-onMounted(() => {
-  loadInitialProducts();
-});
+
+// ==========================================
+// 9. Initialisation (SSR + Client) et Restauration du Scroll
+// ==========================================
 const { pending: initialLoading } = useAsyncData(
   'home-initial-products',
-  () => fetchProductsData('all', null),
+  async () => {
+    // Si l'état est déjà en mémoire (retour de page produit), on retourne les données en cache instantanément
+    if (homeState.value.isInitialized) {
+      return { data: { products: { nodes: homeState.value.allProducts, pageInfo: { endCursor: homeState.value.endCursor, hasNextPage: homeState.value.hasMore } } } };
+    }
+    // Sinon, on fetch normalement (premier chargement ou refresh)
+    return await fetchProductsData('all', null);
+  },
   {
-    lazy: true,
-    server: false,
-    getCachedData(key, nuxtApp) {
-      return nuxtApp.isHydrating && nuxtApp.payload.data[key] ? nuxtApp.payload.data[key] : null;
-    },
+    lazy: false,
+    server: true,
     transform: (res: any) => {
-      const nodes = res?.data?.products?.nodes || [];
-      const pageInfo = res?.data?.products?.pageInfo;
+      if (!homeState.value.isInitialized && res?.data?.products) {
+        const nodes = res.data.products.nodes || [];
+        const pageInfo = res.data.products.pageInfo;
 
-      allProducts.value = nodes;
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
-      
+        homeState.value.allProducts = nodes;
+        homeState.value.endCursor = pageInfo?.endCursor || null;
+        homeState.value.hasMore = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+        homeState.value.isInitialized = true;
+      }
       return res;
     }
   }
 );
+
+// Sauvegarde la position du scroll juste avant de quitter la page
+onBeforeUnmount(() => {
+  homeState.value.scrollPosition = window.scrollY || document.documentElement.scrollTop;
+});
+
+// Restaure la position du scroll si on revient sur la page avec des données en cache
+onMounted(() => {
+  if (homeState.value.isInitialized && homeState.value.scrollPosition > 0) {
+    setTimeout(() => {
+      window.scrollTo({ top: homeState.value.scrollPosition, behavior: 'auto' });
+    }, 50); // Petit délai pour s'assurer que le DOM est bien rendu
+  } else if (!homeState.value.isInitialized) {
+    // Fallback client-side si le chargement initial n'a pas été déclenché
+    loadInitialProducts();
+  }
+});
+
 const loading = computed<boolean>(() => initialLoading.value || isLoading.value);
 </script>
 <template>

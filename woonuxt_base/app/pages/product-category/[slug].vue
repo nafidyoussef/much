@@ -9,10 +9,6 @@ const slug = Array.isArray(routeSlug) ? routeSlug[0] : routeSlug;
 
 const { formatProduct, track } = useTracking();
 
-
-// ==========================================
-// CONFIGURATION SEO PAR CATÉGORIE
-// ==========================================
 // ==========================================
 // 2. SEO DYNAMIQUE (via le composable)
 // ==========================================
@@ -387,14 +383,32 @@ const handleProductClick = (product: Product) => {
           <ProductCard v-for="(node, i) in products" :key="node.id || `product-${i}`" :node :index="i" @click="handleProductClick(node)" />
         </div>
 
-        <div ref="sentinelRef" class="flex flex-col items-center justify-center py-12 mt-8">
-          <div v-if="loadingMore" class="flex items-center gap-3">
+                <!-- ✅ ZONE DE CHARGEMENT / BOUTON LOAD MORE -->
+        <div ref="sentinelRef" class="flex flex-col items-center justify-center py-8 mt-8">
+          
+          <!-- 1. État de chargement (Spinner) -->
+          <div v-if="loadingMore" class="flex items-center gap-3 mb-4">
             <div class="w-8 h-8 border-4 border-[#ff4f24]/20 border-t-[#ff4f24] rounded-full animate-spin"></div>
             <span class="text-gray-500 text-sm font-medium">Chargement de plus de produits...</span>
           </div>
+
+          <!-- 2. Bouton "Charger plus" manuel (Fallback au scroll infini) -->
+          <button
+            v-if="hasNextPage && !loadingMore"
+            @click="fetchProducts(true)"
+            class="inline-flex items-center gap-2 px-8 py-3 bg-[#ff4f24] text-white font-semibold rounded-full shadow-lg shadow-[#ff4f24]/20 hover:bg-[#ff4f24]/90 hover:shadow-xl hover:shadow-[#ff4f24]/30 transition-all duration-300 active:scale-95"
+          >
+            <span>Charger plus de produits</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- 3. État "Fin des produits" -->
           <div v-else-if="!hasNextPage && products.length > 0" class="text-center">
-            <p class="text-gray-400 text-sm">Tous les produits ont été chargés</p>
+            <p class="text-gray-400 text-sm font-medium">Tous les produits ont été chargés</p>
           </div>
+
         </div>
 
         <div v-if="!loading && hasLoadedOnce && products.length === 0" class="text-center py-16">
