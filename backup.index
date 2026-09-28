@@ -1,643 +1,401 @@
-<script lang="ts" setup>
-import type { Product } from '#types/gql';
+<?php
+/**
+ * Plugin Name: Doshift – Orders → External API
+ * Description: Envoi des commandes WooCommerce vers une API externe (DoShift/Directus) avec auto-envoi par statut + bouton "DoShift : Renvoyer vers API" + website="MUCH" si ENCOURS.
+ * Author: DoShift
+ * Version: 1.3.3-doshift
+ */
 
-const { siteName, siteImage } = useAppConfig();
-const runtimeConfig = useRuntimeConfig();
+if (!defined('ABSPATH')) exit;
 
-// ==========================================
-// 0. OPTIMISATION FCP & DNS-Prefetch
-// ==========================================
-useHead({
-  link: [
-    { rel: 'preconnect', href: 'https://api.much.ma', crossorigin: '' },
-    { rel: 'dns-prefetch', href: 'https://api.much.ma' }
-  ],
-  meta: [
-    { name: 'facebook-domain-verification', content: '4fxkoiju8mbw77jhhhdekd9tk9ft2m' }
-  ]
+define('DOSHIFT_ORDERS_API_VERSION', '1.3.3-doshift');
+define('DOSHIFT_ORDERS_API_OPTION',  'doshift_orders_api_settings');
+
+/* =========================================================
+ * Helpers settings
+ * ======================================================= */
+
+function doshift_orders_api_default_settings() {
+    return [
+        'api_url'                 => 'https://ga.milaffat.ma/items/orders',
+        'api_token'               => 'N0mNq_nc64YLqZA788BIA3dYk4VJ6n9V',
+        'auto_send_status'        => 'processing',
+        'auto_send_status_2'      => '',
+        'success_next_status'     => 'completed',
+        'success_next_status_2'   => '',
+        'status_to_send'          => 'ENCOURS',
+        'status_to_send_2'        => 'ENCOURS',
+        'ozon_city_id_meta'       => 'ozon_id',
+        'ozon_city_name_meta'     => 'city_name_fr',
+        'cathedis_city_id_meta'   => 'cathedis_id',
+        'cathedis_city_name_meta' => 'city_name_fr',
+        'billing_city_code_meta'  => 'ozon_id',
+    ];
+}
+
+function doshift_orders_api_get_settings() {
+    $saved = get_option(DOSHIFT_ORDERS_API_OPTION, []);
+    if (!is_array($saved)) $saved = [];
+    return wp_parse_args($saved, doshift_orders_api_default_settings());
+}
+
+/* =========================================================
+ * Admin : menu & page de configuration
+ * ======================================================= */
+
+add_action('admin_menu', function () {
+    if (!class_exists('WooCommerce')) return;
+    add_submenu_page(
+        'woocommerce', 'DoShift – Orders API', 'DoShift – Orders API',
+        'manage_woocommerce', 'doshift-orders-api', 'doshift_orders_api_settings_page'
+    );
 });
 
-// ==========================================
-// 1. SEO
-// ==========================================
-// ==========================================
-// 1. SEO & Schema.org (JSON-LD)
-// ==========================================
-useSeoMeta({
-  title: 'Much.ma – Achat en Ligne au Maroc | Maison, Tech, Mode',
-  ogTitle: () => siteName,
-  description: () => 'Much.ma : achetez en ligne au Maroc parmi des milliers de produits maison, tech, mode et plus. Paiement à la livraison, livraison partout au Maroc',
-  ogDescription: () => "Much.ma : achetez en ligne au Maroc parmi des milliers de produits maison, tech, mode et plus. Paiement à la livraison, livraison partout au Maroc",
-  ogImage: () => siteImage,
-  twitterCard: 'summary_large_image'
-});
-
-// AJOUTEZ CE BLOC POUR LE JSON-LD FAQ
-useHead({
-  script: [
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Comment commander sur Much.ma ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Parcourez nos catégories ou la page Tous les produits, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Le paiement à la livraison est-il disponible ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Oui, vous payez directement au livreur au moment de la réception de votre commande, partout au Maroc."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Livrez-vous dans toutes les villes du Maroc ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Oui, Much.ma livre dans l'ensemble du territoire marocain."
-            }
-          }
-        ]
-      })
+function doshift_orders_api_settings_page() {
+    if (!current_user_can('manage_woocommerce')) {
+        wp_die(__('Vous n’avez pas les droits.', 'woocommerce'));
     }
-  ]
-});
-// ==========================================
-// 2. Vente Flash (Non-bloquant)
-// ==========================================
-const { data: newInData } = useAsyncGql('getNewInProducts', { 
-  category: 'vente-flash' 
-});
-const newInProducts = computed<Product[]>(() => 
-  (newInData.value?.products?.nodes as Product[] | undefined) ?? []
-);
 
-// ==========================================
-// 3. Configuration des catégories
-// ==========================================
-const categories = [
-  { slug: 'all', name: 'Tout' },
-  { slug: 'maison', name: 'Maison' },
-  { slug: 'cuisine', name: 'Cuisine' },
-  { slug: 'tech', name: 'Tech' },
-  { slug: 'beaute', name: 'Beauté' },
-  { slug: 'mode', name: 'Mode' },
-  { slug: 'auto', name: 'Auto' },
-  { slug: 'kids', name: 'Kids' },
-  { slug: 'sport', name: 'Sport' },
-];
+    $settings = doshift_orders_api_get_settings();
 
-const activeCategory = ref('all');
-const productsPerPage = 12;
-
-// ==========================================
-// 4. État réactif des produits
-// ==========================================
-const allProducts = ref<Product[]>([]);
-const endCursor = ref<string | null>(null);
-const hasMore = ref(true);
-const isLoading = ref(false);         // Pour le chargement initial ou changement de catégorie
-const isLoadMoreLoading = ref(false); // Pour le bouton "Charger plus"
-
-// ==========================================
-// 5. Requête GraphQL
-// ==========================================
-const productQuery = `
-  query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
-    products(
-      first: $first
-      after: $after
-      where: {
-        categoryIn: $slug
-        visibility: VISIBLE
-        status: "publish"
-        orderby: { field: $orderby, order: $order }
-      }
-    ) {
-      pageInfo { hasNextPage endCursor }
-      nodes {
-        databaseId
-        id
-        name
-        slug
-        onSale
-        image {
-          altText
-          productCardSourceUrl: sourceUrl(size: MEDIUM)
+    if (isset($_POST['doshift_orders_api_save'])) {
+        check_admin_referer('doshift_orders_api_save');
+        $fields = ['api_url', 'api_token', 'auto_send_status', 'auto_send_status_2', 'success_next_status', 'success_next_status_2', 'status_to_send', 'status_to_send_2', 'ozon_city_id_meta', 'ozon_city_name_meta', 'cathedis_city_id_meta', 'cathedis_city_name_meta', 'billing_city_code_meta'];
+        foreach ($fields as $f) {
+            $settings[$f] = isset($_POST[$f]) ? sanitize_text_field(wp_unslash($_POST[$f])) : '';
         }
-        ... on InventoriedProduct { stockStatus }
-        ... on ProductWithPricing {
-          price
-          regularPrice
-          rawRegularPrice: regularPrice(format: RAW)
-          salePrice
-          rawSalePrice: salePrice(format: RAW)
-        }
-      }
+        update_option(DOSHIFT_ORDERS_API_OPTION, $settings);
+        echo '<div class="updated"><p>Paramètres enregistrés.</p></div>';
     }
-  }
-`;
 
-// ==========================================
-// 6. Fonction de chargement robuste
-// ==========================================
-const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
-  const variables: Record<string, any> = {
-    first: productsPerPage,
-    orderby: 'MENU_ORDER',
-    order: 'DESC'
-  };
-  
-  // ⚠️ CRITIQUE : Ne pas envoyer 'all' comme slug à GraphQL, cela ne retourne rien
-  if (categoryId !== 'all') {
-    variables.slug = [categoryId]; 
-  }
-  
-  if (cursor) {
-    variables.after = cursor;
-  }
+    $statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
+    ?>
+    <div class="wrap">
+        <h1>DoShift – Orders → External API</h1>
+        <form method="post">
+            <?php wp_nonce_field('doshift_orders_api_save'); ?>
+            <h2>1. API</h2>
+            <table class="form-table">
+                <tr><th scope="row"><label for="api_url">API URL</label></th><td><input name="api_url" id="api_url" type="text" class="regular-text" value="<?php echo esc_attr($settings['api_url']); ?>"></td></tr>
+                <tr><th scope="row"><label for="api_token">API Token (Bearer)</label></th><td><input name="api_token" id="api_token" type="text" class="regular-text" value="<?php echo esc_attr($settings['api_token']); ?>"></td></tr>
+            </table>
+            <h2>2. Statuts WooCommerce</h2>
+            <table class="form-table">
+                <tr><th scope="row"><label for="auto_send_status">Statut déclencheur (1)</label></th><td><select name="auto_send_status" id="auto_send_status"><?php foreach ($statuses as $key => $label): $clean = preg_replace('/^wc-/', '', $key); ?><option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['auto_send_status']); ?>><?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?></option><?php endforeach; ?></select></td></tr>
+                <tr><th scope="row"><label for="success_next_status">Statut Woo après succès (1)</label></th><td><select name="success_next_status" id="success_next_status"><?php foreach ($statuses as $key => $label): $clean = preg_replace('/^wc-/', '', $key); ?><option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['success_next_status']); ?>><?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?></option><?php endforeach; ?></select></td></tr>
+                <tr><th scope="row"><label for="status_to_send">Champ "status" dans le JSON (1)</label></th><td><input name="status_to_send" id="status_to_send" type="text" class="regular-text" value="<?php echo esc_attr($settings['status_to_send']); ?>"></td></tr>
+            </table>
+            <h2>3. Villes (metas)</h2>
+            <table class="form-table">
+                <tr><th scope="row"><label for="billing_city_code_meta">Meta "code ville"</label></th><td><input name="billing_city_code_meta" id="billing_city_code_meta" type="text" value="<?php echo esc_attr($settings['billing_city_code_meta']); ?>"></td></tr>
+                <tr><th scope="row"><label for="ozon_city_name_meta">Meta nom ville Ozon</label></th><td><input name="ozon_city_name_meta" id="ozon_city_name_meta" type="text" value="<?php echo esc_attr($settings['ozon_city_name_meta']); ?>"></td></tr>
+                <tr><th scope="row"><label for="cathedis_city_name_meta">Meta nom ville Cathedis</label></th><td><input name="cathedis_city_name_meta" id="cathedis_city_name_meta" type="text" value="<?php echo esc_attr($settings['cathedis_city_name_meta']); ?>"></td></tr>
+            </table>
+            <p class="submit"><button type="submit" name="doshift_orders_api_save" class="button button-primary">Enregistrer</button></p>
+        </form>
+    </div>
+    <?php
+}
 
-  const GQL_HOST = (runtimeConfig.public?.['graphql-client'] as any)?.clients?.default?.host || 'https://api.much.ma/graphql';
+/* =========================================================
+ * Helpers
+ * ======================================================= */
 
-  try {
-    const res = await $fetch(GQL_HOST, {
-      method: 'POST',
-      body: { query: productQuery, variables, operationName: 'getProducts' }
+function doshift_get_supplier_code_from_order_item($item) {
+    $supplier = (string) $item->get_meta('_supplier_code_snapshot', true);
+    if ($supplier === '') {
+        $product = $item->get_product();
+        if ($product) $supplier = (string) $product->get_meta('_supplier_code', true);
+    }
+    return $supplier;
+}
+
+function doshift_get_order_source($order) {
+    if (!$order) return 'site';
+    $candidate_metas = ['woo_source', '_woo_source', 'order_source', '_order_source', 'source', '_source', 'utm_source', '_utm_source'];
+    foreach ($candidate_metas as $meta_key) {
+        $value = (string) $order->get_meta($meta_key, true);
+        if ($value !== '') {
+            $raw_source = strtolower(trim($value));
+            if (strpos($raw_source, 'meta') !== false || strpos($raw_source, 'facebook') !== false || strpos($raw_source, 'instagram') !== false) return 'meta';
+            if (strpos($raw_source, 'google') !== false || strpos($raw_source, 'gads') !== false) return 'google';
+            if (strpos($raw_source, 'tiktok') !== false) return 'tiktok';
+            if (strpos($raw_source, 'console') !== false || strpos($raw_source, 'admin') !== false) return 'console';
+            return sanitize_text_field($raw_source);
+        }
+    }
+    if (is_callable([$order, 'get_created_via']) && $order->get_created_via() === 'admin') return 'console';
+    return 'site';
+}
+
+function doshift_get_order_creator_user($order, $woo_source = '') {
+    if (!$order) return 'unknown';
+    if ($woo_source === '') $woo_source = doshift_get_order_source($order);
+    
+    if ($woo_source === 'console') {
+        $post_obj = get_post($order->get_id());
+        if ($post_obj && !empty($post_obj->post_author)) {
+            $user = get_user_by('id', (int) $post_obj->post_author);
+            if ($user) return $user->user_login;
+        }
+        return 'admin';
+    }
+    $customer_id = (int) $order->get_user_id();
+    if ($customer_id > 0) {
+        $user = get_user_by('id', $customer_id);
+        if ($user) return $user->user_login;
+    }
+    return 'guest';
+}
+
+function doshift_get_order_creator_name($order, $woo_source = '') {
+    if (!$order) return 'Unknown';
+    if ($woo_source === '') $woo_source = doshift_get_order_source($order);
+
+    if ($woo_source === 'console') {
+        $post_obj = get_post($order->get_id());
+        if ($post_obj && !empty($post_obj->post_author)) {
+            $user = get_user_by('id', (int) $post_obj->post_author);
+            if ($user) {
+                if (!empty($user->display_name)) return $user->display_name;
+                $full_name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+                if ($full_name !== '') return $full_name;
+                return $user->user_login;
+            }
+        }
+        return 'Admin';
+    }
+
+    $customer_id = (int) $order->get_user_id();
+    if ($customer_id > 0) {
+        $user = get_user_by('id', $customer_id);
+        if ($user) {
+            if (!empty($user->display_name)) return $user->display_name;
+            $full_name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            if ($full_name !== '') return $full_name;
+            return $user->user_login;
+        }
+    }
+    $billing_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+    return $billing_name !== '' ? $billing_name : 'Guest';
+}
+
+/* =========================================================
+ * Envoi de la commande vers l’API
+ * ======================================================= */
+
+function doshift_orders_api_send($order_id, $force = false, $next_status_override = null, $status_override = null) {
+    $order = wc_get_order($order_id);
+    if (!$order) return ['success' => false, 'message' => 'Commande introuvable.'];
+
+    $settings = doshift_orders_api_get_settings();
+    $already_sent = get_post_meta($order_id, '_doshift_api_sent', true);
+    
+    if ($already_sent && !$force) {
+        return ['success' => false, 'message' => 'Commande déjà envoyée (meta _doshift_api_sent présente).'];
+    }
+
+    $customer_name   = $order->get_billing_first_name();
+    $customer_email  = $order->get_billing_email();
+    $customer_phone  = $order->get_billing_phone();
+    $billing_addr    = $order->get_billing_address_1();
+    $billing_city_wc = $order->get_billing_city();
+    $date_created    = $order->get_date_created() ? $order->get_date_created()->date('c') : '';
+
+    $woo_source    = doshift_get_order_source($order);
+    $woo_user      = doshift_get_order_creator_user($order, $woo_source);
+    $woo_user_name = doshift_get_order_creator_name($order, $woo_source);
+
+    $billing_city_code = $settings['billing_city_code_meta'] ? get_post_meta($order_id, $settings['billing_city_code_meta'], true) : '';
+    $city_name_fr      = get_post_meta($order_id, 'city_name_fr', true);
+    $city_name_ar      = get_post_meta($order_id, 'city_name_ar', true);
+    $ozon_city_name    = get_post_meta($order_id, $settings['ozon_city_name_meta'], true) ?: $city_name_fr;
+    $cathedis_city_name= get_post_meta($order_id, $settings['cathedis_city_name_meta'], true) ?: $city_name_fr;
+    $city_shipping_price = get_post_meta($order_id, 'price_delivered', true);
+    $billing_city_display = $city_name_fr ?: $billing_city_wc;
+
+    $items_array = [];
+    foreach ($order->get_items() as $item) {
+        if (!is_a($item, 'WC_Order_Item_Product')) continue;
+        $product = $item->get_product();
+        $items_array[] = [
+            "woo_id"              => (int) ($product ? $product->get_id() : 0),
+            "product_sku"         => $product ? $product->get_sku() : '',
+            "product_name"        => $item->get_name(),
+            "supplier_code"       => doshift_get_supplier_code_from_order_item($item) ?: null,
+            "quantity"            => (int) $item->get_quantity(),
+            "price"               => (float) $order->get_item_subtotal($item, false),
+            "total"               => (float) $item->get_total(),
+            "product_description" => $product ? wp_strip_all_tags($product->get_description()) : '',
+            "product_image_url"   => $product ? wp_get_attachment_url($product->get_image_id()) : '',
+        ];
+    }
+
+    $status_to_send = ($status_override !== null && $status_override !== '') ? $status_override : $settings['status_to_send'];
+
+    $payload = [
+        "woo_order_id"           => (string) $order_id,
+        "status"                 => $status_to_send,
+        "total"                  => (float) $order->get_total(),
+        "woo_user"               => $woo_user,
+        "woo_user_name"          => $woo_user_name,
+        "woo_source"             => $woo_source,
+        "customer_email"         => $customer_email,
+        "customer_phone"         => $customer_phone,
+        "customer_name"          => $customer_name,
+        "billing_address"        => $billing_addr,
+        "billing_city"           => $billing_city_display,
+        "billing_city_code"      => $billing_city_code,
+        "billing_city_name_fr"   => $city_name_fr,
+        "billing_city_name_ar"   => $city_name_ar,
+        "ozon_city_name"         => $ozon_city_name,
+        "cathedis_city_name"     => $cathedis_city_name,
+        "shipping_amount_city"   => ($city_shipping_price !== '' ? (float) $city_shipping_price : null),
+        "date_created"           => $date_created,
+        "items"                  => ["create" => $items_array],
+    ];
+
+    // AJOUT ROBUSTE : Nettoyage (trim) pour éviter les espaces invisibles dans le statut
+    if (strtoupper(trim($status_to_send)) === 'ENCOURS') {
+        $payload['website'] = 'MUCH';
+    }
+
+    update_post_meta($order_id, '_doshift_detected_woo_source', $woo_source);
+    update_post_meta($order_id, '_doshift_detected_woo_user', $woo_user);
+    update_post_meta($order_id, '_doshift_detected_woo_user_name', $woo_user_name);
+
+    $request_body = wp_json_encode($payload);
+    
+    // LOG DE DÉBOGAGE CRITIQUE
+    error_log('DOSHIFT DEBUG | Order: ' . $order_id . ' | Status: "' . $status_to_send . '" | Website in payload: ' . (isset($payload['website']) ? $payload['website'] : 'ABSENT'));
+    error_log('DOSHIFT PAYLOAD SIZE = ' . strlen($request_body));
+
+    $response = wp_remote_post($settings['api_url'], [
+        'method'  => 'POST',
+        'timeout' => 20,
+        'headers' => [
+            'Authorization' => 'Bearer ' . $settings['api_token'],
+            'Content-Type'  => 'application/json',
+        ],
+        'body' => $request_body,
+    ]);
+
+    update_post_meta($order_id, '_doshift_api_last_payload', $request_body);
+
+    if (is_wp_error($response)) {
+        $msg = 'Erreur HTTP : ' . $response->get_error_message();
+        update_post_meta($order_id, '_doshift_api_last_response', $msg);
+        $order->add_order_note('DoShift API : échec envoi → ' . $msg);
+        return ['success' => false, 'message' => $msg];
+    }
+
+    $code = (int) wp_remote_retrieve_response_code($response);
+    $body = (string) wp_remote_retrieve_body($response);
+
+    update_post_meta($order_id, '_doshift_api_last_http_code', $code);
+    update_post_meta($order_id, '_doshift_api_last_response', $body);
+
+    if ($code >= 200 && $code < 300) {
+        update_post_meta($order_id, '_doshift_api_sent', current_time('mysql'));
+        $order->add_order_note('DoShift API : envoi réussi (HTTP ' . $code . ').');
+
+        $next_status = ($next_status_override !== null && $next_status_override !== '')
+            ? $next_status_override
+            : (!empty($settings['success_next_status']) ? $settings['success_next_status'] : '');
+
+        if ($next_status && $order->get_status() !== $next_status) {
+            $order->update_status($next_status, 'DoShift API : statut changé après envoi réussi.');
+        }
+
+        return ['success' => true, 'message' => 'Envoi réussi (HTTP ' . $code . ').', 'http_code' => $code, 'response_body' => $body];
+    }
+
+    $msg = 'Réponse API invalide (HTTP ' . $code . ').';
+    $order->add_order_note('DoShift API : échec envoi → ' . $msg);
+    return ['success' => false, 'message' => $msg, 'http_code' => $code, 'response_body' => $body];
+}
+
+/* =========================================================
+ * Hooks & AJAX
+ * ======================================================= */
+
+add_action('woocommerce_order_status_changed', function ($order_id, $old_status, $new_status, $order) {
+    $settings = doshift_orders_api_get_settings();
+    $auto_status1 = !empty($settings['auto_send_status']) ? $settings['auto_send_status'] : '';
+    
+    if ($auto_status1 && $new_status === $auto_status1) {
+        $next1   = !empty($settings['success_next_status']) ? $settings['success_next_status'] : null;
+        $status1 = !empty($settings['status_to_send']) ? $settings['status_to_send'] : 'ENCOURS';
+        doshift_orders_api_send($order_id, true, $next1, $status1);
+    }
+}, 10, 4);
+
+add_action('add_meta_boxes', function () {
+    add_meta_box('doshift_orders_api_box', 'DoShift : API Commande', 'doshift_orders_api_metabox', 'shop_order', 'side', 'high');
+});
+
+function doshift_orders_api_metabox($post) {
+    $order_id = $post->ID;
+    $sent = get_post_meta($order_id, '_doshift_api_sent', true);
+    $last_http = get_post_meta($order_id, '_doshift_api_last_http_code', true);
+    $nonce = wp_create_nonce('doshift_orders_api_send_order');
+
+    if ($sent) {
+        echo '<p><strong>Déjà envoyé :</strong><br><code>' . esc_html($sent) . '</code></p>';
+        if ($last_http) echo '<p>Dernier HTTP code : <code>' . esc_html($last_http) . '</code></p>';
+    } else {
+        echo '<p>Cette commande n’a pas encore été envoyée à l’API.</p>';
+    }
+
+    echo '<p><button type="button" class="button button-primary" id="doshift-send-to-api"
+            data-order-id="' . esc_attr($order_id) . '"
+            data-nonce="' . esc_attr($nonce) . '"
+            data-force="1">DoShift : Renvoyer vers API</button></p>';
+    ?>
+    <script>
+    jQuery(function($){
+        $('#doshift-send-to-api').on('click', function(e){
+            e.preventDefault();
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('Envoi en cours...');
+            $.post(ajaxurl, {
+                action: 'doshift_orders_api_send_order',
+                order_id: $btn.data('order-id'),
+                _wpnonce: $btn.data('nonce'),
+                force: $btn.data('force') ? 1 : 0
+            }, function(resp){
+                if (resp && resp.success) {
+                    alert('Envoi réussi');
+                    window.location.reload();
+                } else {
+                    alert('Envoi échoué : ' + (resp && resp.data && resp.data.message ? resp.data.message : 'Erreur inconnue'));
+                    $btn.prop('disabled', false).text('DoShift : Renvoyer vers API');
+                }
+            }).fail(function(){
+                alert('Erreur AJAX.');
+                $btn.prop('disabled', false).text('DoShift : Renvoyer vers API');
+            });
+        });
     });
-    return res as any;
-  } catch (error) {
-    console.error('Erreur lors de la requête GraphQL:', error);
-    return null;
-  }
-};
+    </script>
+    <?php
+}
 
-// ==========================================
-// 7. Actions Utilisateur
-// ==========================================
-const loadInitialProducts = async () => {
-  isLoading.value = true;
-  allProducts.value = []; // On vide pour éviter d'anciens produits pendant le chargement
-  
-  try {
-    const response = await fetchProductsData(activeCategory.value, null);
-    
-    if (response?.data?.products) {
-      const nodes = response.data.products.nodes || [];
-      const pageInfo = response.data.products.pageInfo;
-      
-      allProducts.value = nodes;
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+add_action('wp_ajax_doshift_orders_api_send_order', function () {
+    if (!current_user_can('edit_shop_orders')) wp_send_json_error(['message' => 'Permission refusée.']);
+    check_ajax_referer('doshift_orders_api_send_order');
+
+    $order_id = isset($_POST['order_id']) ? (int) $_POST['order_id'] : 0;
+    $force = !empty($_POST['force']);
+    if (!$order_id) wp_send_json_error(['message' => 'ID commande manquant.']);
+
+    $settings = doshift_orders_api_get_settings();
+    $status1 = !empty($settings['status_to_send']) ? $settings['status_to_send'] : 'ENCOURS';
+
+    $result = doshift_orders_api_send($order_id, $force, null, $status1);
+    if (!empty($result['success'])) {
+        wp_send_json_success(['message' => $result['message']]);
+    } else {
+        wp_send_json_error(['message' => $result['message']]);
     }
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits:', err);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const loadMoreProducts = async () => {
-  if (isLoadMoreLoading.value || !hasMore.value) return;
-  
-  isLoadMoreLoading.value = true;
-  
-  try {
-    const response = await fetchProductsData(activeCategory.value, endCursor.value);
-    
-    if (response?.data?.products) {
-      const newProducts = response.data.products.nodes || [];
-      const pageInfo = response.data.products.pageInfo;
-      
-      allProducts.value.push(...newProducts);
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
-    }
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits suivants:', err);
-  } finally {
-    isLoadMoreLoading.value = false;
-  }
-};
-
-const selectCategory = (slug: string) => {
-  if (activeCategory.value === slug) return;
-  activeCategory.value = slug;
-  loadInitialProducts();
-};
-
-// ==========================================
-// 8. UI Slider Mechanics (Vente Flash)
-// ==========================================
-const newInSliderRef = ref<HTMLElement | null>(null);
-const scrollNewIn = (direction: 'left' | 'right') => {
-  if (!newInSliderRef.value) return;
-  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
-  newInSliderRef.value.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
-    behavior: 'smooth',
-  });
-};
-onMounted(() => {
-  loadInitialProducts();
 });
-const { pending: initialLoading } = useAsyncData(
-  'home-initial-products',
-  () => fetchProductsData('all', null),
-  {
-    lazy: true,
-    server: false,
-    getCachedData(key, nuxtApp) {
-      return nuxtApp.isHydrating && nuxtApp.payload.data[key] ? nuxtApp.payload.data[key] : null;
-    },
-    transform: (res: any) => {
-      const nodes = res?.data?.products?.nodes || [];
-      const pageInfo = res?.data?.products?.pageInfo;
-
-      allProducts.value = nodes;
-      endCursor.value = pageInfo?.endCursor || null;
-      hasMore.value = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
-      
-      return res;
-    }
-  }
-);
-const loading = computed<boolean>(() => initialLoading.value || isLoading.value);
-</script>
-
-<template>
-  <main class="min-h-screen mb-10">
-    <HeroBanner />
-    
-    <!-- SECTION AVANTAGES -->
-    <section class="container py-6 mb-2">
-      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-        <div class="grid grid-cols-2">
-          <div class="flex items-center gap-3 p-2 md:p-5 border-b border-r border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Payez à la livraison</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Payez à la réception</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3 border-b border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Livraison nationale</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Partout au Maroc</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3 border-r border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Retours simplifiés</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Assistance réactive</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Support local</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Une équipe à votre écoute</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 1 : Explorez nos univers -->
-    <section class="container py-2 md:py-4">
-      <div class="flex items-center justify-between mb-4 md:mb-6">
-        <h2 class="text-xl md:text-2xl font-medium text-gray-900">Explorez nos univers</h2>
-      </div>
-      <div class="grid grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4 lg:gap-3">
-        <NuxtLink to="/product-category/maison" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#e8e6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Maison</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/cuisine" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#f5f0e1] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11c0-2 1-4 2-5s2-2 3-2 2 1 3 2 2 3 2 5M5 11h14M7 11v2a2 2 0 002 2h6a2 2 0 002-2v-2" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Cuisine</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 39 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/tech" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#dbe9f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="8" />
-              <circle cx="12" cy="12" r="3" fill="currentColor" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Tech</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/beaute" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#f7e6ee] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Beauté</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/mode" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#ede6f7] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Mode</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/auto" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#e1f0e8] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Auto</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/kids" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#f7f0d6] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="9" />
-              <path stroke-linecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
-              <circle cx="9" cy="10" r="1" fill="currentColor" />
-              <circle cx="15" cy="10" r="1" fill="currentColor" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Kids</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 29 DH</small>
-          </div>
-        </NuxtLink>
-        <NuxtLink to="/product-category/sport" class="group flex flex-col items-center text-center gap-2">
-          <div class="w-16 h-16 rounded-full bg-[#e6eef2] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-            <svg class="w-8 h-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="5" />
-            </svg>
-          </div>
-          <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Sport</strong>
-            <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 39 DH</small>
-          </div>
-        </NuxtLink>
-      </div>
-    </section>
-
-    <!-- SECTION 2 : Vente Flash -->
-    <section v-if="newInProducts.length" class="container py-2 md:py-10">
-      <div class="relative overflow-hidden bg-gradient-to-br from-[#ff4f24]/5 via-white to-white border border-[#ff4f24] rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-        <div class="absolute -top-16 -right-16 w-48 h-48 bg-[#ff4f24]/10 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
-        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-[#ff4f24]/15 rounded-full blur-2xl pointer-events-none hidden md:block"></div>
-
-        <div class="relative flex flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-2 px-1 pt-4 md:px-6 md:pt-6 bg-[#ff4f24]/10">
-          <div class="flex items-center gap-2">
-            <div class="flex-shrink-0 w-7 h-7 mb-2 bg-[#ff4f24] rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-sm md:text-base font-bold text-gray-900 mb-2">Vente flash</h3>
-              <div class="flex mb-2 gap-1">
-                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">02</span>
-                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">18</span>
-                <span class="bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded">44</span>
-              </div>
-            </div>
-          </div>
-          
-          <NuxtLink class="flex-shrink-0 ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#ff4f24] hover:text-[#ff4f24]/80 transition-colors group/link" to="/product-category/vente-flash">
-            Voir les offres
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform group-hover/link:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </NuxtLink>
-        </div>
-
-        <div class="relative group/slider">
-          <div ref="newInSliderRef" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth py-2 px-4 md:px-6 scrollbar-hide">
-            <div v-for="(product, index) in newInProducts" :key="product.databaseId || product.id" class="w-[38%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] flex-shrink-0 snap-start">
-              <ProductCardMini :node="product" :index="index" />
-            </div>
-          </div>
-
-          <button @click="scrollNewIn('left')" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll left">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button @click="scrollNewIn('right')" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-7 h-7 bg-white border border-[#ff4f24]/20 text-[#ff4f24] rounded-full shadow-sm hover:bg-[#ff4f24]/5 hover:border-[#ff4f24]/30 transition-all opacity-0 group-hover/slider:opacity-100" aria-label="Scroll right">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 3 : Recommandé (ONGLETS + LOAD MORE) -->
-    <section class="container py-2 bg-gray-50/50 rounded-2xl px-4 md:px-6 mb-2">
-      <div class="mb-6">
-        <p class="text-xs font-bold text-[#ff4f24] uppercase tracking-wide mb-2">RECOMMANDÉ POUR VOUS</p>
-        <h2 class="text-2xl md:text-3xl font-medium text-gray-900 mb-2">Encore plus de bons plans</h2>
-      </div>
-
-      <!-- Onglets de catégories -->
-      <div class="flex flex-wrap justify-end gap-2 md:gap-2 mb-8">
-        <button
-          v-for="category in categories"
-          :key="category.slug"
-          @click="selectCategory(category.slug)"
-          :disabled="loading"
-          class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border disabled:opacity-50 disabled:cursor-wait"
-          :class="activeCategory === category.slug 
-            ? 'bg-[#ff4f24] text-white border-[#ff4f24] shadow-sm shadow-[#ff4f24]/20' 
-            : 'bg-white text-gray-700 border-gray-200 hover:border-[#ff4f24]/30 hover:bg-[#ff4f24]/5'"
-        >
-          {{ category.name }}
-        </button>
-      </div>
-
-      <!-- ✅ Squelettes de chargement (affichés pendant le chargement initial ou le changement de catégorie) -->
-      <div v-if="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        <div v-for="i in 8" :key="`skeleton-${i}`" class="bg-white rounded-xl border border-gray-100 p-3 animate-pulse">
-          <div class="aspect-[8/9] bg-gray-200 rounded-lg mb-3"></div>
-          <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-      </div>
-
-      <!-- ✅ La grille des produits (visible seulement si on a des produits et qu'on n'est pas en plein chargement de catégorie) -->
-      <div v-if="!loading && allProducts.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-        <ProductCard 
-          v-for="product in allProducts" 
-          :key="product.databaseId || product.id"
-          :node="product"
-        />
-      </div>
-
-      <!-- ✅ État vide (seulement si ce n'est PAS en cours de chargement et qu'il n'y a vraiment aucun produit) -->
-      <div v-if="!loading && allProducts.length === 0" class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-        <p class="text-gray-500">Aucun produit trouvé dans cette catégorie pour le moment.</p>
-      </div>
-
-      <!-- ✅ BOUTON LOAD MORE -->
-      <div v-if="hasMore && allProducts.length > 0" class="flex justify-center mt-10">
-        <button
-          @click="loadMoreProducts"
-          :disabled="isLoadMoreLoading"
-          class="inline-flex items-center gap-2 px-8 py-3 bg-[#ff4f24] text-white font-semibold rounded-full shadow-lg shadow-[#ff4f24]/20 hover:bg-[#ff4f24]/90 hover:shadow-xl hover:shadow-[#ff4f24]/30 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <!-- Spinner uniquement pour le chargement "Voir plus" -->
-          <svg v-if="isLoadMoreLoading" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-          </svg>
-          
-          <span v-if="isLoadMoreLoading">Chargement...</span>
-          
-          <template v-else>
-            <span>Charger plus de produits</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </template>
-        </button>
-      </div>
-
-      <!-- Message "Tous les produits chargés" -->
-      <div v-if="!hasMore && allProducts.length > 0" class="text-center mt-8">
-        <p class="text-sm text-gray-400">Tous les produits ont été chargés</p>
-      </div>
-    </section>
-
-    
-    <!-- ========================================== -->
-    <!-- SECTION SEO : Pourquoi acheter sur Much.ma -->
-<section class="container py-4 md:py-6">
-  <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-    <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Pourquoi acheter sur Much.ma ?</h2>
-
-    <div class="space-y-3 md:space-y-4 text-sm md:text-base text-gray-700">
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Une marketplace marocaine à votre portée</h3>
-        <p class="leading-relaxed">
-          Much.ma est une <strong>marketplace marocaine</strong> où vous pouvez <strong>acheter en ligne</strong> des produits pour la maison, la cuisine, la mode, la tech, la beauté et plus encore. Que vous cherchiez un cadeau, un objet pratique pour la maison ou le dernier gadget tendance. Ne ratez pas l'occasion et profitez de nos <a href="https://www.much.ma/product-category/vente-flash" class="text-[#ff4f24] hover:underline font-semibold">Ventes Flash</a> sur une sélection de produits en promotions.
-        </p>
-      </div>
-
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Commander en toute simplicité</h3>
-        <p class="leading-relaxed">
-          Commander sur Much.ma est simple : parcourez nos univers, ajoutez vos articles préférés au panier, et profitez du <strong>paiement à la livraison</strong>, disponible <strong>partout au Maroc</strong>. Notre équipe est basée localement pour répondre à vos questions.
-        </p>
-      </div>
-
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Découvrez nos univers</h3>
-        <p class="leading-relaxed">
-          Envie de renouveler votre intérieur, d'équiper votre cuisine, de compléter votre garde-robe ou de trouver des accessoires pour vos enfants ? Explorez nos univers
-          <a href="https://www.much.ma/product-category/maison" class="text-[#ff4f24] hover:underline">Maison</a>,
-          <a href="https://www.much.ma/product-category/cuisine" class="text-[#ff4f24] hover:underline">Cuisine</a>,
-          <a href="https://www.much.ma/product-category/tech" class="text-[#ff4f24] hover:underline">Tech</a>,
-          <a href="https://www.much.ma/product-category/beaute" class="text-[#ff4f24] hover:underline">Beauté</a>,
-          <a href="https://www.much.ma/product-category/mode" class="text-[#ff4f24] hover:underline">Mode</a>,
-          <a href="https://www.much.ma/product-category/auto" class="text-[#ff4f24] hover:underline">Auto</a>,
-          <a href="https://www.much.ma/product-category/kids" class="text-[#ff4f24] hover:underline">Kids</a> et
-          <a href="https://www.much.ma/product-category/sport" class="text-[#ff4f24] hover:underline">Sport</a>,
-          et découvrez de nouvelles trouvailles à chaque visite.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SECTION FAQ -->
-<section class="container py-4 md:py-6 mb-6 md:mb-10">
-  <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-    <h2 class="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Questions fréquentes</h2>
-
-    <div class="space-y-3 md:space-y-4">
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Comment commander sur Much.ma ?</h3>
-        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
-          Parcourez nos <a href="https://www.much.ma/products" class="text-[#ff4f24] hover:underline">catégories ou la page Tous les produits</a>, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison.
-        </p>
-      </div>
-
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Le paiement à la livraison est-il disponible ?</h3>
-        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
-          Oui, vous payez directement au livreur au moment de la réception de votre commande, <strong>partout au Maroc</strong>.
-        </p>
-      </div>
-
-      <div>
-        <h3 class="text-sm md:text-base font-semibold text-gray-900 mb-1">Livrez-vous dans toutes les villes du Maroc ?</h3>
-        <p class="text-sm md:text-base text-gray-700 leading-relaxed">
-          Oui, Much.ma livre dans l'ensemble du territoire marocain.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-  </main>
-</template>
-
-<style scoped>
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>

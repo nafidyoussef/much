@@ -37,3 +37,759 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.php [L]
 </IfModule>
 # END WordPress
+
+plugin envoi de commande a ga
+
+/**
+ * Plugin Name: Doshift – Orders → External API
+ * Description: Envoi des commandes WooCommerce vers une API externe (DoShift/Directus) avec auto-envoi par statut + bouton "DoShift : Renvoyer vers API" + villes (ozon_id/cathedis_id) + supplier_code par item + woo_user + woo_user_name + woo_source.
+ * Author: DoShift
+ * Version: 1.3.1-doshift
+ */
+
+if (!defined('ABSPATH')) exit;
+
+define('DOSHIFT_ORDERS_API_VERSION', '1.3.1-doshift');
+define('DOSHIFT_ORDERS_API_OPTION',  'doshift_orders_api_settings');
+
+/* =========================================================
+ * Helpers settings
+ * ======================================================= */
+
+/**
+ * Valeurs par défaut.
+ */
+function doshift_orders_api_default_settings() {
+    return [
+        'api_url'                 => 'https://ga.milaffat.ma/items/orders',
+        'api_token'               => 'N0mNq_nc64YLqZA788BIA3dYk4VJ6n9V',
+
+        // Statut Woo qui déclenche l’envoi automatique (ex: processing, confirmed…)
+        'auto_send_status'        => 'processing',
+        // 2ème statut déclencheur (optionnel)
+        'auto_send_status_2'      => '',
+
+        // Statut Woo après succès (ex: completed, confirmed…)
+        'success_next_status'     => 'completed',
+        // 2ème statut cible après succès (lié au 2ème déclencheur)
+        'success_next_status_2'   => '',
+
+        // Valeur pour "status" dans le JSON envoyé à l’API (1er déclencheur)
+        'status_to_send'          => 'ENCOURS',
+        // Valeur pour "status" dans le JSON envoyé à l’API (2ème déclencheur)
+        'status_to_send_2'        => 'ENCOURS',
+
+        // Metas pour les villes (plugin "Doshift — Villes")
+        'ozon_city_id_meta'       => 'ozon_id',
+        'ozon_city_name_meta'     => 'city_name_fr',
+        'cathedis_city_id_meta'   => 'cathedis_id',
+        'cathedis_city_name_meta' => 'city_name_fr',
+
+        // Code ville que tu veux envoyer (par défaut = ozon_id)
+        'billing_city_code_meta'  => 'ozon_id',
+    ];
+}
+
+/**
+ * Retourne les settings fusionnés avec les defaults.
+ */
+function doshift_orders_api_get_settings() {
+    $saved = get_option(DOSHIFT_ORDERS_API_OPTION, []);
+    if (!is_array($saved)) $saved = [];
+    return wp_parse_args($saved, doshift_orders_api_default_settings());
+}
+
+/* =========================================================
+ * Admin : menu & page de configuration
+ * ======================================================= */
+
+add_action('admin_menu', function () {
+    if (!class_exists('WooCommerce')) return;
+
+    add_submenu_page(
+        'woocommerce',
+        'DoShift – Orders API',
+        'DoShift – Orders API',
+        'manage_woocommerce',
+        'doshift-orders-api',
+        'doshift_orders_api_settings_page'
+    );
+});
+
+/**
+ * Page d'options simple.
+ */
+function doshift_orders_api_settings_page() {
+    if (!current_user_can('manage_woocommerce')) {
+        wp_die(__('Vous n’avez pas les droits.', 'woocommerce'));
+    }
+
+    $settings = doshift_orders_api_get_settings();
+
+    if (isset($_POST['doshift_orders_api_save'])) {
+        check_admin_referer('doshift_orders_api_save');
+
+        $fields = [
+            'api_url',
+            'api_token',
+            'auto_send_status',
+            'auto_send_status_2',
+            'success_next_status',
+            'success_next_status_2',
+            'status_to_send',
+            'status_to_send_2',
+            'ozon_city_id_meta',
+            'ozon_city_name_meta',
+            'cathedis_city_id_meta',
+            'cathedis_city_name_meta',
+            'billing_city_code_meta',
+        ];
+
+        foreach ($fields as $f) {
+            $settings[$f] = isset($_POST[$f]) ? sanitize_text_field(wp_unslash($_POST[$f])) : '';
+        }
+
+        update_option(DOSHIFT_ORDERS_API_OPTION, $settings);
+        echo '<div class="updated"><p>Paramètres enregistrés.</p></div>';
+    }
+
+    $statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
+
+    ?>
+    <div class="wrap">
+        <h1>DoShift – Orders → External API</h1>
+        <p>Configuration de l’envoi des commandes WooCommerce vers l’API Directus / DoShift.</p>
+
+        <form method="post">
+            <?php wp_nonce_field('doshift_orders_api_save'); ?>
+
+            <h2>1. API</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="api_url">API URL</label></th>
+                    <td>
+                        <input name="api_url" id="api_url" type="text" class="regular-text" value="<?php echo esc_attr($settings['api_url']); ?>">
+                        <p class="description">Exemple : <code>https://ga.milaffat.ma/items/orders</code></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="api_token">API Token (Bearer)</label></th>
+                    <td>
+                        <input name="api_token" id="api_token" type="text" class="regular-text" value="<?php echo esc_attr($settings['api_token']); ?>">
+                    </td>
+                </tr>
+            </table>
+
+            <h2>2. Statuts WooCommerce</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="auto_send_status">Statut déclencheur d’envoi automatique (1)</label></th>
+                    <td>
+                        <select name="auto_send_status" id="auto_send_status">
+                            <option value="">— Désactivé —</option>
+                            <?php foreach ($statuses as $key => $label):
+                                $clean = preg_replace('/^wc-/', '', $key); ?>
+                                <option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['auto_send_status']); ?>>
+                                    <?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="success_next_status">Statut Woo après succès d’envoi (1)</label></th>
+                    <td>
+                        <select name="success_next_status" id="success_next_status">
+                            <option value="">— Ne pas changer —</option>
+                            <?php foreach ($statuses as $key => $label):
+                                $clean = preg_replace('/^wc-/', '', $key); ?>
+                                <option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['success_next_status']); ?>>
+                                    <?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="auto_send_status_2">Statut déclencheur d’envoi automatique (2)</label></th>
+                    <td>
+                        <select name="auto_send_status_2" id="auto_send_status_2">
+                            <option value="">— Désactivé —</option>
+                            <?php foreach ($statuses as $key => $label):
+                                $clean = preg_replace('/^wc-/', '', $key); ?>
+                                <option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['auto_send_status_2']); ?>>
+                                    <?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="success_next_status_2">Statut Woo après succès d’envoi (2)</label></th>
+                    <td>
+                        <select name="success_next_status_2" id="success_next_status_2">
+                            <option value="">— Ne pas changer —</option>
+                            <?php foreach ($statuses as $key => $label):
+                                $clean = preg_replace('/^wc-/', '', $key); ?>
+                                <option value="<?php echo esc_attr($clean); ?>" <?php selected($clean, $settings['success_next_status_2']); ?>>
+                                    <?php echo esc_html($label) . ' (' . esc_html($clean) . ')'; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="status_to_send">Champ "status" dans le JSON (1)</label></th>
+                    <td><input name="status_to_send" id="status_to_send" type="text" class="regular-text" value="<?php echo esc_attr($settings['status_to_send']); ?>"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="status_to_send_2">Champ "status" dans le JSON (2)</label></th>
+                    <td><input name="status_to_send_2" id="status_to_send_2" type="text" class="regular-text" value="<?php echo esc_attr($settings['status_to_send_2']); ?>"></td>
+                </tr>
+            </table>
+
+            <h2>3. Villes (metas -> JSON)</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="billing_city_code_meta">Meta "code ville"</label></th>
+                    <td><input name="billing_city_code_meta" id="billing_city_code_meta" type="text" value="<?php echo esc_attr($settings['billing_city_code_meta']); ?>"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="ozon_city_id_meta">Meta ID Ozon</label></th>
+                    <td><input name="ozon_city_id_meta" id="ozon_city_id_meta" type="text" value="<?php echo esc_attr($settings['ozon_city_id_meta']); ?>"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="ozon_city_name_meta">Meta nom ville Ozon</label></th>
+                    <td><input name="ozon_city_name_meta" id="ozon_city_name_meta" type="text" value="<?php echo esc_attr($settings['ozon_city_name_meta']); ?>"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="cathedis_city_id_meta">Meta ID Cathedis</label></th>
+                    <td><input name="cathedis_city_id_meta" id="cathedis_city_id_meta" type="text" value="<?php echo esc_attr($settings['cathedis_city_id_meta']); ?>"></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="cathedis_city_name_meta">Meta nom ville Cathedis</label></th>
+                    <td><input name="cathedis_city_name_meta" id="cathedis_city_name_meta" type="text" value="<?php echo esc_attr($settings['cathedis_city_name_meta']); ?>"></td>
+                </tr>
+            </table>
+
+            <p class="submit">
+                <button type="submit" name="doshift_orders_api_save" class="button button-primary">Enregistrer</button>
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+/* =========================================================
+ * Helper supplier_code
+ * ======================================================= */
+
+/**
+ * Récupère supplier_code pour une ligne :
+ * priorité snapshot -> produit
+ */
+function doshift_get_supplier_code_from_order_item($item) {
+    $supplier = (string) $item->get_meta('_supplier_code_snapshot', true);
+    if ($supplier === '') {
+        $product = $item->get_product();
+        if ($product) {
+            $supplier = (string) $product->get_meta('_supplier_code', true);
+        }
+    }
+    return $supplier;
+}
+
+/* =========================================================
+ * Helpers source + user créateur
+ * ======================================================= */
+
+/**
+ * Détecte si la commande a été créée manuellement depuis l'admin WooCommerce.
+ */
+function doshift_order_is_manual_admin_order($order) {
+    if (!$order) return false;
+
+    $created_via = '';
+    if (is_callable([$order, 'get_created_via'])) {
+        $created_via = (string) $order->get_created_via();
+    }
+
+    if ($created_via === 'admin') {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Retourne la source métier de la commande.
+ */
+function doshift_get_order_source($order) {
+    if (!$order) return 'site';
+
+    $candidate_metas = [
+        'woo_source',
+        '_woo_source',
+        'order_source',
+        '_order_source',
+        'source',
+        '_source',
+        'utm_source',
+        '_utm_source',
+        '_wc_order_attribution_utm_source',
+        '_wc_order_attribution_source_type',
+        '_wc_order_attribution_session_entry',
+    ];
+
+    $raw_source = '';
+
+    foreach ($candidate_metas as $meta_key) {
+        $value = (string) $order->get_meta($meta_key, true);
+        if ($value !== '') {
+            $raw_source = strtolower(trim($value));
+            break;
+        }
+    }
+
+    if ($raw_source !== '') {
+        if (strpos($raw_source, 'meta') !== false || strpos($raw_source, 'facebook') !== false || strpos($raw_source, 'instagram') !== false) {
+            return 'meta';
+        }
+
+        if (strpos($raw_source, 'google') !== false || strpos($raw_source, 'gads') !== false || strpos($raw_source, 'adwords') !== false) {
+            return 'google';
+        }
+
+        if (strpos($raw_source, 'tiktok') !== false) {
+            return 'tiktok';
+        }
+
+        if (strpos($raw_source, 'console') !== false || strpos($raw_source, 'admin') !== false) {
+            return 'console';
+        }
+
+        if (strpos($raw_source, 'site') !== false || strpos($raw_source, 'checkout') !== false || strpos($raw_source, 'direct') !== false) {
+            return 'site';
+        }
+
+        return sanitize_text_field($raw_source);
+    }
+
+    if (doshift_order_is_manual_admin_order($order)) {
+        return 'console';
+    }
+
+    return 'site';
+}
+
+/**
+ * Retourne le login utilisateur à envoyer dans l’API.
+ */
+function doshift_get_order_creator_user($order, $woo_source = '') {
+    if (!$order) return 'unknown';
+
+    if ($woo_source === '') {
+        $woo_source = doshift_get_order_source($order);
+    }
+
+    if ($woo_source === 'console') {
+        $post_author_id = 0;
+
+        if (method_exists($order, 'get_id')) {
+            $post_obj = get_post($order->get_id());
+            if ($post_obj && !empty($post_obj->post_author)) {
+                $post_author_id = (int) $post_obj->post_author;
+            }
+        }
+
+        if ($post_author_id > 0) {
+            $user = get_user_by('id', $post_author_id);
+            if ($user) {
+                return $user->user_login;
+            }
+        }
+
+        $admin_creator_meta_keys = [
+            '_created_by',
+            'created_by',
+            '_admin_user',
+            'admin_user',
+            '_order_created_by_user',
+        ];
+
+        foreach ($admin_creator_meta_keys as $meta_key) {
+            $meta_val = (string) $order->get_meta($meta_key, true);
+            if ($meta_val !== '') {
+                return sanitize_text_field($meta_val);
+            }
+        }
+
+        return 'admin';
+    }
+
+    $customer_id = (int) $order->get_user_id();
+    if ($customer_id > 0) {
+        $user = get_user_by('id', $customer_id);
+        if ($user) {
+            return $user->user_login;
+        }
+    }
+
+    return 'guest';
+}
+
+/**
+ * Retourne le nom affiché / nom complet de l’utilisateur à envoyer dans l’API.
+ */
+function doshift_get_order_creator_name($order, $woo_source = '') {
+    if (!$order) return 'Unknown';
+
+    if ($woo_source === '') {
+        $woo_source = doshift_get_order_source($order);
+    }
+
+    if ($woo_source === 'console') {
+        $post_author_id = 0;
+
+        if (method_exists($order, 'get_id')) {
+            $post_obj = get_post($order->get_id());
+            if ($post_obj && !empty($post_obj->post_author)) {
+                $post_author_id = (int) $post_obj->post_author;
+            }
+        }
+
+        if ($post_author_id > 0) {
+            $user = get_user_by('id', $post_author_id);
+            if ($user) {
+                if (!empty($user->display_name)) return $user->display_name;
+
+                $full_name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+                if ($full_name !== '') return $full_name;
+
+                return $user->user_login;
+            }
+        }
+
+        return 'Admin';
+    }
+
+    $customer_id = (int) $order->get_user_id();
+    if ($customer_id > 0) {
+        $user = get_user_by('id', $customer_id);
+        if ($user) {
+            if (!empty($user->display_name)) return $user->display_name;
+
+            $full_name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            if ($full_name !== '') return $full_name;
+
+            return $user->user_login;
+        }
+    }
+
+    $billing_name = trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name());
+    if ($billing_name !== '') {
+        return $billing_name;
+    }
+
+    return 'Guest';
+}
+
+/* =========================================================
+ * Envoi de la commande vers l’API
+ * ======================================================= */
+
+function doshift_orders_api_send($order_id, $force = false, $next_status_override = null, $status_override = null) {
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return ['success' => false, 'message' => 'Commande introuvable.'];
+    }
+
+    $settings = doshift_orders_api_get_settings();
+
+    $already_sent = get_post_meta($order_id, '_doshift_api_sent', true);
+    if ($already_sent && !$force) {
+        return ['success' => false, 'message' => 'Commande déjà envoyée (meta _doshift_api_sent présente).'];
+    }
+
+    // ========= CLIENT & ADRESSE =========
+    $customer_name   = $order->get_billing_first_name();
+    $customer_email  = $order->get_billing_email();
+    $customer_phone  = $order->get_billing_phone();
+    $billing_addr    = $order->get_billing_address_1();
+    $billing_city_wc = $order->get_billing_city();
+    $date_created    = $order->get_date_created() ? $order->get_date_created()->date('c') : '';
+
+    // ========= SOURCE + USER =========
+    $woo_source    = doshift_get_order_source($order);
+    $woo_user      = doshift_get_order_creator_user($order, $woo_source);
+    $woo_user_name = doshift_get_order_creator_name($order, $woo_source);
+
+    // ========= VILLES =========
+    $billing_city_code = $settings['billing_city_code_meta'] ? get_post_meta($order_id, $settings['billing_city_code_meta'], true) : '';
+    $city_name_fr      = get_post_meta($order_id, 'city_name_fr', true);
+    $city_name_ar      = get_post_meta($order_id, 'city_name_ar', true);
+
+    $ozon_city_id       = $settings['ozon_city_id_meta']       ? get_post_meta($order_id, $settings['ozon_city_id_meta'], true)       : '';
+    $ozon_city_name     = $settings['ozon_city_name_meta']     ? get_post_meta($order_id, $settings['ozon_city_name_meta'], true)     : '';
+    $cathedis_city_id   = $settings['cathedis_city_id_meta']   ? get_post_meta($order_id, $settings['cathedis_city_id_meta'], true)   : '';
+    $cathedis_city_name = $settings['cathedis_city_name_meta'] ? get_post_meta($order_id, $settings['cathedis_city_name_meta'], true) : '';
+
+    $city_shipping_price = get_post_meta($order_id, 'price_delivered', true);
+    $billing_city_display = $city_name_fr ?: $billing_city_wc;
+
+    // ========= ITEMS (+ supplier_code) =========
+    $items_array = [];
+    foreach ($order->get_items() as $item) {
+        if (!is_a($item, 'WC_Order_Item_Product')) continue;
+
+        $product    = $item->get_product();
+        $sku        = $product ? $product->get_sku() : '';
+        $image_url  = $product ? wp_get_attachment_url($product->get_image_id()) : '';
+        $product_id = $product ? $product->get_id() : 0;
+
+        $supplier_code = doshift_get_supplier_code_from_order_item($item);
+
+        $items_array[] = [
+            "woo_id"              => (int) $product_id,
+            "product_sku"         => $sku,
+            "product_name"        => $item->get_name(),
+            "supplier_code"       => ($supplier_code !== '' ? $supplier_code : null),
+            "quantity"            => (int) $item->get_quantity(),
+            "price"               => (float) $order->get_item_subtotal($item, false),
+            "total"               => (float) $item->get_total(),
+            "product_description" => $product ? wp_strip_all_tags($product->get_description()) : '',
+            "product_image_url"   => $image_url,
+        ];
+    }
+
+    $status_to_send = ($status_override !== null && $status_override !== '') ? $status_override : $settings['status_to_send'];
+
+    // ========= PAYLOAD =========
+    $payload = [
+        "woo_order_id"           => (string) $order_id,
+        "status"                 => $status_to_send,
+        "total"                  => (float) $order->get_total(),
+
+        "woo_user"               => $woo_user,
+        "woo_user_name"          => $woo_user_name,
+        "woo_source"             => $woo_source,
+
+        "customer_email"         => $customer_email,
+        "customer_phone"         => $customer_phone,
+        "customer_name"          => $customer_name,
+        "billing_address"        => $billing_addr,
+
+        "billing_city"           => $billing_city_display,
+        "billing_city_code"      => $billing_city_code,
+        "billing_city_name_fr"   => $city_name_fr,
+        "billing_city_name_ar"   => $city_name_ar,
+
+        "ozon_city_id"           => ($ozon_city_id !== '' ? (int) $ozon_city_id : null),
+        "ozon_city_name"         => ($ozon_city_name ?: $city_name_fr),
+
+        "cathedis_city_id"       => ($cathedis_city_id !== '' ? (int) $cathedis_city_id : null),
+        "cathedis_city_name"     => ($cathedis_city_name ?: $city_name_fr),
+
+        "shipping_amount_city"   => ($city_shipping_price !== '' ? (float) $city_shipping_price : null),
+        "date_created"           => $date_created,
+
+        "items" => [
+            "create" => $items_array,
+        ],
+    ];
+
+    update_post_meta($order_id, '_doshift_detected_woo_source', $woo_source);
+    update_post_meta($order_id, '_doshift_detected_woo_user', $woo_user);
+    update_post_meta($order_id, '_doshift_detected_woo_user_name', $woo_user_name);
+
+    $request_body = wp_json_encode($payload);
+	error_log('DOSHIFT PAYLOAD SIZE = ' . strlen($request_body));
+
+    $response = wp_remote_post($settings['api_url'], [
+        'method'  => 'POST',
+        'timeout' => 20,
+        'headers' => [
+            'Authorization' => 'Bearer ' . $settings['api_token'],
+            'Content-Type'  => 'application/json',
+        ],
+        'body' => $request_body,
+    ]);
+
+    update_post_meta($order_id, '_doshift_api_last_payload', $request_body);
+
+    if (is_wp_error($response)) {
+        $msg = 'Erreur HTTP : ' . $response->get_error_message();
+        update_post_meta($order_id, '_doshift_api_last_response', $msg);
+        $order->add_order_note('DoShift API : échec envoi → ' . $msg);
+        return ['success' => false, 'message' => $msg];
+    }
+
+    $code = (int) wp_remote_retrieve_response_code($response);
+    $body = (string) wp_remote_retrieve_body($response);
+
+    update_post_meta($order_id, '_doshift_api_last_http_code', $code);
+    update_post_meta($order_id, '_doshift_api_last_response', $body);
+
+    if ($code >= 200 && $code < 300) {
+        update_post_meta($order_id, '_doshift_api_sent', current_time('mysql'));
+        $order->add_order_note('DoShift API : envoi réussi (HTTP ' . $code . ').');
+
+        $next_status = ($next_status_override !== null && $next_status_override !== '')
+            ? $next_status_override
+            : (!empty($settings['success_next_status']) ? $settings['success_next_status'] : '');
+
+        if ($next_status && $order->get_status() !== $next_status) {
+            $order->update_status($next_status, 'DoShift API : statut changé après envoi réussi.');
+        }
+
+        return [
+            'success'       => true,
+            'message'       => 'Envoi réussi (HTTP ' . $code . ').',
+            'http_code'     => $code,
+            'response_body' => $body,
+        ];
+    }
+
+    $msg = 'Réponse API invalide (HTTP ' . $code . ').';
+    $order->add_order_note('DoShift API : échec envoi → ' . $msg);
+
+    return [
+        'success'       => false,
+        'message'       => $msg,
+        'http_code'     => $code,
+        'response_body' => $body,
+    ];
+}
+
+/* =========================================================
+ * Auto-envoi lors du changement de statut
+ * ======================================================= */
+
+add_action('woocommerce_order_status_changed', function ($order_id, $old_status, $new_status, $order) {
+    $settings = doshift_orders_api_get_settings();
+    $auto_status1 = !empty($settings['auto_send_status'])   ? $settings['auto_send_status']   : '';
+    $auto_status2 = !empty($settings['auto_send_status_2']) ? $settings['auto_send_status_2'] : '';
+
+    if ($auto_status1 && $new_status === $auto_status1) {
+        $next1   = !empty($settings['success_next_status']) ? $settings['success_next_status'] : null;
+        $status1 = !empty($settings['status_to_send'])      ? $settings['status_to_send']      : 'ENCOURS';
+        doshift_orders_api_send($order_id, true, $next1, $status1);
+
+    } elseif ($auto_status2 && $new_status === $auto_status2) {
+        $next2   = !empty($settings['success_next_status_2']) ? $settings['success_next_status_2'] : null;
+        $status2 = !empty($settings['status_to_send_2'])      ? $settings['status_to_send_2']      : $settings['status_to_send'];
+        doshift_orders_api_send($order_id, false, $next2, $status2);
+    }
+}, 10, 4);
+
+/* =========================================================
+ * Metabox admin : bouton "DoShift : Renvoyer vers API"
+ * ======================================================= */
+
+add_action('add_meta_boxes', function () {
+    add_meta_box(
+        'doshift_orders_api_box',
+        'DoShift : API Commande',
+        'doshift_orders_api_metabox',
+        'shop_order',
+        'side',
+        'high'
+    );
+});
+
+function doshift_orders_api_metabox($post) {
+    $order_id       = $post->ID;
+    $sent           = get_post_meta($order_id, '_doshift_api_sent', true);
+    $last_http      = get_post_meta($order_id, '_doshift_api_last_http_code', true);
+    $woo_source     = get_post_meta($order_id, '_doshift_detected_woo_source', true);
+    $woo_user       = get_post_meta($order_id, '_doshift_detected_woo_user', true);
+    $woo_user_name  = get_post_meta($order_id, '_doshift_detected_woo_user_name', true);
+
+    $nonce = wp_create_nonce('doshift_orders_api_send_order');
+
+    if ($sent) {
+        echo '<p><strong>Déjà envoyé :</strong><br><code>' . esc_html($sent) . '</code></p>';
+        if ($last_http) {
+            echo '<p>Dernier HTTP code : <code>' . esc_html($last_http) . '</code></p>';
+        }
+    } else {
+        echo '<p>Cette commande n’a pas encore été envoyée à l’API.</p>';
+    }
+
+    if ($woo_source !== '') {
+        echo '<p><strong>woo_source :</strong> <code>' . esc_html($woo_source) . '</code></p>';
+    }
+
+    if ($woo_user !== '') {
+        echo '<p><strong>woo_user :</strong> <code>' . esc_html($woo_user) . '</code></p>';
+    }
+
+    if ($woo_user_name !== '') {
+        echo '<p><strong>woo_user_name :</strong> <code>' . esc_html($woo_user_name) . '</code></p>';
+    }
+
+    echo '<p><button type="button" class="button button-primary" id="doshift-send-to-api"
+            data-order-id="' . esc_attr($order_id) . '"
+            data-nonce="' . esc_attr($nonce) . '"
+            data-force="1">DoShift : Renvoyer vers API</button></p>';
+    ?>
+    <script>
+    jQuery(function($){
+        $('#doshift-send-to-api').on('click', function(e){
+            e.preventDefault();
+            var $btn = $(this);
+
+            $btn.prop('disabled', true).text('Envoi en cours...');
+
+            $.post(ajaxurl, {
+                action:   'doshift_orders_api_send_order',
+                order_id: $btn.data('order-id'),
+                _wpnonce: $btn.data('nonce'),
+                force:    $btn.data('force') ? 1 : 0
+            }, function(resp){
+                if (resp && resp.success) {
+                    alert('Envoi réussi');
+                    window.location.reload();
+                } else {
+                    alert('Envoi échoué : ' + (resp && resp.data && resp.data.message ? resp.data.message : 'Erreur inconnue'));
+                    $btn.prop('disabled', false).text('DoShift : Renvoyer vers API');
+                }
+            }).fail(function(){
+                alert('Erreur AJAX.');
+                $btn.prop('disabled', false).text('DoShift : Renvoyer vers API');
+            });
+        });
+    });
+    </script>
+    <?php
+}
+
+add_action('wp_ajax_doshift_orders_api_send_order', function () {
+    if (!current_user_can('edit_shop_orders')) {
+        wp_send_json_error(['message' => 'Permission refusée.']);
+    }
+
+    check_ajax_referer('doshift_orders_api_send_order');
+
+    $order_id = isset($_POST['order_id']) ? (int) $_POST['order_id'] : 0;
+    $force    = !empty($_POST['force']);
+
+    if (!$order_id) {
+        wp_send_json_error(['message' => 'ID commande manquant.']);
+    }
+
+    $settings = doshift_orders_api_get_settings();
+    $status1  = !empty($settings['status_to_send']) ? $settings['status_to_send'] : 'ENCOURS';
+
+    $result = doshift_orders_api_send($order_id, $force, null, $status1);
+
+    if (!empty($result['success'])) {
+        wp_send_json_success(['message' => $result['message']]);
+    } else {
+        wp_send_json_error(['message' => $result['message']]);
+    }
+});
