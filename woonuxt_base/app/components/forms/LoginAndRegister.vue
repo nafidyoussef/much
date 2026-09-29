@@ -129,8 +129,8 @@ const passwordLabel = computed(() => t('account.password'));
 
 const inputPlaceholder = computed(() => {
   return {
-    email: 'johndoe@email.com',
-    username: formView.value === FormView.LOGIN ? 'johndoe@email.com' : 'johndoe',
+    email: 'mohamed@email.com',
+    username: formView.value === FormView.LOGIN ? 'mohamed@email.com' : 'johndoe',
     password: '********',
   };
 });
