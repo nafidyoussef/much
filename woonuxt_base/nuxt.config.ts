@@ -13,7 +13,7 @@ const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTt
 export default defineNuxtConfig({
   image: {
     provider: 'vercel',
-    domains: ['i0.wp.com'],
+    domains: ['api.much.ma'],
   },
   compatibilityDate: '2026-07-10',
   experimental: { appManifest: false, asyncContext: true },
