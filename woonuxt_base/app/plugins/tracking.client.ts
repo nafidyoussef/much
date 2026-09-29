@@ -6,7 +6,7 @@ declare global {
   }
 }
 
-// 2. On s'assure que ce fichier est traité comme un module
+// 2.On s'assure que ce fichier est traité comme un module
 export {};
 
 export default defineNuxtPlugin(() => {
