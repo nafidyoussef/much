@@ -99,8 +99,7 @@ const fetchProducts = async (append = false) => {
           orderby: ProductsOrderByEnum.MenuOrder,
           order: 'DESC'
         }
-      },
-      cache: 'no-store'
+      }
     });
 
     const newProducts = response?.data?.products?.nodes || [];

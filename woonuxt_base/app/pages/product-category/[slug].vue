@@ -222,8 +222,7 @@ const fetchProducts = async (append = false) => {
 
     const response = await $fetch<any>(GQL_HOST, {
       method: 'POST',
-      body: { query: getProductsQuery, variables },
-      cache: 'no-store'
+      body: { query: getProductsQuery, variables }
     });
 
     const newProducts = response?.data?.products?.nodes || [];
