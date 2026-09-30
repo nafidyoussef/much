@@ -332,7 +332,6 @@ useHead({
   link: [
     { rel: 'canonical', href: canonicalUrl },
     // ✅ 4. PRECONNECT : Accélère la connexion au CDN d'images WordPress
-    { rel: 'preconnect', href: 'https://i0.wp.com' },
     { rel: 'dns-prefetch', href: 'https://api.much.ma' },
   ],
   script: [
