@@ -11,9 +11,12 @@ const { formatProduct, track } = useTracking();
 
 const slug = route.params.slug as string;
 
-// ✅ 1. UNIQUE REQUÊTE : Récupère le produit ET son statut de stock initial en une seule fois
-const { data, error } = await useAsyncGql('getProduct', { slug, frontEndUrl });
-const product = ref<ProductDetail | null>(data.value?.product ?? null);
+// ✅ 1. PAS DE 'AWAIT' ICI : Cela permet au composant de rendre le Skeleton immédiatement
+// pendant que la requête GraphQL s'exécute en arrière-plan.
+const { data, error, pending } = useAsyncGql('getProduct', { slug, frontEndUrl });
+
+// On utilise un computed pour que 'product' soit réactif dès que 'data' arrive
+const product = computed<ProductDetail | null>(() => data.value?.product ?? null);
 
 const productLoadError = computed(() => 
   error.value 
@@ -176,7 +179,6 @@ const selectProductInput = computed<AddToCartInput>(() => {
   return input;
 });
 
-// ✅ 2. STATUT DE STOCK : Lit uniquement les données de la première requête (pas de refresh)
 const stockStatus = computed(() => {
   if (isVariableProduct.value) {
     return activeVariation.value?.stockStatus ?? product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
@@ -196,9 +198,7 @@ const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : is
 
 const savingsAmount = computed(() => {
   const target = priceTarget.value as any;
-  if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
-    return 0;
-  }
+  if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) return 0;
   const regular = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
   const sale = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
   return Math.max(0, regular - sale);
@@ -210,19 +210,14 @@ const savingsAmount = computed(() => {
 let hasTrackedViewItem = false;
 
 watch(() => displayProduct.value?.databaseId, (newId) => {
-  if (newId && !hasTrackedViewItem) {
+  if (newId && !hasTrackedViewItem && !pending.value) {
     const item = formatProduct(displayProduct.value!, 1);
-    track('view_item', {
-      value: item.price,
-      items: [item]
-    });
+    track('view_item', { value: item.price, items: [item] });
     hasTrackedViewItem = true;
   }
 }, { immediate: true });
 
-watch(() => route.fullPath, () => {
-  hasTrackedViewItem = false;
-});
+watch(() => route.fullPath, () => { hasTrackedViewItem = false; });
 
 // ==========================================
 // ACTIONS
@@ -232,10 +227,7 @@ const handleAddToCart = async (): Promise<void> => {
   const item = formatProduct(displayProduct.value, quantity.value);
   try {
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-    track('add_to_cart', {
-      value: item.price * quantity.value,
-      items: [item]
-    });
+    track('add_to_cart', { value: item.price * quantity.value, items: [item] });
     toggleCart(true);
   } catch (error) {
     console.error('Erreur lors de l\'ajout au panier:', error);
@@ -247,10 +239,7 @@ const handleBuyNow = async (): Promise<void> => {
   const item = formatProduct(displayProduct.value, quantity.value);
   try {
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-    track('add_to_cart', {
-      value: item.price * quantity.value,
-      items: [item]
-    });
+    track('add_to_cart', { value: item.price * quantity.value, items: [item] });
     await navigateTo('/checkout');
   } catch (error) {
     console.error('Erreur lors de l\'achat immédiat:', error);
@@ -265,9 +254,7 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
 
   if (import.meta.client) {
     const query: Record<string, string> = {};
-    variations.forEach((v) => {
-      if (v.name && v.value) query[v.name] = v.value;
-    });
+    variations.forEach((v) => { if (v.name && v.value) query[v.name] = v.value; });
     if (activeVariation.value?.databaseId) query.variationId = String(activeVariation.value.databaseId);
     const url = new URL(window.location.href);
     url.search = new URLSearchParams(query).toString();
@@ -280,8 +267,8 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
 // ==========================================
 const siteName = 'Much.ma';
 const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`);
-const seoTitle = computed(() => `${product.value?.name || 'Produit'} | Much.ma`);
-const seoDescription = computed(() => `${product.value?.name || 'Produit'} – Much.ma : paiement à la livraison, livraison partout au Maroc`);
+const seoTitle = computed(() => `${product.value?.name || 'Chargement...'} | Much.ma`);
+const seoDescription = computed(() => `${product.value?.name || 'Découvrez nos produits'} – Much.ma : paiement à la livraison, livraison partout au Maroc`);
 const seoImage = computed(() => displayProduct.value?.image?.sourceUrl || 'https://www.much.ma/images/placeholder.jpg');
 
 useSeoMeta({
@@ -298,14 +285,11 @@ useSeoMeta({
   twitterImage: seoImage,
 });
 
-// ✅ 3. JSON-LD CALCULÉ UNE SEULE FOIS (Pas de recalcul à chaque rendu)
 const jsonLdSchema = computed(() => {
-  if (!displayProduct.value) return '';
-
+  if (!displayProduct.value || pending.value) return '';
   const rawPrice = String(displayProduct.value.price || '0').replace(/[^0-9.]/g, '');
   const price = parseFloat(rawPrice) || 0;
-  const isAvailable = displayProduct.value.stockStatus === StockStatusEnum.InStock ||
-    displayProduct.value.stockStatus === StockStatusEnum.OnBackorder;
+  const isAvailable = displayProduct.value.stockStatus === StockStatusEnum.InStock || displayProduct.value.stockStatus === StockStatusEnum.OnBackorder;
 
   return JSON.stringify({
     "@context": "https://schema.org",
@@ -313,11 +297,8 @@ const jsonLdSchema = computed(() => {
     "name": displayProduct.value.name,
     "image": seoImage.value,
     "description": seoDescription.value,
-    "sku": product?.value?.sku || String(route.params.slug),
-    "brand": {
-      "@type": "Brand",
-      "name": siteName
-    },
+    "sku": product.value?.sku || String(route.params.slug),
+    "brand": { "@type": "Brand", "name": siteName },
     "offers": {
       "@type": "Offer",
       "url": canonicalUrl.value,
@@ -331,31 +312,74 @@ const jsonLdSchema = computed(() => {
 useHead({
   link: [
     { rel: 'canonical', href: canonicalUrl },
-    // ✅ 4. PRECONNECT : Accélère la connexion au CDN d'images WordPress
+    { rel: 'preconnect', href: 'https://i0.wp.com' },
     { rel: 'dns-prefetch', href: 'https://api.much.ma' },
   ],
-  script: [
-    {
-      type: 'application/ld+json',
-      innerHTML: jsonLdSchema
-    }
-  ]
+  script: [{ type: 'application/ld+json', innerHTML: jsonLdSchema }]
 });
 
 /*const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);*/
+const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);**/
 </script>
 
 <template>
   <main class="container relative py-6 xl:max-w-7xl">
-    <div v-if="product">
+    
+    <!-- ✅ 2. SKELETON LOADER : S'affiche INSTANTANÉMENT pendant le chargement -->
+    <div v-if="pending" class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24 animate-pulse">
+      <!-- Skeleton Image -->
+      <div class="relative w-full min-w-0">
+        <div class="aspect-square w-full rounded-xl bg-gray-200"></div>
+        <div class="flex gap-2 mt-4">
+          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
+          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
+          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
+        </div>
+      </div>
+
+      <!-- Skeleton Détails -->
+      <div class="w-full min-w-0 md:py-2 space-y-6">
+        <!-- Titre -->
+        <div class="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div> <!-- Étoiles -->
+        
+        <!-- Prix et Stock -->
+        <div class="flex justify-between items-start">
+          <div class="space-y-2">
+            <div class="h-4 bg-gray-200 rounded w-24"></div>
+            <div class="h-4 bg-gray-200 rounded w-20"></div>
+          </div>
+          <div class="h-10 bg-gray-200 rounded w-32"></div> <!-- Prix -->
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-2 pt-4">
+          <div class="h-4 bg-gray-200 rounded w-full"></div>
+          <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+          <div class="h-4 bg-gray-200 rounded w-4/6"></div>
+        </div>
+
+        <hr class="border-gray-200" />
+
+        <!-- Formulaire Skeleton -->
+        <div class="space-y-4 pt-2">
+          <div class="h-10 bg-gray-200 rounded w-full"></div> <!-- Attributs -->
+          <div class="flex gap-3">
+            <div class="h-11 bg-gray-200 rounded w-28"></div> <!-- Quantité -->
+            <div class="h-11 bg-gray-200 rounded flex-1"></div> <!-- Bouton Ajouter -->
+          </div>
+          <div class="h-12 bg-gray-200 rounded w-full"></div> <!-- Bouton Acheter -->
+       0</div>
+      </div>
+    </div>
+
+    <!-- ✅ 3. CONTENU RÉEL : S'affiche dès que les données sont prêtes -->
+    <div v-else-if="product">
       <Breadcrumb v-if="storeSettings.showBreadcrumbOnSingleProduct" :product class="mb-2" />
 
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
-        
-        <!-- GALERIE D'IMAGES -->
         <div class="relative w-full min-w-0 overflow-x-auto snap-x snap-mandatory flex md:block scrollbar-hide">
           <ProductImageGallery
             v-if="productImage"
@@ -373,8 +397,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
             :alt="product?.name || 'Product'"
             fetchpriority="high"
           />
-          
-          <!-- Indicateur visuel de swipe pour mobile -->
           <div class="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
             <div class="w-1.5 h-1.5 rounded-full bg-white/80 shadow-sm"></div>
             <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
@@ -382,10 +404,8 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
           </div>
         </div>
 
-        <!-- Détails du produit -->
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
-
           <div class="mb-6">
             <div class="mb-4">
               <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
@@ -413,7 +433,6 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
                   :sale-price="priceTarget?.salePrice"
                   :regular-price="priceTarget?.regularPrice"
                 />
-                
                 <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
                   <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -427,9 +446,7 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
           </div>
 
           <HookOutlet name="product.summary.afterPrice" :ctx="{ product: displayProduct }" as="div" />
-
           <div class="mb-8 text-gray-600 leading-relaxed" v-html="product.shortDescription"></div>
-
           <hr class="border-gray-200 my-6" />
 
           <form @submit.prevent="handleAddToCart" class="space-y-4">
@@ -445,12 +462,7 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
             <div class="flex flex-row gap-3">
               <div class="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-28 md:w-36 flex-shrink-0 focus-within:border-[#ff4f24] transition-colors bg-white">
                 <button type="button" @click="quantity > 1 ? quantity-- : null" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">-</button>
-                <input
-                  v-model.number="quantity"
-                  type="number"
-                  min="1"
-                  class="w-full h-11 text-center border-none focus:ring-0 p-0 font-bold text-gray-900 bg-transparent"
-                />
+                <input v-model.number="quantity" type="number" min="1" class="w-full h-11 text-center border-none focus:ring-0 p-0 font-bold text-gray-900 bg-transparent" />
                 <button type="button" @click="quantity++" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">+</button>
               </div>
 
@@ -514,7 +526,8 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
       </div>
     </div>
 
-    <div v-else class="my-24 text-center text-gray-500">
+    <!-- ✅ 4. GESTION D'ERREUR (Seulement si le chargement est terminé et qu'il y a une erreur) -->
+    <div v-else-if="!pending && error" class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
   </main>
