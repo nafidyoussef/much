@@ -37,30 +37,9 @@ useHead({
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Comment commander sur Much.ma ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Parcourez nos catégories ou la page Tous les produits, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Le paiement à la livraison est-il disponible ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Oui, vous payez directement au livreur au moment de la réception de votre commande, partout au Maroc."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Livrez-vous dans toutes les villes du Maroc ?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Oui, Much.ma livre dans l'ensemble du territoire marocain."
-            }
-          }
+          { "@type": "Question", "name": "Comment commander sur Much.ma ?", "acceptedAnswer": { "@type": "Answer", "text": "Parcourez nos catégories ou la page Tous les produits, ajoutez vos articles au panier, puis validez votre commande en renseignant votre adresse de livraison." } },
+          { "@type": "Question", "name": "Le paiement à la livraison est-il disponible ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, vous payez directement au livreur au moment de la réception de votre commande, partout au Maroc." } },
+          { "@type": "Question", "name": "Livrez-vous dans toutes les villes du Maroc ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Much.ma livre dans l'ensemble du territoire marocain." } }
         ]
       })
     }
@@ -70,34 +49,22 @@ useHead({
 // ==========================================
 // 2. Vente Flash (Non-bloquant)
 // ==========================================
-const { data: newInData } = useAsyncGql('getNewInProducts', { 
-  category: 'vente-flash' 
-});
-const newInProducts = computed<Product[]>(() => 
-  (newInData.value?.products?.nodes as Product[] | undefined) ?? []
-);
+const { data: newInData } = useAsyncGql('getNewInProducts', { category: 'vente-flash' });
+const newInProducts = computed<Product[]>(() => (newInData.value?.products?.nodes as Product[] | undefined) ?? []);
 
 // ==========================================
 // 3. Configuration des catégories
 // ==========================================
 const categories = [
-  { slug: 'all', name: 'Tout' },
-  { slug: 'maison', name: 'Maison' },
-  { slug: 'cuisine', name: 'Cuisine' },
-  { slug: 'tech', name: 'Tech' },
-  { slug: 'beaute', name: 'Beauté' },
-  { slug: 'mode', name: 'Mode' },
-  { slug: 'auto', name: 'Auto' },
-  { slug: 'kids', name: 'Kids' },
-  { slug: 'sport', name: 'Sport' },
+  { slug: 'all', name: 'Tout' }, { slug: 'maison', name: 'Maison' }, { slug: 'cuisine', name: 'Cuisine' },
+  { slug: 'tech', name: 'Tech' }, { slug: 'beaute', name: 'Beauté' }, { slug: 'mode', name: 'Mode' },
+  { slug: 'auto', name: 'Auto' }, { slug: 'kids', name: 'Kids' }, { slug: 'sport', name: 'Sport' },
 ];
-
 const productsPerPage = 12;
 
 // ==========================================
-// 4. État réactif PERSISTANT (useState)
+// 4. État réactif PERSISTANT (Client-side navigation)
 // ==========================================
-// Cet état reste en mémoire lors de la navigation, empêchant la perte des données et du scroll
 const homeState = useState('home-products-state', () => ({
   allProducts: [] as Product[],
   endCursor: null as string | null,
@@ -107,7 +74,6 @@ const homeState = useState('home-products-state', () => ({
   scrollPosition: 0
 }));
 
-// On expose les valeurs via des computed pour une utilisation transparente dans le template
 const allProducts = computed(() => homeState.value.allProducts);
 const hasMore = computed(() => homeState.value.hasMore);
 const activeCategory = computed({
@@ -119,72 +85,57 @@ const isLoading = ref(false);
 const isLoadMoreLoading = ref(false);
 
 // ==========================================
-// 5. Requête GraphQL
+// 🛡️ 5. LE VRAI CACHE : Dictionnaire en mémoire pour les requêtes
 // ==========================================
+// Ce cache survit tant que l'utilisateur est sur la page. 
+// Si on reclique sur une catégorie déjà chargée, 0 appel réseau.
+const queryCache = new Map<string, any>();
+
 const productQuery = `
   query getProducts($after: String, $slug: [String], $first: Int = 12, $orderby: ProductsOrderByEnum = MENU_ORDER, $order: OrderEnum = DESC) {
-    products(
-      first: $first
-      after: $after
-      where: {
-        categoryIn: $slug
-        visibility: VISIBLE
-        status: "publish"
-        orderby: { field: $orderby, order: $order }
-      }
-    ) {
+    products(first: $first, after: $after, where: { categoryIn: $slug, visibility: VISIBLE, status: "publish", orderby: { field: $orderby, order: $order } }) {
       pageInfo { hasNextPage endCursor }
       nodes {
-        databaseId
-        id
-        name
-        slug
-        onSale
-        image {
-          altText
-          productCardSourceUrl: sourceUrl(size: LARGE)
-        }
+        databaseId, id, name, slug, onSale
+        image { altText, productCardSourceUrl: sourceUrl(size: MEDIUM) } 
         ... on InventoriedProduct { stockStatus }
-        ... on ProductWithPricing {
-          price
-          regularPrice
-          rawRegularPrice: regularPrice(format: RAW)
-          salePrice
-          rawSalePrice: salePrice(format: RAW)
-        }
+        ... on ProductWithPricing { price, regularPrice, rawRegularPrice: regularPrice(format: RAW), salePrice, rawSalePrice: salePrice(format: RAW) }
       }
     }
   }
 `;
 
 // ==========================================
-// 6. Fonction de chargement robuste
+// 6. Fonction de chargement avec Cache Intelligent
 // ==========================================
 const fetchProductsData = async (categoryId: string, cursor: string | null = null) => {
-  const variables: Record<string, any> = {
-    first: productsPerPage,
-    orderby: 'MENU_ORDER',
-    order: 'DESC'
-  };
-  
-  if (categoryId !== 'all') {
-    variables.slug = [categoryId]; 
+  // 1. Créer une clé unique pour cette combinaison exacte
+  const cacheKey = `${categoryId}-${cursor || 'initial'}`;
+
+  // 2. SI la donnée est en cache, on la retourne IMMÉDIATEMENT (0 ms, 0 appel API)
+  if (queryCache.has(cacheKey)) {
+    return queryCache.get(cacheKey);
   }
-  
-  if (cursor) {
-    variables.after = cursor;
-  }
+
+  // 3. Sinon, on prépare la requête
+  const variables: Record<string, any> = { first: productsPerPage, orderby: 'MENU_ORDER', order: 'DESC' };
+  if (categoryId !== 'all') variables.slug = [categoryId];
+  if (cursor) variables.after = cursor;
 
   const GQL_HOST = (runtimeConfig.public?.['graphql-client'] as any)?.clients?.default?.host || 'https://api.much.ma/graphql';
 
   try {
+    // 4. Appel réseau réel (seulement si pas en cache)
     const res = await $fetch(GQL_HOST, {
       method: 'POST',
       body: { query: productQuery, variables, operationName: 'getProducts' }
     });
+
+    // 5. Sauvegarder le résultat dans le cache pour les prochains clics
+    queryCache.set(cacheKey, res);
     return res as any;
   } catch (error) {
-    console.error('Erreur lors de la requête GraphQL:', error);
+    console.error('Erreur GraphQL:', error);
     return null;
   }
 };
@@ -193,61 +144,42 @@ const fetchProductsData = async (categoryId: string, cursor: string | null = nul
 // 7. Actions Utilisateur
 // ==========================================
 const loadInitialProducts = async (force = false) => {
-  // Si déjà initialisé et qu'on ne force pas le rechargement, on ne fait rien (évite le double fetch au retour)
-  if (homeState.value.isInitialized && !force) {
-    isLoading.value = false;
-    return;
-  }
-
+  if (homeState.value.isInitialized && !force) { isLoading.value = false; return; }
   isLoading.value = true;
-  
   try {
     const response = await fetchProductsData(homeState.value.activeCategory, null);
-    
     if (response?.data?.products) {
       const nodes = response.data.products.nodes || [];
       const pageInfo = response.data.products.pageInfo;
-      
       homeState.value.allProducts = nodes;
       homeState.value.endCursor = pageInfo?.endCursor || null;
       homeState.value.hasMore = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
       homeState.value.isInitialized = true;
     }
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits:', err);
-  } finally {
-    isLoading.value = false;
-  }
+  } catch (err) { console.error('Erreur chargement:', err); }
+  finally { isLoading.value = false; }
 };
 
 const loadMoreProducts = async () => {
   if (isLoadMoreLoading.value || !homeState.value.hasMore) return;
-  
   isLoadMoreLoading.value = true;
-  
   try {
     const response = await fetchProductsData(homeState.value.activeCategory, homeState.value.endCursor);
-    
     if (response?.data?.products) {
       const newProducts = response.data.products.nodes || [];
       const pageInfo = response.data.products.pageInfo;
-      
-      // On ajoute les nouveaux produits à l'état persistant
       homeState.value.allProducts.push(...newProducts);
       homeState.value.endCursor = pageInfo?.endCursor || null;
       homeState.value.hasMore = pageInfo?.hasNextPage ?? (newProducts.length === productsPerPage);
     }
-  } catch (err) {
-    console.error('Erreur lors du chargement des produits suivants:', err);
-  } finally {
-    isLoadMoreLoading.value = false;
-  }
+  } catch (err) { console.error('Erreur load more:', err); }
+  finally { isLoadMoreLoading.value = false; }
 };
 
 const selectCategory = (slug: string) => {
   if (homeState.value.activeCategory === slug) return;
   
-  // Réinitialisation propre de l'état pour la nouvelle catégorie
+  // Réinitialisation propre
   homeState.value.activeCategory = slug;
   homeState.value.isInitialized = false;
   homeState.value.allProducts = [];
@@ -255,33 +187,28 @@ const selectCategory = (slug: string) => {
   homeState.value.hasMore = true;
   homeState.value.scrollPosition = 0;
   
+  // Cette fonction utilisera le cache si l'utilisateur a déjà cliqué sur cette catégorie
   loadInitialProducts(true);
 };
 
 // ==========================================
-// 8. UI Slider Mechanics (Vente Flash)
+// 8. UI Slider Mechanics
 // ==========================================
 const newInSliderRef = ref<HTMLElement | null>(null);
 const scrollNewIn = (direction: 'left' | 'right') => {
   if (!newInSliderRef.value) return;
-  const scrollAmount = newInSliderRef.value.clientWidth * 0.8;
-  newInSliderRef.value.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
-    behavior: 'smooth',
-  });
+  newInSliderRef.value.scrollBy({ left: direction === 'left' ? -newInSliderRef.value.clientWidth * 0.8 : newInSliderRef.value.clientWidth * 0.8, behavior: 'smooth' });
 };
 
 // ==========================================
-// 9. Initialisation (SSR + Client) et Restauration du Scroll
+// 9. Initialisation
 // ==========================================
 const { pending: initialLoading } = useAsyncData(
   'home-initial-products',
   async () => {
-    // Si l'état est déjà en mémoire (retour de page produit), on retourne les données en cache instantanément
     if (homeState.value.isInitialized) {
       return { data: { products: { nodes: homeState.value.allProducts, pageInfo: { endCursor: homeState.value.endCursor, hasNextPage: homeState.value.hasMore } } } };
     }
-    // Sinon, on fetch normalement (premier chargement ou refresh)
     return await fetchProductsData('all', null);
   },
   {
@@ -289,12 +216,9 @@ const { pending: initialLoading } = useAsyncData(
     server: true,
     transform: (res: any) => {
       if (!homeState.value.isInitialized && res?.data?.products) {
-        const nodes = res.data.products.nodes || [];
-        const pageInfo = res.data.products.pageInfo;
-
-        homeState.value.allProducts = nodes;
-        homeState.value.endCursor = pageInfo?.endCursor || null;
-        homeState.value.hasMore = pageInfo?.hasNextPage ?? (nodes.length === productsPerPage);
+        homeState.value.allProducts = res.data.products.nodes || [];
+        homeState.value.endCursor = res.data.products.pageInfo?.endCursor || null;
+        homeState.value.hasMore = res.data.products.pageInfo?.hasNextPage ?? (homeState.value.allProducts.length === productsPerPage);
         homeState.value.isInitialized = true;
       }
       return res;
@@ -302,19 +226,14 @@ const { pending: initialLoading } = useAsyncData(
   }
 );
 
-// Sauvegarde la position du scroll juste avant de quitter la page
 onBeforeUnmount(() => {
   homeState.value.scrollPosition = window.scrollY || document.documentElement.scrollTop;
 });
 
-// Restaure la position du scroll si on revient sur la page avec des données en cache
 onMounted(() => {
   if (homeState.value.isInitialized && homeState.value.scrollPosition > 0) {
-    setTimeout(() => {
-      window.scrollTo({ top: homeState.value.scrollPosition, behavior: 'auto' });
-    }, 50); // Petit délai pour s'assurer que le DOM est bien rendu
+    setTimeout(() => window.scrollTo({ top: homeState.value.scrollPosition, behavior: 'auto' }), 50);
   } else if (!homeState.value.isInitialized) {
-    // Fallback client-side si le chargement initial n'a pas été déclenché
     loadInitialProducts();
   }
 });
