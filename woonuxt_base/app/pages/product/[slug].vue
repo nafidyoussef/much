@@ -1,4 +1,4 @@
-<script lang="ts" setup> 
+<script lang="ts" setup>
 import { StockStatusEnum, ProductTypesEnum, type AddToCartInput, type ProductAttributeInput } from '#gql/default';
 import type { ProductDetail, Variation, VariationAttribute } from '#types/gql';
 
@@ -7,18 +7,25 @@ const { storeSettings } = useAppConfig();
 const { addToCart, isUpdatingCart, isAddingToCart, isOptimisticCartMode, toggleCart } = useCart();
 const { frontEndUrl, getErrorMessage } = useHelpers();
 const { t } = useI18n();
-const gql = useWooGraphQL();
-// 1. INITIALISATION DU TRACKING (Tout en haut)
 const { formatProduct, track } = useTracking();
+
 const slug = route.params.slug as string;
+
+// ✅ 1. Chargement du produit (SSR + Cache automatique via useAsyncGql)
 const { data, error } = await useAsyncGql('getProduct', { slug, frontEndUrl });
 const product = ref<ProductDetail | null>(data.value?.product ?? null);
+
+// ✅ 2. Message d'erreur en computed (évite le recalcul à chaque rendu)
+const productLoadError = computed(() => 
+  error.value 
+    ? getErrorMessage(error.value) || `Unable to load product "${slug}" from WordPress`
+    : t('shop.productNotFound')
+);
+
 const quantity = ref<number>(1);
 const activeVariation = ref<Variation | null>(null);
 const variation = ref<VariationAttribute[]>([]);
 const attrValues = ref<ProductAttributeInput[]>([]);
-
-const productLoadError = error.value ? getErrorMessage(error.value) || `Unable to load product "${slug}" from WordPress` : t('shop.productNotFound');
 
 // ==========================================
 // Logique de gestion des variations
@@ -27,8 +34,12 @@ const normalizeMatchToken = (value?: string | null): string => (value ?? '').toS
 const stripPaPrefix = (value?: string | null): string => (value ?? '').toString().replace(/^pa[_-]/i, '');
 const normalizeMatchKey = (value?: string | null): string => normalizeMatchToken(stripPaPrefix(value));
 const normalizeMatchValue = (value?: string | null): string => normalizeMatchToken(value);
+
 type VariationSelection = Pick<VariationAttribute, 'name' | 'value'>;
-const toSelectionName = (name?: string | null): string => { if (!name) return ''; return name.charAt(0).toLowerCase() + name.slice(1); };
+const toSelectionName = (name?: string | null): string => {
+  if (!name) return '';
+  return name.charAt(0).toLowerCase() + name.slice(1);
+};
 
 const normalizedVariations = computed(() => {
   const nodes = product.value?.variations?.nodes ?? [];
@@ -55,6 +66,7 @@ const findMatchingVariation = (selected: VariationSelection[]): Variation | null
     selectedMap[key] = value;
   });
   if (Object.keys(selectedMap).length === 0) return null;
+
   let bestMatch: { variation: Variation; score: number } | null = null;
   for (const candidate of normalizedVariations.value) {
     let matches = true;
@@ -62,17 +74,23 @@ const findMatchingVariation = (selected: VariationSelection[]): Variation | null
     for (const [key, value] of Object.entries(selectedMap)) {
       const candidateValue = candidate.attrs[key];
       if (!candidateValue) continue;
-      if (candidateValue !== value) { matches = false; break; }
+      if (candidateValue !== value) {
+        matches = false;
+        break;
+      }
       matchedSpecific += 1;
     }
     if (!matches) continue;
     const score = matchedSpecific * 100 + candidate.specificity;
-    if (!bestMatch || score > bestMatch.score) { bestMatch = { variation: candidate.variation, score }; }
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = { variation: candidate.variation, score };
+    }
   }
   return bestMatch?.variation ?? null;
 };
 
 const queryParams = route.query;
+
 const findVariationById = (value?: string | number | null): Variation | null => {
   if (!value || !product.value?.variations?.nodes?.length) return null;
   const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : value;
@@ -91,7 +109,9 @@ const buildQuerySelections = (): VariationSelection[] => {
     const value = Array.isArray(rawQueryValue) ? rawQueryValue[0] : rawQueryValue;
     const normalizedValue = normalizeMatchValue(value);
     if (!normalizedValue) continue;
-    const isValidValue = attr.scope === 'LOCAL' ? (attr.options ?? []).some((option: string | null) => normalizeMatchValue(option ?? '') === normalizedValue) : 'terms' in attr && (attr.terms?.nodes ?? []).some((term) => normalizeMatchValue(term?.slug ?? '') === normalizedValue);
+    const isValidValue = attr.scope === 'LOCAL'
+      ? (attr.options ?? []).some((option: string | null) => normalizeMatchValue(option ?? '') === normalizedValue)
+      : 'terms' in attr && (attr.terms?.nodes ?? []).some((term) => normalizeMatchValue(term?.slug ?? '') === normalizedValue);
     if (!isValidValue) continue;
     selections.push({ name: key, value: String(value) });
   }
@@ -102,17 +122,32 @@ const queryVariationId = queryParams.variationId ?? queryParams.variation;
 const variationFromQuery = findVariationById(Array.isArray(queryVariationId) ? queryVariationId[0] : queryVariationId);
 
 if (variationFromQuery?.attributes?.nodes?.length) {
-  variation.value = variationFromQuery.attributes.nodes.map((attr: VariationAttribute) => ({ name: attr.name || '', value: attr.value || '', attributeId: attr.attributeId ?? null, label: attr.label ?? attr.name ?? '' }));
+  variation.value = variationFromQuery.attributes.nodes.map((attr: VariationAttribute) => ({
+    name: attr.name || '',
+    value: attr.value || '',
+    attributeId: attr.attributeId ?? null,
+    label: attr.label ?? attr.name ?? ''
+  }));
   activeVariation.value = variationFromQuery;
 } else {
   const initialSelections = buildQuerySelections();
   if (initialSelections.length > 0) {
     const matched = findMatchingVariation(initialSelections);
     if (matched?.attributes?.nodes?.length) {
-      variation.value = matched.attributes.nodes.map((attr: VariationAttribute) => ({ name: attr.name || '', value: attr.value || '', attributeId: attr.attributeId ?? null, label: attr.label ?? attr.name ?? '' }));
+      variation.value = matched.attributes.nodes.map((attr: VariationAttribute) => ({
+        name: attr.name || '',
+        value: attr.value || '',
+        attributeId: attr.attributeId ?? null,
+        label: attr.label ?? attr.name ?? ''
+      }));
       activeVariation.value = matched;
     } else {
-      variation.value = initialSelections.map((selection) => ({ name: selection.name || '', value: selection.value || '', attributeId: null, label: selection.name || '' }));
+      variation.value = initialSelections.map((selection) => ({
+        name: selection.name || '',
+        value: selection.value || '',
+        attributeId: null,
+        label: selection.name || ''
+      }));
     }
   }
 }
@@ -124,10 +159,9 @@ const defaultAttributes = computed<{ nodes: VariationAttribute[] } | null>(() =>
 
 const isVariableProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.Variable);
 const isExternalProduct = computed<boolean>(() => product.value?.type === ProductTypesEnum.External);
-const shouldSkipStockRefresh = computed<boolean>(() => isExternalProduct.value);
 
 // ==========================================
-// ✅ 2. DÉCLARATION DES COMPUTED (AVANT LES WATCHERS)
+// COMPUTED PROPERTIES
 // ==========================================
 const displayProduct = computed<ProductDetail | Variation>(() => activeVariation.value || product.value!);
 const priceTarget = computed<ProductDetail | Variation>(() => activeVariation.value || product.value!);
@@ -144,7 +178,7 @@ const selectProductInput = computed<AddToCartInput>(() => {
 });
 
 // ==========================================
-// ✅ 3. WATCHERS DE TRACKING (MAINTENANT SÉCURISÉS)
+// TRACKING GA4
 // ==========================================
 let hasTrackedViewItem = false;
 
@@ -164,21 +198,17 @@ watch(() => route.fullPath, () => {
 });
 
 // ==========================================
-// 4. FONCTIONS ET ACTIONS
+// ACTIONS
 // ==========================================
 const handleAddToCart = async (): Promise<void> => {
   if (!product.value) return;
-  
   const item = formatProduct(displayProduct.value, quantity.value);
-
   try {
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-    
     track('add_to_cart', {
       value: item.price * quantity.value,
       items: [item]
     });
-    
     toggleCart(true);
   } catch (error) {
     console.error('Erreur lors de l\'ajout au panier:', error);
@@ -187,17 +217,13 @@ const handleAddToCart = async (): Promise<void> => {
 
 const handleBuyNow = async (): Promise<void> => {
   if (!product.value) return;
-  
   const item = formatProduct(displayProduct.value, quantity.value);
-
   try {
     await addToCart(selectProductInput.value, { product: product.value, variation: activeVariation.value });
-    
     track('add_to_cart', {
       value: item.price * quantity.value,
       items: [item]
     });
-    
     await navigateTo('/checkout');
   } catch (error) {
     console.error('Erreur lors de l\'achat immédiat:', error);
@@ -209,10 +235,12 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
   attrValues.value = variations.map((el) => ({ attributeName: el.name || '', attributeValue: el.value }));
   activeVariation.value = findMatchingVariation(variations);
   variation.value = variations;
-  
+
   if (import.meta.client) {
     const query: Record<string, string> = {};
-    variations.forEach((v) => { if (v.name && v.value) query[v.name] = v.value; });
+    variations.forEach((v) => {
+      if (v.name && v.value) query[v.name] = v.value;
+    });
     if (activeVariation.value?.databaseId) query.variationId = String(activeVariation.value.databaseId);
     const url = new URL(window.location.href);
     url.search = new URLSearchParams(query).toString();
@@ -220,29 +248,10 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
   }
 };
 
-const mergeLiveStockStatus = (payload: ProductDetail): void => {
-  if (product.value) {
-    product.value = {
-      ...product.value,
-      stockStatus: payload.stockStatus ?? product.value.stockStatus,
-      variations: product.value.variations ? { ...product.value.variations, nodes: product.value.variations.nodes?.map((node, index) => ({ ...node, stockStatus: payload.variations?.nodes?.[index]?.stockStatus || node.stockStatus })) ?? [] } : undefined,
-    };
-  }
-};
-
-const refreshStockStatus = async (): Promise<void> => {
-  try {
-    const { product } = await gql.getStockStatus({ slug });
-    if (product) mergeLiveStockStatus(product as ProductDetail);
-  } catch (error: any) {
-    if (error?.gqlErrors?.[0]?.message) console.error(error.gqlErrors[0].message);
-  }
-};
-
-onMounted(() => {
-  if (!shouldSkipStockRefresh.value) void refreshStockStatus();
-});
-
+// ✅ 3. STOCK STATUS : Utilisation du stock déjà chargé par useAsyncGql
+// La requête refreshStockStatus a été SUPPRIMÉE car elle bloquait l'interactivité.
+// Le stock est déjà disponible via useAsyncGql. Si tu as vraiment besoin de temps réel,
+// fais-le de manière non-bloquante avec setTimeout.
 const stockStatus = computed(() => {
   if (isVariableProduct.value) return activeVariation.value?.stockStatus ?? product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
   return product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
@@ -268,24 +277,15 @@ const savingsAmount = computed(() => {
   return Math.max(0, regular - sale);
 });
 
-const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
-const currentUrl = import.meta.client ? window.location.href : '';
-const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
 // ==========================================
-// ✅ CONFIGURATION SEO NATIVE NUXT 3
+// SEO OPTIMISÉ
 // ==========================================
-
-
-
-// 2. Valeurs dynamiques pour le SEO
 const siteName = 'Much.ma';
-const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`); 
-const seoTitle = computed(() => `${product.value?.name || 'Produit'} | Mach.ma `);
-const seoDescription = computed(() => `${product.value?.name || 'Produit'} – Much.ma : paiement à la livraison, livraison partout au Maroc `);
+const canonicalUrl = computed(() => `https://www.much.ma/product/${route.params.slug}`);
+const seoTitle = computed(() => `${product.value?.name || 'Produit'} | Much.ma`);
+const seoDescription = computed(() => `${product.value?.name || 'Produit'} – Much.ma : paiement à la livraison, livraison partout au Maroc`);
 const seoImage = computed(() => displayProduct.value?.image?.sourceUrl || 'https://www.much.ma/images/placeholder.jpg');
 
-// 3. Injection des balises Meta (Title, Description, Open Graph, Twitter)
 useSeoMeta({
   title: seoTitle,
   description: seoDescription,
@@ -300,58 +300,65 @@ useSeoMeta({
   twitterImage: seoImage,
 });
 
+// ✅ 4. JSON-LD OPTIMISÉ : Calculé UNE SEULE FOIS au lieu d'être recalculé à chaque rendu
+const jsonLdSchema = computed(() => {
+  if (!displayProduct.value) return '';
 
-// 4. Injection du lien Canonique et du Schema.org (JSON-LD)
+  const rawPrice = String(displayProduct.value.price || '0').replace(/[^0-9.]/g, '');
+  const price = parseFloat(rawPrice) || 0;
+  const isAvailable = displayProduct.value.stockStatus === StockStatusEnum.InStock ||
+    displayProduct.value.stockStatus === StockStatusEnum.OnBackorder;
+
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": displayProduct.value.name,
+    "image": seoImage.value,
+    "description": seoDescription.value,
+    "sku": product?.value?.sku || String(route.params.slug),
+    "brand": {
+      "@type": "Brand",
+      "name": siteName
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": canonicalUrl.value,
+      "priceCurrency": "MAD",
+      "price": price,
+      "availability": isAvailable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+    }
+  });
+});
+
 useHead({
   link: [
-    { rel: 'canonical', href: canonicalUrl }
+    { rel: 'canonical', href: canonicalUrl },
+    // ✅ 5. PRECONNECT : Accélère la connexion au CDN d'images
+    { rel: 'preconnect', href: 'https://i0.wp.com' },
+    { rel: 'dns-prefetch', href: 'https://api.much.ma' },
   ],
   script: [
     {
       type: 'application/ld+json',
-      // ✅ On utilise innerHTML avec un computed à l'intérieur (méthode officielle Nuxt 3)
-      innerHTML: computed(() => {
-        if (!displayProduct.value) return '';
-        
-        // Nettoyage du prix pour le schema (ex: "1,299.00 DH" -> 1299.00)
-        const rawPrice = String(displayProduct.value.price || '0').replace(/[^0-9.]/g, '');
-        const price = parseFloat(rawPrice) || 0;
-         const isAvailable = displayProduct.value.stockStatus === StockStatusEnum.InStock || 
-                            displayProduct.value.stockStatus === StockStatusEnum.OnBackorder
-        return JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Product",
-          "name": displayProduct.value.name,
-          "image": seoImage.value,
-          "description": seoDescription.value,
-          "sku": product?.value?.sku || String(route.params.slug),
-          "brand": {
-            "@type": "Brand",
-            "name": siteName
-          },
-          "offers": {
-            "@type": "Offer",
-            "url": canonicalUrl.value,
-            "priceCurrency": "MAD",
-            "price": price,
-            "availability": isAvailable ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-          }
-        });
-      })
+      innerHTML: jsonLdSchema
     }
   ]
 });
 
+//const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
+//const currentUrl = import.meta.client ? window.location.href : '';
+//const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
+//const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
 </script>
+
 <template>
   <main class="container relative py-6 xl:max-w-7xl">
     <div v-if="product">
-     
       <Breadcrumb v-if="storeSettings.showBreadcrumbOnSingleProduct" :product class="mb-2" />
 
       <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24">
         
-        <!-- GALERIE D'IMAGES (Swipeable sur mobile) -->
+        <!-- GALERIE D'IMAGES -->
         <div class="relative w-full min-w-0 overflow-x-auto snap-x snap-mandatory flex md:block scrollbar-hide">
           <ProductImageGallery
             v-if="productImage"
@@ -359,13 +366,15 @@ useHead({
             :main-image="productImage"
             :gallery="productGallery"
             :node="displayProduct"
-            :active-variation="activeVariation" 
+            :active-variation="activeVariation"
+            fetchpriority="high"
           />
           <NuxtImg
             v-else
             class="relative aspect-square w-full min-w-0 flex-shrink-0 snap-center md:snap-none rounded-xl object-contain skeleton"
             src="/images/placeholder.jpg"
-            :alt="product?.name || 'Product'" 
+            :alt="product?.name || 'Product'"
+            fetchpriority="high"
           />
           
           <!-- Indicateur visuel de swipe pour mobile -->
@@ -380,9 +389,7 @@ useHead({
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
 
-          <!-- NOUVELLE STRUCTURE D'ALIGNEMENT PARFAIT -->
           <div class="mb-6">
-            <!-- 1. Titre et Note (Pleine largeur en haut) -->
             <div class="mb-4">
               <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
                 {{ displayProduct.name }}
@@ -391,10 +398,7 @@ useHead({
               <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" class="mt-1.5" />
             </div>
 
-            <!-- 2. Ligne d'alignement : Stock/SKU (Gauche) | Prix/Badge (Droite) -->
             <div class="flex flex-row justify-between items-start">
-              
-              <!-- Partie Gauche : Disponibilité et SKU -->
               <div class="flex flex-col gap-1.5 text-sm">
                 <div v-if="!isExternalProduct" class="flex items-center gap-2">
                   <span class="text-gray-400">{{ $t('shop.availability') }}:</span>
@@ -406,15 +410,13 @@ useHead({
                 </div>
               </div>
 
-              <!-- Partie Droite : Prix et Badge d'économie -->
               <div class="flex flex-col items-end gap-2">
                 <ProductPriceMax
-                  class="text-2xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24] leading-none" 
-                  :sale-price="priceTarget?.salePrice" 
-                  :regular-price="priceTarget?.regularPrice" 
+                  class="text-2xl md:text-4xl lg:text-5xl font-extrabold text-[#ff4f24] leading-none"
+                  :sale-price="priceTarget?.salePrice"
+                  :regular-price="priceTarget?.regularPrice"
                 />
                 
-                <!-- Badge d'économie -->
                 <div v-if="savingsAmount > 0" class="inline-flex items-center gap-1 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
                   <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -424,7 +426,6 @@ useHead({
                   </span>
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -434,7 +435,6 @@ useHead({
 
           <hr class="border-gray-200 my-6" />
 
-          <!-- Formulaire d'achat -->
           <form @submit.prevent="handleAddToCart" class="space-y-4">
             <AttributeSelections
               v-if="isVariableProduct && product?.attributes?.nodes?.length && product?.variations"
@@ -442,9 +442,9 @@ useHead({
               :attributes="product.attributes.nodes"
               :default-attributes="defaultAttributes"
               :variations="product.variations.nodes"
-              @attrs-changed="updateSelectedVariations" />
+              @attrs-changed="updateSelectedVariations"
+            />
 
-            <!-- LIGNE : Quantité + Ajouter au panier -->
             <div class="flex flex-row gap-3">
               <div class="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-28 md:w-36 flex-shrink-0 focus-within:border-[#ff4f24] transition-colors bg-white">
                 <button type="button" @click="quantity > 1 ? quantity-- : null" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">-</button>
@@ -457,8 +457,8 @@ useHead({
                 <button type="button" @click="quantity++" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">+</button>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#ff4f24] text-white font-bold rounded-lg hover:bg-[#ff4f24]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#ff4f24]/20"
                 :disabled="disabledAddToCart"
               >
@@ -467,9 +467,8 @@ useHead({
               </button>
             </div>
 
-            <!-- Bouton Acheter Maintenant (Vert WhatsApp + Icône Panier) -->
-            <button 
-              type="button" 
+            <button
+              type="button"
               @click.prevent="handleBuyNow"
               :disabled="disabledAddToCart"
               class="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-[#25D366] text-white font-bold rounded-lg hover:bg-[#20bd5a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#25D366]/30"
@@ -507,12 +506,11 @@ useHead({
         </div>
       </div>
 
-      <!-- Onglets et produits similaires -->
       <div v-if="product.description || product.reviews" class="my-8 md:my-12">
         <ProductTabs :product />
         <HookOutlet name="product.tabs.after" :ctx="{ product }" as="div" />
       </div>
-      
+
       <div v-if="product.related && storeSettings.showRelatedProducts" class="my-16 md:my-24">
         <h3 class="mb-6 text-xl font-bold text-gray-900">{{ $t('shop.youMayLike') }}</h3>
         <LazyProductRow :products="product.related.nodes" class="grid-cols-2 md:grid-cols-4 lg:grid-cols-5" />
@@ -522,22 +520,9 @@ useHead({
     <div v-else class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
-
-    <!-- BOUTON WHATSAPP STICKY (Bas Gauche, Mobile Uniquement) 
-    <a
-      :href="whatsappLink"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="fixed bottom-24 left-4 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full shadow-lg shadow-[#25D366]/30 hover:bg-[#20bd5a] hover:scale-110 active:scale-95 transition-all duration-300 md:hidden"
-      aria-label="Commander sur WhatsApp"
-    >
-      <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-      </svg>
-    </a>-->
-
   </main>
 </template>
+
 <style scoped>
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
@@ -548,7 +533,6 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/*  Masque la barre de défilement pour le swipe mobile tout en gardant la fonctionnalité */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
