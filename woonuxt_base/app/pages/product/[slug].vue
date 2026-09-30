@@ -11,11 +11,10 @@ const { formatProduct, track } = useTracking();
 
 const slug = route.params.slug as string;
 
-// ✅ 1. Chargement du produit (SSR + Cache automatique via useAsyncGql)
+// ✅ 1. UNIQUE REQUÊTE : Récupère le produit ET son statut de stock initial en une seule fois
 const { data, error } = await useAsyncGql('getProduct', { slug, frontEndUrl });
 const product = ref<ProductDetail | null>(data.value?.product ?? null);
 
-// ✅ 2. Message d'erreur en computed (évite le recalcul à chaque rendu)
 const productLoadError = computed(() => 
   error.value 
     ? getErrorMessage(error.value) || `Unable to load product "${slug}" from WordPress`
@@ -177,6 +176,34 @@ const selectProductInput = computed<AddToCartInput>(() => {
   return input;
 });
 
+// ✅ 2. STATUT DE STOCK : Lit uniquement les données de la première requête (pas de refresh)
+const stockStatus = computed(() => {
+  if (isVariableProduct.value) {
+    return activeVariation.value?.stockStatus ?? product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
+  }
+  return product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
+});
+
+const disabledAddToCart = computed(() => {
+  const canPurchaseWithCurrentStock = stockStatus.value === StockStatusEnum.InStock || stockStatus.value === StockStatusEnum.OnBackorder;
+  const isInvalidType = !displayProduct.value;
+  const isCartUpdating = isOptimisticCartMode.value ? false : isUpdatingCart.value || isAddingToCart.value;
+  const hasValidVariation = !isVariableProduct.value || !!activeVariation.value;
+  return !canPurchaseWithCurrentStock || isCartUpdating || !hasValidVariation || isInvalidType;
+});
+
+const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
+
+const savingsAmount = computed(() => {
+  const target = priceTarget.value as any;
+  if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
+    return 0;
+  }
+  const regular = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
+  const sale = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
+  return Math.max(0, regular - sale);
+});
+
 // ==========================================
 // TRACKING GA4
 // ==========================================
@@ -248,35 +275,6 @@ const updateSelectedVariations = (variations: VariationAttribute[]): void => {
   }
 };
 
-// ✅ 3. STOCK STATUS : Utilisation du stock déjà chargé par useAsyncGql
-// La requête refreshStockStatus a été SUPPRIMÉE car elle bloquait l'interactivité.
-// Le stock est déjà disponible via useAsyncGql. Si tu as vraiment besoin de temps réel,
-// fais-le de manière non-bloquante avec setTimeout.
-const stockStatus = computed(() => {
-  if (isVariableProduct.value) return activeVariation.value?.stockStatus ?? product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
-  return product.value?.stockStatus ?? StockStatusEnum.OutOfStock;
-});
-
-const disabledAddToCart = computed(() => {
-  const canPurchaseWithCurrentStock = stockStatus.value === StockStatusEnum.InStock || stockStatus.value === StockStatusEnum.OnBackorder;
-  const isInvalidType = !displayProduct.value;
-  const isCartUpdating = isOptimisticCartMode.value ? false : isUpdatingCart.value || isAddingToCart.value;
-  const hasValidVariation = !isVariableProduct.value || !!activeVariation.value;
-  return !canPurchaseWithCurrentStock || isCartUpdating || !hasValidVariation || isInvalidType;
-});
-
-const addToCartLoading = computed(() => (isOptimisticCartMode.value ? false : isUpdatingCart.value));
-
-const savingsAmount = computed(() => {
-  const target = priceTarget.value as any;
-  if (!target?.onSale || !target?.rawRegularPrice || !target?.rawSalePrice) {
-    return 0;
-  }
-  const regular = parseFloat(String(target.rawRegularPrice).replace(/[^0-9.]/g, '')) || 0;
-  const sale = parseFloat(String(target.rawSalePrice).replace(/[^0-9.]/g, '')) || 0;
-  return Math.max(0, regular - sale);
-});
-
 // ==========================================
 // SEO OPTIMISÉ
 // ==========================================
@@ -300,7 +298,7 @@ useSeoMeta({
   twitterImage: seoImage,
 });
 
-// ✅ 4. JSON-LD OPTIMISÉ : Calculé UNE SEULE FOIS au lieu d'être recalculé à chaque rendu
+// ✅ 3. JSON-LD CALCULÉ UNE SEULE FOIS (Pas de recalcul à chaque rendu)
 const jsonLdSchema = computed(() => {
   if (!displayProduct.value) return '';
 
@@ -333,7 +331,7 @@ const jsonLdSchema = computed(() => {
 useHead({
   link: [
     { rel: 'canonical', href: canonicalUrl },
-    // ✅ 5. PRECONNECT : Accélère la connexion au CDN d'images
+    // ✅ 4. PRECONNECT : Accélère la connexion au CDN d'images WordPress
     { rel: 'preconnect', href: 'https://i0.wp.com' },
     { rel: 'dns-prefetch', href: 'https://api.much.ma' },
   ],
@@ -345,10 +343,10 @@ useHead({
   ]
 });
 
-//const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
-//const currentUrl = import.meta.client ? window.location.href : '';
-//const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-//const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);
+/*const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
+const currentUrl = import.meta.client ? window.location.href : '';
+const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
+const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);*/
 </script>
 
 <template>
