@@ -160,7 +160,7 @@ export default defineNuxtConfig({
     '/product/**': { swr: 3600 }
   },
 
-
+/*
  sitemap: {
     exclude: [
       '/my-account/**',
@@ -271,5 +271,5 @@ export default defineNuxtConfig({
     },
   },
 
-
+*/
 });

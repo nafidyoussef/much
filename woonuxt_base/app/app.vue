@@ -75,7 +75,9 @@ useHead({
 <template>
   <NuxtPwaManifest />
   <NuxtLoadingIndicator />
+  
   <div class="flex flex-col min-h-screen">
+    <!-- ✅ 1. Le Header s'affiche IMMÉDIATEMENT -->
     <AppHeader />
 
     <Transition name="slide-from-right">
@@ -86,18 +88,33 @@ useHead({
       <MobileMenu v-if="isShowingMobileMenu" />
     </Transition>
 
-    <NuxtPage />
+    <!-- ✅ 2. Suspense empêche la page produit de bloquer le Header -->
+    <Suspense>
+      <template #default>
+        <NuxtPage />
+      </template>
+      <template #fallback>
+        <!-- Fallback global optionnel (ton skeleton de page produit peut aussi le gérer) -->
+        <div class="container py-6 flex-1 animate-pulse">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div class="aspect-square bg-gray-200 rounded-xl"></div>
+            <div class="space-y-4">
+              <div class="h-8 bg-gray-200 rounded w-3/4"></div>
+              <div class="h-32 bg-gray-200 rounded w-full"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </Suspense>
 
     <Transition name="fade">
       <div v-if="isShowingCart || isShowingMobileMenu" class="bg-black opacity-25 inset-0 z-40 fixed" @click="closeCartAndMenu"></div>
     </Transition>
     
     <AppFooter />
-    <AppToolBar/>
-
+    <AppToolBar />
   </div>
 </template>
-
 <style>
 @reference "#tailwind";
 
