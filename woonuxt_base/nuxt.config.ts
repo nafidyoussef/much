@@ -131,21 +131,17 @@ export default defineNuxtConfig({
     }
   },
 
-  nitro: {
-    prerender: { ignore: ['/.netlify/images'] },
-    routeRules: {
-      '/checkout/order-received/**': { prerender: false },
-      '/order-summary/**': { prerender: false },
-      '/product/**': { isr: catalogIsrTtl },
-      '/product-category/**': { isr: catalogIsrTtl },
-      '/products': { isr: catalogIsrTtl },
-      '/products/**': { isr: catalogIsrTtl },
-    },
+  routeRules: {
+    // Le premier visiteur attendra le temps de la requête, 
+    // mais Nuxt enverra IMMÉDIATEMENT la version en cache aux 1000 visiteurs suivants (en 50ms)
+    '/': { swr: 3600 },
+    '/products/**': { swr: 3600 },
+    '/product-category/**': { swr: 3600 },
+    '/product/**': { swr: 3600 }, // ✅ C'est cette ligne qui sauve ta page produit
   },
 
   i18n: {
     locales: [
-      { code: 'en_US', file: 'en-US.json', name: 'English 🇺🇸' },
       { code: 'fr_FR', file: 'fr-FR.json', name: 'Français 🇫🇷' },
     ],
     langDir: 'locales',
@@ -153,12 +149,6 @@ export default defineNuxtConfig({
     strategy: 'no_prefix',
   },
 
-   routeRules: {
-    '/': { swr: 3600 },
-    '/products/**': { swr: 3600 },
-    '/product-category/**': { swr: 3600 },
-    '/product/**': { swr: 3600 }
-  },
 
 /*
  sitemap: {
