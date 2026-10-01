@@ -112,17 +112,20 @@ const thumbnailButtonClasses = (galleryImg: ImageFragment) => [
       <SaleBadge :node class="absolute text-base top-4 right-4 z-10" />
       
       <!-- ✅ CORRECTION 2 : Attribut 'sizes' nettoyé pour mieux guider le navigateur mobile -->
+    
       <NuxtPicture
-        :width="imgWidth"
-        :height="imgWidth"
-        sizes="100vw sm:100vw md:50vw lg:50vw xl:800px"
-        :alt="imageToShow.altText || node.name"
-        :title="imageToShow.title || node.name"
-        :src="imageToShow.sourceUrl || FALLBACK_IMG"
-        :preload="{ fetchPriority: 'high' }"
-        :img-attrs="{ class: 'h-full w-full object-contain pointer-events-none' }" 
-      />
-
+  :width="imgWidth"
+  :height="imgWidth"
+  sizes="100vw sm:100vw md:50vw lg:50vw xl:800px"
+  :alt="imageToShow.altText || node.name"
+  :title="imageToShow.title || node.name"
+  :src="imageToShow.sourceUrl || FALLBACK_IMG"
+  fetchpriority="high" 
+  decoding="async"
+  loading="eager"
+  
+  :img-attrs="{ class: 'h-full w-full object-contain pointer-events-none' }" 
+/>
       <!-- Visual feedback zones (hidden by default, shown on hover) -->
       <div class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
         <div class="absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-black/5 to-transparent"></div>

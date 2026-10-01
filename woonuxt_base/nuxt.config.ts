@@ -7,8 +7,6 @@ const { resolve } = createResolver(import.meta.url);
 const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 const APP_HOST = process.env.APP_HOST || 'https://much.ma';
 
-const parsedCatalogIsrTtl = Number.parseInt(process.env.CATALOG_ISR_TTL || '3600', 10);
-const catalogIsrTtl = Number.isFinite(parsedCatalogIsrTtl) && parsedCatalogIsrTtl > 0 ? parsedCatalogIsrTtl : 3600;
 
 export default defineNuxtConfig({
   image: {
@@ -68,7 +66,7 @@ export default defineNuxtConfig({
         headers: { Origin: APP_HOST },
         
         tokenStorage: {
-          mode: 'cookie',
+          mode: 'localStorage',
           cookieOptions: {
             name: 'woocommerce-session',
             domain: '.much.ma',       // Parfait pour partager entre much.ma et api.much.ma
