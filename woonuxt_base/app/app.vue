@@ -64,10 +64,24 @@ useHead({
       innerHTML: 'window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };',
     },
     {
-      // Chargement du script Vercel Speed Insights
-      src: 'https://va.vercel-scripts.com/v1/speed-insights/script.js',
-      defer: true,
+  innerHTML: `
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => {
+        var script = document.createElement('script');
+        script.src = 'https://va.vercel-scripts.com/v1/speed-insights/script.js';
+        script.defer = true;
+        document.head.appendChild(script);
+      });
+    } else {
+      setTimeout(() => {
+        var script = document.createElement('script');
+        script.src = 'https://va.vercel-scripts.com/v1/speed-insights/script.js';
+        script.defer = true;
+        document.head.appendChild(script);
+      }, 2000); // Attend 2 secondes que la page soit interactive
     }
+  `
+}
   ],
 
   // 4. ✅ Google Tag Manager : Fallback <noscript> juste après <body>
