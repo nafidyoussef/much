@@ -28,6 +28,14 @@ watch(
 
 useHead({
   // 1. Titre de la page
+   link: [
+    { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
+    { rel: 'dns-prefetch', href: 'https://www.googletagmanager.com' },
+    { rel: 'preconnect', href: 'https://connect.facebook.net' },
+    { rel: 'dns-prefetch', href: 'https://connect.facebook.net' },
+    { rel: 'preconnect', href: 'https://va.vercel-scripts.com' },
+  ],
+
   titleTemplate: `%s`,
   
   // 2. Couleur primaire dynamique
@@ -65,7 +73,7 @@ useHead({
   // 4. ✅ Google Tag Manager : Fallback <noscript> juste après <body>
   noscript: [
     {
-      innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PGQNM7T6" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+      innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PGQNM7T6" height="0" width="0" style="display:none;visibility:hidden" loading="lazy"></iframe>`,
       tagPosition: 'bodyOpen', // ⚠️ Place le code juste après l'ouverture de <body>
     },
   ],
