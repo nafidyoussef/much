@@ -7,7 +7,6 @@ const { resolve } = createResolver(import.meta.url);
 const GQL_HOST = process.env.GQL_HOST || 'https://api.much.ma/graphql';
 const APP_HOST = process.env.APP_HOST || 'https://much.ma';
 
-
 export default defineNuxtConfig({
   image: {
     provider: 'vercel',
@@ -57,7 +56,7 @@ export default defineNuxtConfig({
 
   css: [resolve('./app/assets/css/main.css')],
 
-  runtimeConfig: {
+runtimeConfig: {
  public: {
   'graphql-client': {
     clients: {
@@ -65,17 +64,6 @@ export default defineNuxtConfig({
         host: GQL_HOST,
         headers: { Origin: APP_HOST },
         
-        tokenStorage: {
-          mode: 'localStorage',
-          cookieOptions: {
-            name: 'woocommerce-session',
-            domain: '.much.ma',       // Parfait pour partager entre much.ma et api.much.ma
-            maxAge: 60 * 60 * 24 * 14, // 14 jours (parfait)
-            sameSite: 'none',         // OBLIGATOIRE pour les requêtes fetch cross-sous-domaine sur iOS
-            secure: true,             // OBLIGATOIRE quand sameSite est 'none'
-            path: '/'                 // Bonne pratique pour s'assurer qu'il est envoyé partout
-          }
-        },
         
         fetchOptions: {
           mode: 'cors',
@@ -135,7 +123,7 @@ export default defineNuxtConfig({
     '/': { swr: 3600 },
     '/products/**': { swr: 3600 },
     '/product-category/**': { swr: 3600 },
-    '/product/**': { swr: 3600 }, // ✅ C'est cette ligne qui sauve ta page produit
+    '/product/**': { swr: 9600 }, // ✅ C'est cette ligne qui sauve ta page produit
   },
 
   i18n: {
