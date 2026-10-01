@@ -27,7 +27,7 @@ watch(
 );
 
 useHead({
-  // 1. Titre de la page
+ 
    link: [
     { rel: 'preconnect', href: 'https://www.googletagmanager.com' },
     { rel: 'dns-prefetch', href: 'https://www.googletagmanager.com' },
@@ -35,7 +35,7 @@ useHead({
     { rel: 'dns-prefetch', href: 'https://connect.facebook.net' },
     { rel: 'preconnect', href: 'https://va.vercel-scripts.com' },
   ],
-
+ // 1. Titre de la page
   titleTemplate: `%s`,
   
   // 2. Couleur primaire dynamique

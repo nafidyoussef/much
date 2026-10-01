@@ -17,6 +17,20 @@ export default defineNuxtConfig({
   
   vite: {
     plugins: [tailwindcss()],
+     build: {
+      minify: 'esbuild',
+      target: 'esnext',
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          // ✅ On utilise 'as any' pour contourner l'erreur TypeScript stricte de Rollup
+          manualChunks: {
+            vue: ['vue', 'vue-router', '@vueuse/core'],
+            ui: ['reka-ui', 'tailwind-merge'],
+          } as any, 
+        }
+      }
+    },
     optimizeDeps: {
       include: ['@stripe/stripe-js/pure', '@vue/devtools-core', '@vue/devtools-kit', '@vueuse/core', 'graphql-request', 'graphql-tag', 'reka-ui', 'tailwind-merge', 'workbox-window'],
     },
