@@ -17,19 +17,14 @@ export default defineNuxtConfig({
   
   vite: {
     plugins: [tailwindcss()],
-     build: {
+    build: {
+      // ✅ Minification ultra-rapide et légère
       minify: 'esbuild',
+      // ✅ Cible les navigateurs modernes pour un JS plus concis
       target: 'esnext',
+      // ✅ Sépare le CSS pour un chargement parallèle
       cssCodeSplit: true,
-      rollupOptions: {
-        output: {
-          // ✅ On utilise 'as any' pour contourner l'erreur TypeScript stricte de Rollup
-          manualChunks: {
-            vue: ['vue', 'vue-router', '@vueuse/core'],
-            ui: ['reka-ui', 'tailwind-merge'],
-          } as any, 
-        }
-      }
+      // ❌ manualChunks supprimé pour éviter les conflits avec Rolldown sur Vercel
     },
     optimizeDeps: {
       include: ['@stripe/stripe-js/pure', '@vue/devtools-core', '@vue/devtools-kit', '@vueuse/core', 'graphql-request', 'graphql-tag', 'reka-ui', 'tailwind-merge', 'workbox-window'],
