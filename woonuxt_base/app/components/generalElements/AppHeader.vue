@@ -1,52 +1,66 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-// ✅ 1. État par défaut à TRUE. 
-// Grâce au SSR de Nuxt, le HTML généré aura déjà la classe "visible".
-// Le navigateur l'affichera instantanément, avant même l'hydratation JS.
-const isHeaderVisible = ref(true);
-const isScrolled = ref(false);
 const lastScrollY = ref(0);
+const isScrolled = ref(false);
+const isHeaderVisible = ref(true);
 
-// ✅ 2. Utilisation de requestAnimationFrame pour des performances maximales
-// et éviter la "vibration" du scroll sur mobile.
-let ticking = false;
+// Verrou pour empêcher la boucle de vibration pendant l'animation
+const isTransitioning = ref(false);
 const SCROLL_THRESHOLD = 10;
 
 const handleScroll = () => {
-  if (!ticking) {
-    window.requestAnimationFrame(() => {
-      const currentScrollY = window.scrollY;
-      
-      // Si on est tout en haut de la page
-      if (currentScrollY <= 10) {
-        isHeaderVisible.value = true;
-        isScrolled.value = false;
-      } else {
-        isScrolled.value = true;
-        const scrollDifference = currentScrollY - lastScrollY.value;
+  //  Si une animation est en cours, on ignore TOUT événement de scroll
+  // C'est la clé pour casser la boucle de vibration !
+  if (isTransitioning.value) return;
 
-        // Ignorer les micro-mouvements
-        if (Math.abs(scrollDifference) > SCROLL_THRESHOLD) {
-          if (scrollDifference > 0) {
-            // Scroll vers le BAS -> Cacher
-            isHeaderVisible.value = false;
-          } else {
-            // Scroll vers le HAUT -> Afficher
-            isHeaderVisible.value = true;
-          }
-          lastScrollY.value = currentScrollY;
-        }
-      }
-      ticking = false;
-    });
-    ticking = true;
+  const currentScrollY = window.scrollY;
+  
+  // Si on est tout en haut de la page
+  if (currentScrollY <= 10) {
+    if (!isHeaderVisible.value) {
+      isHeaderVisible.value = true;
+      activerVerrou();
+    }
+    isScrolled.value = false;
+    lastScrollY.value = currentScrollY;
+    return;
   }
+
+  isScrolled.value = true;
+  const scrollDifference = currentScrollY - lastScrollY.value;
+
+  // Ignorer les micro-mouvements
+  if (Math.abs(scrollDifference) < SCROLL_THRESHOLD) {
+    return;
+  }
+
+  if (scrollDifference > 0) {
+    // Scroll vers le BAS
+    if (isHeaderVisible.value) {
+      isHeaderVisible.value = false;
+      activerVerrou();
+    }
+  } else {
+    // Scroll vers le HAUT
+    if (!isHeaderVisible.value) {
+      isHeaderVisible.value = true;
+      activerVerrou();
+    }
+  }
+
+  lastScrollY.value = currentScrollY;
+};
+
+// Fonction pour verrouiller le scroll pendant la durée de la transition CSS + marge de sécurité
+const activerVerrou = () => {
+  isTransitioning.value = true;
+  setTimeout(() => {
+    isTransitioning.value = false;
+  }, 350); // 300ms (durée CSS) + 50ms de marge
 };
 
 onMounted(() => {
-  // Initialiser la position de départ au montage (côté client uniquement)
-  lastScrollY.value = window.scrollY;
   window.addEventListener('scroll', handleScroll, { passive: true });
 });
 
@@ -56,7 +70,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- sticky top-0 garantit qu'il reste en haut, z-40 pour passer au-dessus du contenu -->
   <header class="sticky top-0 left-0 w-full z-40 bg-white border-b border-gray-100 shadow-sm">
     <div class="container px-4 md:px-6">
 
@@ -66,10 +79,10 @@ onUnmounted(() => {
       <div class="lg:hidden">
         
         <!-- Row 1 : Logo et Panier/Compte -->
-        <!-- ✅ Utilisation de translate-y au lieu de max-h-0 pour une animation fluide et sans saut de layout -->
+        <!-- overflow-hidden est crucial pour que max-h-0 fonctionne sans débordement -->
         <div 
-          class="flex items-center justify-between transition-transform duration-300 ease-in-out"
-          :class="(!isHeaderVisible && isScrolled) ? '-translate-y-full' : 'translate-y-0'"
+          class="flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden"
+          :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-1 mb-0'"
         >
           <Logo class="w-28" />
           <div class="flex items-center gap-4">
@@ -77,7 +90,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Row 2 : Menu et Recherche (Toujours visible ou ajustable selon tes besoins) -->
+        <!-- Row 2 : Menu et Recherche -->
         <div class="flex items-center gap-3 py-2">
           <MenuTrigger class="shrink-0" />
           <div class="flex-1">
@@ -88,7 +101,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ========================================== -->
-      <!-- VERSION DESKTOP (Toujours visible)         -->
+      <!-- VERSION DESKTOP (Inchangée)             -->
       <!-- ========================================== -->
       <div class="hidden lg:flex h-20 items-center gap-8">
         <Logo class="w-40 shrink-0" />
