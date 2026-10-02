@@ -60,10 +60,17 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
     '@vite-pwa/nuxt',
-    '@nuxtjs/sitemap', // 1. AJOUT DU MODULE SITEMAP
+    '@nuxtjs/sitemap',
+    'nuxt-delay-hydration'
   ],
-
-  css: [resolve('./app/assets/css/main.css')],
+  delayHydration: {
+    // Mode 'init' est le plus agressif et le plus efficace pour le TBT mobile
+    mode: 'init', 
+    // On exclut le header et les boutons d'achat pour qu'ils restent interactifs tout de suite
+    exclude: ['AppHeader', 'AddToCartButton', 'CartTrigger']
+  }
+,
+css: [resolve('./app/assets/css/main.css')],
 
 runtimeConfig: {
  public: {
