@@ -313,7 +313,6 @@ const jsonLdSchema = computed(() => {
 useHead({
   link: [
     { rel: 'canonical', href: canonicalUrl },
-    { rel: 'preconnect', href: 'https://i0.wp.com' },
     { rel: 'dns-prefetch', href: 'https://api.much.ma' },
   ],
   script: [{ type: 'application/ld+json', innerHTML: jsonLdSchema }]
