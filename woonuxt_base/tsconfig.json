@@ -15,5 +15,5 @@
     "types": ["@nuxt/image", "@nuxtjs/i18n"],
     "strict": true
   },
-  "include": ["../.nuxt/nuxt.d.ts", "../.nuxt/types/**/*.d.ts", "../.nuxt/imports.d.ts", "./app/**/*", "./**/*.ts", "./**/*.vue"]
+  "include": ["../.nuxt/nuxt.d.ts", "../.nuxt/types/**/*.d.ts", "../.nuxt/imports.d.ts", "./app/**/*", "./**/*.ts", "./**/*.vue", "server"]
 }
