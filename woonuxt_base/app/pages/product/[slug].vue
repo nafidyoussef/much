@@ -319,27 +319,21 @@ useHead({
   script: [{ type: 'application/ld+json', innerHTML: jsonLdSchema }]
 });
 onMounted(() => {
-  // On attend 500ms. Si l'utilisateur ferme l'onglet avant, ce code ne s'exécute pas.
-  // 500ms est largement suffisant pour que le navigateur ait fini d'afficher le HTML/CSS critique.
   setTimeout(() => {
-    
-    // ✅ navigator.sendBeacon est LA méthode magique pour ce cas d'usage.
-    // Contrairement à fetch ou axios, sendBeacon garantit que la requête sera 
-    // envoyée au serveur MÊME SI l'utilisateur ferme l'onglet ou l'application 
-    // Facebook immédiatement après.
-    const payload = JSON.stringify({
+    const payloadData = {
       slug: route.params.slug,
-      timestamp: Date.now(),
       utm_source: route.query.utm_source,
       utm_campaign: route.query.utm_campaign
-    })
+    };
 
-    // Remplace '/api/log-view' par un petit endpoint Nuxt (server/api/log-view.post.ts) 
-    // qui enregistre juste cette info dans ta base de données ou tes logs.
-    navigator.sendBeacon('/api/log-view', payload)
+    // ✅ CRUCIAL : Envelopper dans un Blob en tant qu'application/json
+    // Cela force le navigateur à envoyer les bons headers pour que Nuxt puisse faire readBody()
+    const blob = new Blob([JSON.stringify(payloadData)], { type: 'application/json' });
     
-  }, 500) 
-})
+    navigator.sendBeacon('/api/log-view', blob);
+    
+  }, 500);
+});
 /*const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
 const currentUrl = import.meta.client ? window.location.href : '';
 const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;

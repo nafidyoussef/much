@@ -1,15 +1,17 @@
 export default defineEventHandler(async (event) => {
   try {
+    // readBody va maintenant correctement parser le JSON grâce au Blob
     const body = await readBody(event);
     
-    // ✅ Indicateur simple et direct dans les logs Vercel
-    console.log(`VUE CONFIRMÉE | Source: ${body.utm_source || 'inconnue'} | Slug: ${body.slug || 'inconnu'}`);
+    // Extraction sécurisée avec des valeurs par défaut
+    const slug = body?.slug || 'inconnu';
+    const utm_source = body?.utm_source || 'inconnue';
+
+    console.log(`✅ VUE CONFIRMÉE | Source: ${utm_source} | Slug: ${slug}`);
     
-    // 204 No Content : dit au navigateur "c'est reçu, libère les ressources"
     return { status: 204 };
-    
   } catch (error) {
-    console.error('Erreur log-view:', error);
+    console.error('❌ Erreur log-view:', error);
     return { status: 500 };
   }
 });
