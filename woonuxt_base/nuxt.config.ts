@@ -13,7 +13,11 @@ export default defineNuxtConfig({
     domains: ['api.much.ma'],
   },
   compatibilityDate: '2026-07-10',
-  experimental: { appManifest: false, asyncContext: true },
+  experimental: {
+  payloadExtraction: false, // ✅ no more _payload.json requests
+  appManifest: false,
+  asyncContext: true,
+},
   
   vite: {
     plugins: [tailwindcss()],
