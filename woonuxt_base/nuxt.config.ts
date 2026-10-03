@@ -38,6 +38,21 @@ export default defineNuxtConfig({
         { rel: 'icon', href: '/logo.png', type: 'image/png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
       ],
+       meta: [
+      {
+        'http-equiv': 'Content-Security-Policy',
+        content: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://va.vercel-scripts.com",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: https:",
+          "font-src 'self' data:",
+          "connect-src 'self' https://api.much.ma https://www.google-analytics.com https://connect.facebook.net https://www.googletagmanager.com",
+          "frame-src 'self' https://www.googletagmanager.com",
+          "manifest-src 'self'",
+        ].join('; '),
+      },
+    ],
     },
   },
 

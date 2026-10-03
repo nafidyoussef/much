@@ -28,6 +28,7 @@ watch([isShowingCart, isShowingMobileMenu], () => {
 
 watch(() => route.path, () => closeCartAndMenu());
 
+
 // ============================================================
 // ✅ ANALYTICS — Loaded AFTER hydration / first interaction
 // ============================================================
