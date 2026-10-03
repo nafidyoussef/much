@@ -133,7 +133,7 @@ announcementText: process.env.PUBLIC_ANNOUNCEMENT_TEXT || "Livraison rapide part
     '/': { swr: 3600 },
     '/products/**': { swr: 3600 },
     '/product-category/**': { swr: 3600 },
-    '/product/**': { swr: 9600 }, // ✅ C'est cette ligne qui sauve ta page produit
+    '/product/**': { isr: 9600 }, // ✅ C'est cette ligne qui sauve ta page produit
   },
 
   i18n: {
