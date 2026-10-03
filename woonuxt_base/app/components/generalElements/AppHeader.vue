@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
+
+const announcementText = "🚚 Livraison à 19 DH et GRATUITE à partir de 199 DH !" ;
+
 const lastScrollY = ref(0);
 const isScrolled = ref(false);
 const isHeaderVisible = ref(true);
@@ -10,13 +13,10 @@ const isTransitioning = ref(false);
 const SCROLL_THRESHOLD = 10;
 
 const handleScroll = () => {
-  //  Si une animation est en cours, on ignore TOUT événement de scroll
-  // C'est la clé pour casser la boucle de vibration !
   if (isTransitioning.value) return;
 
   const currentScrollY = window.scrollY;
   
-  // Si on est tout en haut de la page
   if (currentScrollY <= 10) {
     if (!isHeaderVisible.value) {
       isHeaderVisible.value = true;
@@ -30,19 +30,16 @@ const handleScroll = () => {
   isScrolled.value = true;
   const scrollDifference = currentScrollY - lastScrollY.value;
 
-  // Ignorer les micro-mouvements
   if (Math.abs(scrollDifference) < SCROLL_THRESHOLD) {
     return;
   }
 
   if (scrollDifference > 0) {
-    // Scroll vers le BAS
     if (isHeaderVisible.value) {
       isHeaderVisible.value = false;
       activerVerrou();
     }
   } else {
-    // Scroll vers le HAUT
     if (!isHeaderVisible.value) {
       isHeaderVisible.value = true;
       activerVerrou();
@@ -52,12 +49,11 @@ const handleScroll = () => {
   lastScrollY.value = currentScrollY;
 };
 
-// Fonction pour verrouiller le scroll pendant la durée de la transition CSS + marge de sécurité
 const activerVerrou = () => {
   isTransitioning.value = true;
   setTimeout(() => {
     isTransitioning.value = false;
-  }, 350); // 300ms (durée CSS) + 50ms de marge
+  }, 350);
 };
 
 onMounted(() => {
@@ -71,18 +67,23 @@ onUnmounted(() => {
 
 <template>
   <header class="sticky top-0 left-0 w-full z-40 bg-white border-b border-gray-100 shadow-sm">
+    
+    <!-- ✅ 2. BARRE D'ANNONCE (S'affiche uniquement si le texte est défini) -->
+    <div v-if="announcementText" class="bg-[#ff4f24] text-white text-xs md:text-sm font-bold text-center py-1 px-6 tracking-wide">
+      {{ announcementText }}
+    </div>
+
     <div class="container px-4 md:px-6">
 
       <!-- ========================================== -->
-      <!-- VERSION MOBILE                           -->
+      <!-- VERSION MOBILE                             -->
       <!-- ========================================== -->
       <div class="lg:hidden">
         
         <!-- Row 1 : Logo et Panier/Compte -->
-        <!-- overflow-hidden est crucial pour que max-h-0 fonctionne sans débordement -->
         <div 
           class="flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden"
-          :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-1 mb-0'"
+          :class="!isHeaderVisible && isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-2 mb-0'"
         >
           <Logo class="w-28" />
           <div class="flex items-center gap-4">
@@ -101,7 +102,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ========================================== -->
-      <!-- VERSION DESKTOP (Inchangée)             -->
+      <!-- VERSION DESKTOP                            -->
       <!-- ========================================== -->
       <div class="hidden lg:flex h-20 items-center gap-8">
         <Logo class="w-40 shrink-0" />

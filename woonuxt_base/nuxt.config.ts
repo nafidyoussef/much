@@ -66,6 +66,7 @@ export default defineNuxtConfig({
 css: [resolve('./app/assets/css/main.css')],
 
 runtimeConfig: {
+announcementText: process.env.PUBLIC_ANNOUNCEMENT_TEXT || "Livraison rapide partout au Maroc",
  public: {
   'graphql-client': {
     clients: {
@@ -255,6 +256,5 @@ runtimeConfig: {
       }
     },
   },
-
 
 });
