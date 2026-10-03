@@ -110,20 +110,28 @@ useHead({
 </script>
 
 <template>
+  <NuxtPwaManifest />
+  <NuxtLoadingIndicator />
+  
   <div class="flex flex-col min-h-screen">
-    <!-- ✅ 1. Header renders FIRST, no async wrapper -->
+    <!-- ✅ 1. Le Header s'affiche IMMÉDIATEMENT -->
     <AppHeader />
 
-    <!-- ✅ 2. Cart/Menu are lazy — they don't block header -->
-    <LazyCart v-if="isShowingCart" />
-    <LazyMobileMenu v-if="isShowingMobileMenu" />
+    <Transition name="slide-from-right">
+      <Cart v-if="isShowingCart" />
+    </Transition>
 
-    <!-- ✅ 3. Only the PAGE is async-wrapped, not the whole app -->
+    <Transition name="slide-from-left">
+      <MobileMenu v-if="isShowingMobileMenu" />
+    </Transition>
+
+    <!-- ✅ 2. Suspense empêche la page produit de bloquer le Header -->
     <Suspense>
       <template #default>
         <NuxtPage />
       </template>
       <template #fallback>
+        <!-- Fallback global optionnel (ton skeleton de page produit peut aussi le gérer) -->
         <div class="container py-6 flex-1 animate-pulse">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div class="aspect-square bg-gray-200 rounded-xl"></div>
@@ -136,23 +144,20 @@ useHead({
       </template>
     </Suspense>
 
-    <div
-      v-if="isShowingCart || isShowingMobileMenu"
-      class="bg-black opacity-25 inset-0 z-40 fixed"
-      @click="closeCartAndMenu"
-    ></div>
-
+    <Transition name="fade">
+      <div v-if="isShowingCart || isShowingMobileMenu" class="bg-black opacity-25 inset-0 z-40 fixed" @click="closeCartAndMenu"></div>
+    </Transition>
+    
     <AppFooter />
     <AppToolBar />
   </div>
 </template>
-
 <style>
 @reference "#tailwind";
 
 html,
 body {
-  @apply text-gray-900;
+  @apply  text-gray-900;
   scroll-behavior: auto;
 }
 
@@ -215,8 +220,13 @@ pre {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar-track,
@@ -229,18 +239,33 @@ pre {
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0.001; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0.001;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeDisabledIn {
-  0% { opacity: 0.001; }
-  100% { opacity: 0.7; }
+  0% {
+    opacity: 0.001;
+  }
+
+  100% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  100% { opacity: 0.001; }
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.001;
+  }
 }
 
 .page-enter-active,
@@ -266,8 +291,12 @@ pre {
 }
 
 @keyframes skelaton {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 img.skeleton {
@@ -330,12 +359,12 @@ input[type='radio']:after {
 input[type='checkbox']:checked:after,
 input[type='checkbox'] + label,
 input[type='radio'] + label {
-  @apply cursor-pointer text-gray-600 hover:text-primary;
+  @apply cursor-pointer text-gray-600  hover:text-primary;
 }
 
 input[type='checkbox']:checked + label,
 input[type='radio']:checked + label {
-  @apply text-gray-800 hover:text-primary-dark;
+  @apply text-gray-800  hover:text-primary-dark;
 }
 
 input[type='checkbox']:checked,
