@@ -344,15 +344,21 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
     
     <!-- ✅ 2. SKELETON LOADER : S'affiche INSTANTANÉMENT pendant le chargement -->
     <div v-if="pending" class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24 animate-pulse">
-      <!-- Skeleton Image -->
-      <div class="relative w-full min-w-0">
-        <div class="aspect-square w-full rounded-xl bg-gray-200"></div>
-        <div class="flex gap-2 mt-4">
-          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
-          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
-          <div class="w-16 h-16 rounded-lg bg-gray-200"></div>
-        </div>
-      </div>
+      <!-- Skeleton Image - 4 positions statiques, rapide et prévisible -->
+<div class="relative w-full min-w-0">
+  <!-- Image principale -->
+  <div class="aspect-square w-full overflow-hidden rounded-xl bg-gray-100">
+    <div class="h-full w-full animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200"></div>
+  </div>
+
+  <!-- 4 thumbnails statiques (pas de calcul, pas de v-if) -->
+  <div class="flex gap-2 mt-4">
+    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+  </div>
+</div>
 
       <!-- Skeleton Détails -->
       <div class="w-full min-w-0 md:py-2 space-y-6">
