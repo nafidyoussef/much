@@ -26,7 +26,7 @@ const selectedPaymentMethodId = computed<string>(() => resolvePaymentMethodId(or
 const isInvalidEmail = ref<boolean>(false);
 const isInvalidPhone = ref<boolean>(false);
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const phoneRegex = /^(?:\+?212|0)[5-7]\d{8}$/;
+const phoneRegex = /^(?:(?:\+|00)212[-\s.]?|0[-\s.]?)[5-7](?:[-\s.]?\d){8}$/;
 
 // --- État Local du Formulaire ---
 const formData = reactive({
