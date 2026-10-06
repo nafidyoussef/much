@@ -1,7 +1,12 @@
 [
+  {"id":1,"displayName":"CASABLANCA - الدار البيضاء","name":"CASABLANCA","aliases":["Casablanca","MECHOUAR DE CASABLANCA","LAHRAOUYINE","Casa","CASA - HAY MOHAMMADI","CASA - HABOUS","CASA - RAHMA","CASA - MOULAY RACHID","CASA - SIDI BERNOUSSI","CASA - DAR BOUAZZA","CASA - EL FIDA","CASA - ABDELMOUMEN","CASA - LA GIRONDE","CASA - ANASSI","CASA - SIDI OTHMANE","CASA - SIDI BELYOUT","CASA - HAY HASSANI","CASA - SIDI MAAROUF","CASA - AIN CHOK","CASA - MAARIF","CASA - DERB GHALLEF","CASA - EMILE ZOLA","CASA - BOURGOGNE","CASA - AIN DIAB","CASA - ANFA","CASA - OASIS","CASA - BEN MSICK","CASA - MERS SULTAN","CASA - OULFA","CASA - LISSASFA","CASA - AIN SEBAA","CASA - ROCHES NOIRES","CASA - SIDI MOUMEN"]},
+  {"id":3,"displayName":"Rabat - الرباط","name":"Rabat","aliases":["Rabat","RABAT - YOUSSOUFIA","RABAT - KEBIBAT","RABAT - AKKARI","RABAT - AL MASSIRA","RABAT - TAKADDOUM","RABAT - LES AMBASSADEURS","RABAT - OCEAN","RABAT - MEDINA","RABAT - CENTRE VILLE","RABAT - MABILLA","RABAT - AVIATION","RABAT - YACOUB EL MANSOUR","RABAT - AGDAL","RABAT - MADINAT AL IRFANE","RABAT - ENNAHDA","RABAT - HAY RIAD","RABAT - SOUISSI","RABAT - LES ORANGERS","RABAT - HAY EL FATH","RABAT - DIOUR JAMAA","RABAT - HASSAN","RABAT - EL MENZEH","KASBAT OUDAYA","RABAT - OCEAN","RABAT - MEDINA"]},
+  {"id":2,"displayName":"MARRAKECH - مراكش","name":"MARRAKECH","aliases":["Marrakech","MARRAKECH - LA PALMERAIE","MARRAKECH - AIN ITTI","MARRAKECH-ANCIENNE MEDINA","MARRAKECH - SIDI GHANEM","MARRAKECH - DAOUDIATE","MARRAKECH - AZLI","MARRAKECH - MHAMID","MARRAKECH - AZZOUZIA","MARRAKECH - TARGA","MARRAKECH - SIDI ABBAD","MARRAKECH - SEMLALIA","MARRAKECH - GUELIZ","MARRAKECH - MASSIRA","MARRAKECH - AIN MEZOUAR","MARRAKECH - SAADA","LES PORTES DE MARRAKESH"]},
+  {"id":18,"displayName":"Tanger - طنجة","name":"Tanger","aliases":["Tanger","TANGER - AL AOUAMA","TANGER - DRADEB","TANGER - COMPLEXE HASSANI","TANGER - BNI MAKADA","TANGER - MESSNANA","TANGER - CENTRE VILLE","TANGER - BRANESSE","TANGER - MGHOGHA","TANGER - GZENAYA","TANGER - SIDI DRISS","TANGER - IBERIA","TANGER - MALABATA","TANGER - BOUKHALEF","TANJA LBALIA","GZENAYA","Gueznaia"]},
+ {"id":10,"displayName":"AGADIR - أكادير","name":"AGADIR","aliases":["Agadir","AGADIR - AIT SOUSS","AGADIR - FOUNTY","AGADIR - VILLE NOUVELLE","AGADIR - DAKHLA","AGADIR - TILILA","AGADIR - TASSILA","AGADIR - HAY MOHAMMADI","AGADIR - DOUAR AHLAKA","AGADIR - EL HOUDA","AGADIR - RIAD ASSALAM","AGADIR - CHARAF","AGADIR - TALBORJT","AGADIR - AEREPORT","AGADIR - BENSERGAO","AGADIR - MELLOUL","TIKIOUINE"]},
   {"id":799,"displayName":"ADDISS- TATA - أضيس تاتا","name":"ADDISS- TATA","aliases":["ADISS","ADIS"]},
   {"id":433,"displayName":"AFOURER - أفورار","name":"AFOURER","aliases":["Afourer Copy (-394860207)","AFOURAR"]},
-  {"id":10,"displayName":"AGADIR - أكادير","name":"AGADIR","aliases":["Agadir","AGADIR - AIT SOUSS","AGADIR - FOUNTY","AGADIR - VILLE NOUVELLE","AGADIR - DAKHLA","AGADIR - TILILA","AGADIR - TASSILA","AGADIR - HAY MOHAMMADI","AGADIR - DOUAR AHLAKA","AGADIR - EL HOUDA","AGADIR - RIAD ASSALAM","AGADIR - CHARAF","AGADIR - TALBORJT","AGADIR - AEREPORT","AGADIR - BENSERGAO","AGADIR - MELLOUL","TIKIOUINE"]},
+  
   {"id":469,"displayName":"AGAFAY - أكفاي","name":"AGAFAY","aliases":["Agafay"]},
   {"id":211,"displayName":"AGDZ - أڭدز","name":"AGDZ","aliases":["Agdz"]},
   {"id":1008,"displayName":"AGHBAL- BERKANE - أغبال بركان","name":"AGHBAL- BERKANE","aliases":[]},
@@ -158,7 +163,7 @@
   {"id":877,"displayName":"BRIKCHA-CHEFCHAOUEN - بريكة شفشاون","name":"BRIKCHA-CHEFCHAOUEN","aliases":["BRIKCHA-CHEFCHAOUEN","Brikcha"]},
   {"id":656,"displayName":"Cabo Negro - كابو نيغرو","name":"Cabo Negro","aliases":["Cabo Negro","CABO NIGRO"]},
   {"id":824,"displayName":"CAFEMAURE - كافا مور","name":"CAFEMAURE","aliases":["CAFEMAURE"]},
-  {"id":1,"displayName":"CASABLANCA - الدار البيضاء","name":"CASABLANCA","aliases":["Casablanca","MECHOUAR DE CASABLANCA","LAHRAOUYINE","Casa","CASA - HAY MOHAMMADI","CASA - HABOUS","CASA - RAHMA","CASA - MOULAY RACHID","CASA - SIDI BERNOUSSI","CASA - DAR BOUAZZA","CASA - EL FIDA","CASA - ABDELMOUMEN","CASA - LA GIRONDE","CASA - ANASSI","CASA - SIDI OTHMANE","CASA - SIDI BELYOUT","CASA - HAY HASSANI","CASA - SIDI MAAROUF","CASA - AIN CHOK","CASA - MAARIF","CASA - DERB GHALLEF","CASA - EMILE ZOLA","CASA - BOURGOGNE","CASA - AIN DIAB","CASA - ANFA","CASA - OASIS","CASA - BEN MSICK","CASA - MERS SULTAN","CASA - OULFA","CASA - LISSASFA","CASA - AIN SEBAA","CASA - ROCHES NOIRES","CASA - SIDI MOUMEN"]},
+  
   {"id":688,"displayName":"CHEFCHAOUEN - شفشاون","name":"CHEFCHAOUEN","aliases":["CHEFCHAOUEN"]},
   {"id":952,"displayName":"CHELLALAT - شلالات","name":"CHELLALAT","aliases":["ECH-CHALLALATE","CHELLALAT"]},
   {"id":61,"displayName":"CHEMAIA - الشماية","name":"CHEMAIA","aliases":["Chemaia","CHMAIA","Echemmaia"]},
@@ -320,7 +325,6 @@
   {"id":422,"displayName":"madagh - مداغ","name":"madagh","aliases":["MADAGH"]},
   {"id":943,"displayName":"MARINA BEACH - مارينا بيتش","name":"MARINA BEACH","aliases":[]},
   {"id":683,"displayName":"MARINA SMIR - مارينا سميّر","name":"MARINA SMIR","aliases":["MARINA SMIR"]},
-  {"id":2,"displayName":"MARRAKECH - مراكش","name":"MARRAKECH","aliases":["Marrakech","MARRAKECH - LA PALMERAIE","MARRAKECH - AIN ITTI","MARRAKECH-ANCIENNE MEDINA","MARRAKECH - SIDI GHANEM","MARRAKECH - DAOUDIATE","MARRAKECH - AZLI","MARRAKECH - MHAMID","MARRAKECH - AZZOUZIA","MARRAKECH - TARGA","MARRAKECH - SIDI ABBAD","MARRAKECH - SEMLALIA","MARRAKECH - GUELIZ","MARRAKECH - MASSIRA","MARRAKECH - AIN MEZOUAR","MARRAKECH - SAADA","LES PORTES DE MARRAKESH"]},
   {"id":25,"displayName":"Martil - مرتيل","name":"Martil","aliases":["Martil"]},
   {"id":707,"displayName":"MASMOUDA - مسمودة","name":"MASMOUDA","aliases":["MASMOUDA"]},
   {"id":618,"displayName":"MASSA - massa","name":"MASSA","aliases":["MASSA"]},
@@ -416,7 +420,7 @@
   {"id":920,"displayName":"Ourtzagh - أورتزاغ","name":"Ourtzagh","aliases":["OURTZAGH"]},
   {"id":610,"displayName":"Outat El Haj - أوتات الحاج","name":"Outat El Haj","aliases":["Outat El Hajj","EL ORJANE"]},
   {"id":621,"displayName":"Ouzoud - أوزود","name":"Ouzoud","aliases":["Ouzoud"]},
-  {"id":3,"displayName":"Rabat - الرباط","name":"Rabat","aliases":["Rabat","RABAT - YOUSSOUFIA","RABAT - KEBIBAT","RABAT - AKKARI","RABAT - AL MASSIRA","RABAT - TAKADDOUM","RABAT - LES AMBASSADEURS","RABAT - OCEAN","RABAT - MEDINA","RABAT - CENTRE VILLE","RABAT - MABILLA","RABAT - AVIATION","RABAT - YACOUB EL MANSOUR","RABAT - AGDAL","RABAT - MADINAT AL IRFANE","RABAT - ENNAHDA","RABAT - HAY RIAD","RABAT - SOUISSI","RABAT - LES ORANGERS","RABAT - HAY EL FATH","RABAT - DIOUR JAMAA","RABAT - HASSAN","RABAT - EL MENZEH","KASBAT OUDAYA","RABAT - OCEAN","RABAT - MEDINA"]},
+ 
   {"id":459,"displayName":"Ras El Ain - رأس العين","name":"Ras El Ain","aliases":["Ras El Ain"]},
   {"id":866,"displayName":"RAS EL AIN-SETTAT R - رأس العين سطات","name":"RAS EL AIN-SETTAT R","aliases":["RAS AIN RHAMNA"]},
   {"id":420,"displayName":"Ras lma - رأس الماء","name":"Ras lma","aliases":["RAS EL MA","Ras lma"]},
@@ -518,7 +522,6 @@
   {"id":936,"displayName":"TAMRI - تامري","name":"TAMRI","aliases":["TAMRI"]},
   {"id":1015,"displayName":"TAMSAMAN-NADOR - تامسمان الناظور","name":"TAMSAMAN-NADOR","aliases":["TAMSAMAN-NADOR"]},
   {"id":623,"displayName":"TANANTE-AZILAL - تاننت أزيلال","name":"TANANTE-AZILAL","aliases":["tanante","TANANT"]},
-  {"id":18,"displayName":"Tanger - طنجة","name":"Tanger","aliases":["Tanger","TANGER - AL AOUAMA","TANGER - DRADEB","TANGER - COMPLEXE HASSANI","TANGER - BNI MAKADA","TANGER - MESSNANA","TANGER - CENTRE VILLE","TANGER - BRANESSE","TANGER - MGHOGHA","TANGER - GZENAYA","TANGER - SIDI DRISS","TANGER - IBERIA","TANGER - MALABATA","TANGER - BOUKHALEF","TANJA LBALIA","GZENAYA","Gueznaia"]},
   {"id":884,"displayName":"TANSIKHTE - تانسيخت","name":"TANSIKHTE","aliases":["TANSIKHTE"]},
   {"id":178,"displayName":"TANTAN - طانطان","name":"TANTAN","aliases":["Tan Tan","TANTAN"]},
   {"id":98,"displayName":"Taounate - تاونات","name":"Taounate","aliases":["Taounate"]},
