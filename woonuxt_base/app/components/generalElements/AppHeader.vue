@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 
-const announcementText = "🚚 Livraison à 19 DH et GRATUITE à partir de 199 DH !" ;
+const announcementText = "🚚 Livraison à 19 DH et GRATUITE à partir de 199 DH" ;
 
 const lastScrollY = ref(0);
 const isScrolled = ref(false);
