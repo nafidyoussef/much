@@ -13,7 +13,6 @@ const { formatProduct, track } = useTracking();
 const slug = route.params.slug as string;
 
 // ✅ 1. PAS DE 'AWAIT' ICI : Cela permet au composant de rendre le Skeleton immédiatement
-// pendant que la requête GraphQL s'exécute en arrière-plan.
 const { data, error, pending } = useAsyncGql('getProduct', { slug, frontEndUrl });
 
 // On utilise un computed pour que 'product' soit réactif dès que 'data' arrive
@@ -206,6 +205,41 @@ const savingsAmount = computed(() => {
 });
 
 // ==========================================
+// 🔥 LOGIQUE VENTE FLASH & COMPTE À REBOURS
+// ==========================================
+const isFlashSale = computed(() => {
+  const categories = product.value?.productCategories?.nodes || [];
+  return categories.some(cat => 
+    cat.slug?.toLowerCase().includes('vente-flash') || 
+    cat.name?.toLowerCase().includes('vente flash')
+  );
+});
+
+const timeLeft = ref({ hours: 16, minutes: 50, seconds: 56 });
+let timerInterval: ReturnType<typeof setInterval> | null = null;
+
+const startFlashSaleCountdown = () => {
+  let totalSeconds = (timeLeft.value.hours * 3600) + (timeLeft.value.minutes * 60) + timeLeft.value.seconds;
+  
+  timerInterval = setInterval(() => {
+    if (totalSeconds > 0) {
+      totalSeconds--;
+      timeLeft.value.hours = Math.floor(totalSeconds / 3600);
+      timeLeft.value.minutes = Math.floor((totalSeconds % 3600) / 60);
+      timeLeft.value.seconds = totalSeconds % 60;
+    } else {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+  }, 1000);
+};
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval);
+});
+// ==========================================
+
+
+// ==========================================
 // TRACKING GA4
 // ==========================================
 let hasTrackedViewItem = false;
@@ -317,6 +351,7 @@ useHead({
   ],
   script: [{ type: 'application/ld+json', innerHTML: jsonLdSchema }]
 });
+
 onMounted(() => {
   setTimeout(() => {
     const payloadData = {
@@ -325,18 +360,15 @@ onMounted(() => {
       utm_campaign: route.query.utm_campaign
     };
 
-    // ✅ CRUCIAL : Envelopper dans un Blob en tant qu'application/json
-    // Cela force le navigateur à envoyer les bons headers pour que Nuxt puisse faire readBody()
     const blob = new Blob([JSON.stringify(payloadData)], { type: 'application/json' });
-    
     navigator.sendBeacon('/api/log-view', blob);
-    
   }, 500);
+
+  // 🔥 Démarrer le compte à rebours si c'est une vente flash
+  if (isFlashSale.value) {
+    startFlashSaleCountdown();
+  }
 });
-/*const whatsappNumber = process.env.WTSP_PHONE || '212660612098';
-const currentUrl = import.meta.client ? window.location.href : '';
-const whatsappMessage = `Bonjour, je suis intéressé par ce produit : ${product.value?.name} - ${currentUrl}`;
-const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`);**/
 </script>
 
 <template>
@@ -344,55 +376,44 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
     
     <!-- ✅ 2. SKELETON LOADER : S'affiche INSTANTANÉMENT pendant le chargement -->
     <div v-if="pending" class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,34rem)] lg:gap-24 animate-pulse">
-      <!-- Skeleton Image - 4 positions statiques, rapide et prévisible -->
-<div class="relative w-full min-w-0">
-  <!-- Image principale -->
-  <div class="aspect-square w-full overflow-hidden rounded-xl bg-gray-100">
-    <div class="h-full w-full animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200"></div>
-  </div>
-
-  <!-- 4 thumbnails statiques (pas de calcul, pas de v-if) -->
-  <div class="flex gap-2 mt-4">
-    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
-    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
-    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
-    <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
-  </div>
-</div>
+      <!-- Skeleton Image -->
+      <div class="relative w-full min-w-0">
+        <div class="aspect-square w-full overflow-hidden rounded-xl bg-gray-100">
+          <div class="h-full w-full animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200"></div>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+          <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+          <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+          <div class="aspect-square w-20 shrink-0 rounded-lg bg-gray-100 animate-pulse"></div>
+        </div>
+      </div>
 
       <!-- Skeleton Détails -->
       <div class="w-full min-w-0 md:py-2 space-y-6">
-        <!-- Titre -->
         <div class="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
-        <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div> <!-- Étoiles -->
-        
-        <!-- Prix et Stock -->
+        <div class="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
         <div class="flex justify-between items-start">
           <div class="space-y-2">
             <div class="h-4 bg-gray-200 rounded w-24"></div>
             <div class="h-4 bg-gray-200 rounded w-20"></div>
           </div>
-          <div class="h-10 bg-gray-200 rounded w-32"></div> <!-- Prix -->
+          <div class="h-10 bg-gray-200 rounded w-32"></div>
         </div>
-
-        <!-- Description -->
         <div class="space-y-2 pt-4">
           <div class="h-4 bg-gray-200 rounded w-full"></div>
           <div class="h-4 bg-gray-200 rounded w-5/6"></div>
           <div class="h-4 bg-gray-200 rounded w-4/6"></div>
         </div>
-
         <hr class="border-gray-200" />
-
-        <!-- Formulaire Skeleton -->
         <div class="space-y-4 pt-2">
-          <div class="h-10 bg-gray-200 rounded w-full"></div> <!-- Attributs -->
+          <div class="h-10 bg-gray-200 rounded w-full"></div>
           <div class="flex gap-3">
-            <div class="h-11 bg-gray-200 rounded w-28"></div> <!-- Quantité -->
-            <div class="h-11 bg-gray-200 rounded flex-1"></div> <!-- Bouton Ajouter -->
+            <div class="h-11 bg-gray-200 rounded w-28"></div>
+            <div class="h-11 bg-gray-200 rounded flex-1"></div>
           </div>
-          <div class="h-12 bg-gray-200 rounded w-full"></div> <!-- Bouton Acheter -->
-       </div>
+          <div class="h-12 bg-gray-200 rounded w-full"></div>
+        </div>
       </div>
     </div>
 
@@ -427,15 +448,40 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
 
         <div class="w-full min-w-0 md:py-2">
           <HookOutlet name="product.summary.beforeTitle" :ctx="{ product: displayProduct }" as="div" />
+          
           <div class="mb-6">
+           
+
             <div class="mb-4">
-              <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight">
+              <span class="flex flex-wrap items-center gap-2 font-bold text-gray-900 leading-tight text-2xl md:text-3xl">
                 {{ displayProduct.name }}
                 <LazyWPAdminLink :link="`/wp-admin/post.php?post=${product.databaseId}&action=edit`" class="text-xs text-gray-400 hover:text-primary">Edit</LazyWPAdminLink>
               </span>
               <StarRating v-if="storeSettings.showReviews" :rating="averageRating" :count="reviewCount" class="mt-1.5" />
             </div>
-
+ <!-- ✅ NOUVEAU : Badge et Compte à rebours Vente Flash -->
+            <div v-if="isFlashSale" class="flex flex-wrap items-center gap-3 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <span class="bg-red-600 text-white text-xs font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm animate-pulse">
+                🔥 Vente Flash
+              </span>
+              <div class="flex items-center gap-1.5 text-red-700 font-bold font-mono text-lg md:text-xl">
+                <span class="bg-white px-2.5 py-1 rounded-md shadow-sm border border-red-100 min-w-[2.5rem] text-center">
+                  {{ String(timeLeft.hours).padStart(2, '0') }}
+                </span>
+                <span class="text-red-400">:</span>
+                <span class="bg-white px-2.5 py-1 rounded-md shadow-sm border border-red-100 min-w-[2.5rem] text-center">
+                  {{ String(timeLeft.minutes).padStart(2, '0') }}
+                </span>
+                <span class="text-red-400">:</span>
+                <span class="bg-white px-2.5 py-1 rounded-md shadow-sm border border-red-100 min-w-[2.5rem] text-center text-red-600">
+                  {{ String(timeLeft.seconds).padStart(2, '0') }}
+                </span>
+              </div>
+              <span class="text-xs text-red-600 font-medium ml-auto hidden sm:block">
+                Offre limitée dans le temps !
+              </span>
+            </div>
+            <!-- ✅ FIN VENTE FLASH -->
             <div class="flex flex-row justify-between items-start">
               <div class="flex flex-col gap-1.5 text-sm">
                 <div v-if="!isExternalProduct" class="flex items-center gap-2">
@@ -547,7 +593,7 @@ const whatsappLink = computed(() => `https://wa.me/${whatsappNumber}?text=${enco
       </div>
     </div>
 
-    <!-- ✅ 4. GESTION D'ERREUR (Seulement si le chargement est terminé et qu'il y a une erreur) -->
+    <!-- ✅ 4. GESTION D'ERREUR -->
     <div v-else-if="!pending && error" class="my-24 text-center text-gray-500">
       {{ productLoadError }}
     </div>
