@@ -49,9 +49,7 @@ const formData = reactive({
 });
 
 // --- Villes du Maroc ---
-const MOROCCAN_CITIES = (moroccanCitiesData as any[]).sort((a, b) => 
-  a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' })
-);
+const MOROCCAN_CITIES = moroccanCitiesData as any[];
 
 // --- Logique de Recherche de Ville ---
 // --- Logique de Recherche de Ville ---
@@ -133,17 +131,17 @@ const filteredCities = computed(() => {
 const selectCity = (city: any, isShipping = false) => {
   if (isShipping) {
     formData.shipping.city = city.name;
-    shippingCitySearch.value = city.displayName; // ✅ Affiche seulement ici
+    shippingCitySearch.value = city.displayName; // Affiche seulement ici
     shippingSearchQuery.value = ''; // Reset recherche
     showShippingCityDropdown.value = false;
   } else {
     formData.billing.city = city.name;
-    citySearch.value = city.displayName; // ✅ Affiche seulement ici
+    citySearch.value = city.displayName; // Affiche seulement ici
     searchQuery.value = ''; // Reset recherche
     showCityDropdown.value = false;
   }
 };
-// ✅ Ouvrir le dropdown : on reset la recherche mais PAS l'affichage
+//  Ouvrir le dropdown : on reset la recherche mais PAS l'affichage
 const toggleCityDropdown = (isShipping = false) => {
   if (isShipping) {
     showShippingCityDropdown.value = !showShippingCityDropdown.value;

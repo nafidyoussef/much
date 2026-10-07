@@ -9,7 +9,7 @@ const categories = [
   { name: 'Tech', slug: 'tech', icon: 'ion:disc-outline' },
   { name: 'Beauté', slug: 'beaute', icon: 'ion:star-outline' },
   { name: 'Mode', slug: 'mode', icon: 'ion:diamond-outline' },
-  { name: 'Auto', slug: 'auto', icon: 'ion:flash-outline' },
+  { name: 'Auto & Moto', slug: 'auto', icon: 'ion:flash-outline' },
   { name: 'Kids', slug: 'kids', icon: 'ion:happy-outline' },
   { name: 'Sport', slug: 'sport', icon: 'ion:ellipse-outline' },
 ];

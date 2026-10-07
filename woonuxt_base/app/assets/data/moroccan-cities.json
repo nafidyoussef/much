@@ -3,10 +3,18 @@
   {"id":3,"displayName":"Rabat - الرباط","name":"Rabat","aliases":["Rabat","RABAT - YOUSSOUFIA","RABAT - KEBIBAT","RABAT - AKKARI","RABAT - AL MASSIRA","RABAT - TAKADDOUM","RABAT - LES AMBASSADEURS","RABAT - OCEAN","RABAT - MEDINA","RABAT - CENTRE VILLE","RABAT - MABILLA","RABAT - AVIATION","RABAT - YACOUB EL MANSOUR","RABAT - AGDAL","RABAT - MADINAT AL IRFANE","RABAT - ENNAHDA","RABAT - HAY RIAD","RABAT - SOUISSI","RABAT - LES ORANGERS","RABAT - HAY EL FATH","RABAT - DIOUR JAMAA","RABAT - HASSAN","RABAT - EL MENZEH","KASBAT OUDAYA","RABAT - OCEAN","RABAT - MEDINA"]},
   {"id":2,"displayName":"MARRAKECH - مراكش","name":"MARRAKECH","aliases":["Marrakech","MARRAKECH - LA PALMERAIE","MARRAKECH - AIN ITTI","MARRAKECH-ANCIENNE MEDINA","MARRAKECH - SIDI GHANEM","MARRAKECH - DAOUDIATE","MARRAKECH - AZLI","MARRAKECH - MHAMID","MARRAKECH - AZZOUZIA","MARRAKECH - TARGA","MARRAKECH - SIDI ABBAD","MARRAKECH - SEMLALIA","MARRAKECH - GUELIZ","MARRAKECH - MASSIRA","MARRAKECH - AIN MEZOUAR","MARRAKECH - SAADA","LES PORTES DE MARRAKESH"]},
   {"id":18,"displayName":"Tanger - طنجة","name":"Tanger","aliases":["Tanger","TANGER - AL AOUAMA","TANGER - DRADEB","TANGER - COMPLEXE HASSANI","TANGER - BNI MAKADA","TANGER - MESSNANA","TANGER - CENTRE VILLE","TANGER - BRANESSE","TANGER - MGHOGHA","TANGER - GZENAYA","TANGER - SIDI DRISS","TANGER - IBERIA","TANGER - MALABATA","TANGER - BOUKHALEF","TANJA LBALIA","GZENAYA","Gueznaia"]},
- {"id":10,"displayName":"AGADIR - أكادير","name":"AGADIR","aliases":["Agadir","AGADIR - AIT SOUSS","AGADIR - FOUNTY","AGADIR - VILLE NOUVELLE","AGADIR - DAKHLA","AGADIR - TILILA","AGADIR - TASSILA","AGADIR - HAY MOHAMMADI","AGADIR - DOUAR AHLAKA","AGADIR - EL HOUDA","AGADIR - RIAD ASSALAM","AGADIR - CHARAF","AGADIR - TALBORJT","AGADIR - AEREPORT","AGADIR - BENSERGAO","AGADIR - MELLOUL","TIKIOUINE"]},
+  {"id":10,"displayName":"AGADIR - أكادير","name":"AGADIR","aliases":["Agadir","AGADIR - AIT SOUSS","AGADIR - FOUNTY","AGADIR - VILLE NOUVELLE","AGADIR - DAKHLA","AGADIR - TILILA","AGADIR - TASSILA","AGADIR - HAY MOHAMMADI","AGADIR - DOUAR AHLAKA","AGADIR - EL HOUDA","AGADIR - RIAD ASSALAM","AGADIR - CHARAF","AGADIR - TALBORJT","AGADIR - AEREPORT","AGADIR - BENSERGAO","AGADIR - MELLOUL","TIKIOUINE"]},
+  {"id":23,"displayName":"Eljadida - الجديدة","name":"Eljadida","aliases":["Eljadida","El Jadida","EL-JADIDA"]},
+  {"id":19,"displayName":"Fes - فاس","name":"Fes","aliases":["Fes","FÈS","Fés","MECHOUAR FES JDID","FES - LIDO","FES - EL FADILA","FES - LEMSSELLAH","FES - EL AMBRA","FES - NOUZHA","FES - EL FATH","FES - SIDI BRAHIM","FES - AWINATE EL HAJAJE","FES - HAY NAJAH","FES - AIN KADOUS","FES - HAY DAYAA","FES - ZITOUNE","FES - LIMOUN","FES - HAY ZINEB","FES - LHADIQUA","FES - HAY ZAZA","FES - EL MASSIRA","FES - BENSOUDA","FES - NARJIS","FES - EL MERJA","FES - AIN SMEN","FES - HAY TAREQ","FES - HAY KARIM EL AMRANI","FES - HAY BADR","FES - JDID","FES - DOKKARATE","FES - HAY QODS","FES - AL ATLAS","FES - AIN SKATOU","FES - ROUTE AIN CHEKAF","FES - TGHAT","FES - VILLE NOUVELLE","FES - SAADA","FES - ADARISSA","FES - HAY ERRACHIDIA","FES - HAY ANASS","FES - AIN CHKEF","FES - OUED FES","FES - ROUTE D'IMOUZZER","FES - HAY EL KARAOUYINE","FES - HAY ENNAKHIL","FES - AIN NOUKBI","FES - BAB FTOUH","FES - SIDI BOUJIDA","FES - ANCIENNE MÜDINA","FES - HAY LALLA SOUKAINA","FES - MONT-FLEURI","FES - MOULAY DRISS","FES - BEN SLIMANE","FES - DHAR LAKHMISS","FES - EL MELLAH","FES - HAY EL MOHAMMADI","FES - EL BATHAA","FES - HAY ESSALAM","FES - BEN DEBBAB","FES - AIN HARROUNE","FES - BOU JLOUD","MOULAY YACOUB","FES - ANCIENNE MÜDINA"]},
+  {"id":22,"displayName":"Tetouan - تطوان","name":"Tetouan","aliases":["Tetouan"]},
+  {"id":26,"displayName":"Kenitra - القنيطرة","name":"Kenitra","aliases":["Kenitra","Kénitra"]},
+  {"id":4,"displayName":"Salé - سلا","name":"Salé","aliases":["Salé","Sale","Salè"]},
+  {"id":27,"displayName":"Meknes - مكناس","name":"Meknes","aliases":["Meknès","Meknes","HAMRIA"]},
+  {"id":20,"displayName":"OUJDA - وجدة","name":"OUJDA","aliases":["Oujda","SIDI YAHIA D'OUJDA","AEREPORT OUJDA ANGAD"]},
+  {"id":7,"displayName":"Mohammadia - المحمدية","name":"Mohammadia","aliases":["Mohammadia","Mohammedia","MOHMMADIA","MOHAMMÉDIA"]},
+  {"id":39,"displayName":"BENI MELLAL - بني ملال","name":"BENI MELLAL","aliases":["Beni Mellal","Béni Mellal"]},
   {"id":799,"displayName":"ADDISS- TATA - أضيس تاتا","name":"ADDISS- TATA","aliases":["ADISS","ADIS"]},
   {"id":433,"displayName":"AFOURER - أفورار","name":"AFOURER","aliases":["Afourer Copy (-394860207)","AFOURAR"]},
-  
   {"id":469,"displayName":"AGAFAY - أكفاي","name":"AGAFAY","aliases":["Agafay"]},
   {"id":211,"displayName":"AGDZ - أڭدز","name":"AGDZ","aliases":["Agdz"]},
   {"id":1008,"displayName":"AGHBAL- BERKANE - أغبال بركان","name":"AGHBAL- BERKANE","aliases":[]},
@@ -106,7 +114,7 @@
   {"id":417,"displayName":"Beni Ansar - بني أنصار","name":"Beni Ansar","aliases":["Beni Ansar","BNI"]},
   {"id":428,"displayName":"Beni Chiker - بني شيكر","name":"Beni Chiker","aliases":["BNI CHIKER"]},
   {"id":648,"displayName":"Beni Drar - بني درار","name":"Beni Drar","aliases":["Beni Drar","BNI DRAR"]},
-  {"id":39,"displayName":"BENI MELLAL - بني ملال","name":"BENI MELLAL","aliases":["Beni Mellal","Béni Mellal"]},
+
   {"id":697,"displayName":"BENI OUAL - بني وال","name":"BENI OUAL","aliases":["BENI OUAL","BENI OUAL-CHEFCHAOUEN","BNI OUAL"]},
   {"id":904,"displayName":"Beni Oulid - بني وليد","name":"Beni Oulid","aliases":["BNI OULID"]},
   {"id":878,"displayName":"Beni Tadjit-Oujda - بني تجيت وجدة","name":"Beni Tadjit-Oujda","aliases":["Beni Tadjit-Oujda","BNI TADJITE"]},
@@ -206,7 +214,7 @@
   {"id":87,"displayName":"El Hajeb - الحاجب","name":"El Hajeb","aliases":["El Hajeb","LHAJEB MEKNES"]},
   {"id":93,"displayName":"El Haj Kaddour - الحاج قدور","name":"El Haj Kaddour","aliases":["El Haj Kaddour","HAJ KADDOUR"]},
   {"id":6,"displayName":"El Harhoura - الهرهورة","name":"El Harhoura","aliases":["El Harhoura","HARHOURA"]},
-  {"id":23,"displayName":"Eljadida - الجديدة","name":"Eljadida","aliases":["Eljadida","El Jadida","EL-JADIDA"]},
+  
   {"id":849,"displayName":"EL JEBHA - الجبهة","name":"EL JEBHA","aliases":["EL Jebha","JEBHA","AMTAR"]},
   {"id":628,"displayName":"EL KBAB - القباب","name":"EL KBAB","aliases":["el qbab","EL KBAB"]},
   {"id":908,"displayName":"El Khemis des Aït Ouahi-fes - خميس أيت واهي فاس","name":"El Khemis des Aït Ouahi-fes RG-","aliases":[]},
@@ -223,7 +231,7 @@
   {"id":846,"displayName":"Essehoul-Salé - الشول سلا","name":"Essehoul-Salé","aliases":["SHOUL"]},
   {"id":764,"displayName":"Fam EL Hsin - فم الحصن","name":"Fam EL Hsin","aliases":["Fam EL Hsin","Fam al hisn-tata","FAM EL HISN"]},
   {"id":418,"displayName":"Farkhana - فركانة","name":"Farkhana","aliases":[]},
-  {"id":19,"displayName":"Fes - فاس","name":"Fes","aliases":["Fes","FÈS","Fés","MECHOUAR FES JDID","FES - LIDO","FES - EL FADILA","FES - LEMSSELLAH","FES - EL AMBRA","FES - NOUZHA","FES - EL FATH","FES - SIDI BRAHIM","FES - AWINATE EL HAJAJE","FES - HAY NAJAH","FES - AIN KADOUS","FES - HAY DAYAA","FES - ZITOUNE","FES - LIMOUN","FES - HAY ZINEB","FES - LHADIQUA","FES - HAY ZAZA","FES - EL MASSIRA","FES - BENSOUDA","FES - NARJIS","FES - EL MERJA","FES - AIN SMEN","FES - HAY TAREQ","FES - HAY KARIM EL AMRANI","FES - HAY BADR","FES - JDID","FES - DOKKARATE","FES - HAY QODS","FES - AL ATLAS","FES - AIN SKATOU","FES - ROUTE AIN CHEKAF","FES - TGHAT","FES - VILLE NOUVELLE","FES - SAADA","FES - ADARISSA","FES - HAY ERRACHIDIA","FES - HAY ANASS","FES - AIN CHKEF","FES - OUED FES","FES - ROUTE D'IMOUZZER","FES - HAY EL KARAOUYINE","FES - HAY ENNAKHIL","FES - AIN NOUKBI","FES - BAB FTOUH","FES - SIDI BOUJIDA","FES - ANCIENNE MÜDINA","FES - HAY LALLA SOUKAINA","FES - MONT-FLEURI","FES - MOULAY DRISS","FES - BEN SLIMANE","FES - DHAR LAKHMISS","FES - EL MELLAH","FES - HAY EL MOHAMMADI","FES - EL BATHAA","FES - HAY ESSALAM","FES - BEN DEBBAB","FES - AIN HARROUNE","FES - BOU JLOUD","MOULAY YACOUB","FES - ANCIENNE MÜDINA"]},
+  
   {"id":832,"displayName":"FEZOUANE - فزوان","name":"FEZOUANE","aliases":[]},
   {"id":426,"displayName":"Fezwan - فزوان","name":"Fezwan","aliases":["Fezwan","FEZOUANE"]},
   {"id":647,"displayName":"Figuig - فكيك","name":"Figuig","aliases":["Figuig"]},
@@ -289,7 +297,7 @@
   {"id":181,"displayName":"KASBAT TADLA - قصبة تادلة","name":"KASBAT TADLA","aliases":["KASBAT TADLA","Kasba tadla"]},
   {"id":874,"displayName":"KASSITA - كاسيتا","name":"KASSITA","aliases":[]},
   {"id":175,"displayName":"KELAA DES SRAGHNA - قلعة السراغنة","name":"KELAA DES SRAGHNA","aliases":["Kelâa des Sraghna","El Kelâa des Sraghna","EL KELAA DES SRAGHNA","El kalaa des sraghna"]},
-  {"id":26,"displayName":"Kenitra - القنيطرة","name":"Kenitra","aliases":["Kenitra","Kénitra"]},
+  
   {"id":463,"displayName":"KETTARA - القطارة","name":"KETTARA","aliases":["Kettara","KHETTARA"]},
   {"id":778,"displayName":"Khemis Sahel - خميس الساحل","name":"Khemis Sahel","aliases":["Khemis Sahel"]},
   {"id":79,"displayName":"Khemisset - الخميسات","name":"Khemisset","aliases":["Khémisset","KHEMISSET","Khmisset"]},
@@ -335,7 +343,7 @@
   {"id":730,"displayName":"MEHDIA - المهدية","name":"MEHDIA","aliases":["MEHDYA","Mehdia-kenitra"]},
   {"id":847,"displayName":"Mejjate Meknes - مجاط مكناس","name":"Mejjate Meknes","aliases":[]},
   {"id":172,"displayName":"MEJJAT-Marrakech - مجاط مراكش","name":"MEJJAT-Marrakech","aliases":["Mejjat","MAJJAT","MAJJATE"]},
-  {"id":27,"displayName":"Meknes - مكناس","name":"Meknes","aliases":["Meknès","Meknes","HAMRIA"]},
+ 
   {"id":916,"displayName":"Mernissa - مرنيصة","name":"Mernissa","aliases":["Mernissa"]},
   {"id":860,"displayName":"Mers El Kheir - مرس الخير","name":"Mers El Kheir","aliases":[]},
   {"id":602,"displayName":"MERZOUGA - مرزوكة","name":"MERZOUGA","aliases":["Merzouga"]},
@@ -348,7 +356,7 @@
   {"id":117,"displayName":"Mirleft - ميرلفت","name":"Mirleft","aliases":["Mirleft"]},
   {"id":619,"displayName":"MIRLEFT - ميرلفت","name":"MIRLEFT","aliases":[]},
   {"id":108,"displayName":"Missour - ميسور","name":"Missour","aliases":["Missour"]},
-  {"id":7,"displayName":"Mohammadia - المحمدية","name":"Mohammadia","aliases":["Mohammadia","Mohammedia","MOHMMADIA","MOHAMMÉDIA"]},
+  
   {"id":727,"displayName":"MOHA OU CHERIF - موحى أو شريف","name":"MOHA OU CHERIF","aliases":["MOHA OU CHERIF"]},
   {"id":708,"displayName":"MOQRISSET - مقريست","name":"MOQRISSET","aliases":["MOQRISSET"]},
   {"id":587,"displayName":"Moulay Abdellah - مولاي عبد الله","name":"Moulay Abdellah","aliases":["MOULAY ABDALLAH","MOULAY ABELLAH AMGHAR"]},
@@ -381,7 +389,7 @@
   {"id":830,"displayName":"OUFELIOUNE - أوفليون","name":"OUFELIOUNE","aliases":["OUFELIOUNE"]},
   {"id":1007,"displayName":"Ouislane-Meknes - أيسلان مكناس","name":"Ouislane-Meknes","aliases":[]},
   {"id":918,"displayName":"OUISSLAN - أيسلان","name":"OUISSLAN","aliases":["OUISLANE"]},
-  {"id":20,"displayName":"OUJDA - وجدة","name":"OUJDA","aliases":["Oujda","SIDI YAHIA D'OUJDA","AEREPORT OUJDA ANGAD"]},
+  
   {"id":895,"displayName":"Oulad Abbou-settat - أولاد عبو سطات","name":"Oulad Abbou-settat RG","aliases":["Oulad Abbou"]},
   {"id":780,"displayName":"Oulad Abdou-SETTET - أولاد عبدو سطات","name":"Oulad Abdou-SETTET RG-","aliases":[]},
   {"id":201,"displayName":"Oulad Dahou - أولاد دحو","name":"Oulad Dahou","aliases":["Oulad Dahou","Ouled dahou-agadir"]},
@@ -435,7 +443,7 @@
   {"id":921,"displayName":"Sahel Boutaher - ساحل بوطاهر","name":"Sahel Boutaher","aliases":["Sahel Boutaher","SAHEL"]},
   {"id":419,"displayName":"Saidia - السعيدية","name":"Saidia","aliases":["SAIDIA"]},
   {"id":11,"displayName":"Sala Al Jadida - سلا الجديدة","name":"Sala Al Jadida","aliases":["Sala Al Jadida","Sala El Jadida","SALE ELJADIDA"]},
-  {"id":4,"displayName":"Salé - سلا","name":"Salé","aliases":["Salé","Sale","Salè"]},
+
   {"id":685,"displayName":"SANIA PLAGE - سانية بلاغ","name":"SANIA PLAGE","aliases":["SANIA PLAGE"]},
   {"id":942,"displayName":"SANIA TORRES - سانية توريس","name":"SANIA TORRES","aliases":[]},
   {"id":83,"displayName":"Sbaa ayoune - سبعة عيون","name":"Sbaa ayoune","aliases":["Sbaa ayoune","SBAA AYOUN","SEBAA ROUADI","SABAA AIYOUN"]},
@@ -540,7 +548,7 @@
   {"id":205,"displayName":"TEMSIA - تمسية","name":"TEMSIA","aliases":["Temsia"]},
   {"id":949,"displayName":"TENDRARA-Oujda R - تندrar وجدة","name":"TENDRARA-Oujda R","aliases":["TENDRARA","TENDRARA-Oujda R"]},
   {"id":733,"displayName":"TEROUAL - تيرول","name":"TEROUAL","aliases":[]},
-  {"id":22,"displayName":"Tetouan - تطوان","name":"Tetouan","aliases":["Tetouan"]},
+  
   {"id":927,"displayName":"Thar Es-Souk-TAOUNATE- - ثار السوق تاونات","name":"Thar Es-Souk-TAOUNATE-","aliases":["THAR ES-SOUK"]},
   {"id":655,"displayName":"Tidas - تيداس","name":"Tidas","aliases":["TIDAS","TIDDAS"]},
   {"id":81,"displayName":"Tifelt - تيفلت","name":"Tifelt","aliases":["Tifelt","TIFLET"]},

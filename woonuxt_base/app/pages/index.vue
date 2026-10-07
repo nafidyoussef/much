@@ -58,7 +58,7 @@ const newInProducts = computed<Product[]>(() => (newInData.value?.products?.node
 const categories = [
   { slug: 'all', name: 'Tout' }, { slug: 'maison', name: 'Maison' }, { slug: 'cuisine', name: 'Cuisine' },
   { slug: 'tech', name: 'Tech' }, { slug: 'beaute', name: 'Beauté' }, { slug: 'mode', name: 'Mode' },
-  { slug: 'auto', name: 'Auto' }, { slug: 'kids', name: 'Kids' }, { slug: 'sport', name: 'Sport' },
+  { slug: 'auto', name: 'Auto & Moto' }, { slug: 'kids', name: 'Kids' }, { slug: 'sport', name: 'Sport' },
 ];
 const productsPerPage = 12;
 
@@ -363,7 +363,7 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
             </svg>
           </div>
           <div>
-            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Auto</strong>
+            <strong class="block text-[10px] md:text-xs lg:text-[11px] font-medium text-gray-800 leading-tight whitespace-nowrap">Auto & Moto</strong>
             <small class="text-[9px] md:text-[10px] lg:text-[10px] text-gray-500 whitespace-nowrap">Dès 19 DH</small>
           </div>
         </NuxtLink>
@@ -553,7 +553,7 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
           <a href="https://www.much.ma/product-category/tech" class="text-[#ff4f24] hover:underline">Tech</a>,
           <a href="https://www.much.ma/product-category/beaute" class="text-[#ff4f24] hover:underline">Beauté</a>,
           <a href="https://www.much.ma/product-category/mode" class="text-[#ff4f24] hover:underline">Mode</a>,
-          <a href="https://www.much.ma/product-category/auto" class="text-[#ff4f24] hover:underline">Auto</a>,
+          <a href="https://www.much.ma/product-category/auto" class="text-[#ff4f24] hover:underline">Auto & Moto</a>,
           <a href="https://www.much.ma/product-category/kids" class="text-[#ff4f24] hover:underline">Kids</a> et
           <a href="https://www.much.ma/product-category/sport" class="text-[#ff4f24] hover:underline">Sport</a>,
           et découvrez de nouvelles trouvailles à chaque visite.
