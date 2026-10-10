@@ -1,3 +1,97 @@
+-----
+
+# BEGIN LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteRule litespeed/debug/.*\.log$ - [F,L]
+RewriteRule \.litespeed_conf\.dat - [F,L]
+</IfModule>
+<IfModule LiteSpeed>
+CacheLookup on
+RewriteRule .* - [E=Cache-Control:no-autoflush]
+
+### marker ASYNC start ###
+RewriteCond %{REQUEST_URI} /wp-admin/admin-ajax\.php
+RewriteCond %{QUERY_STRING} action=async_litespeed
+RewriteRule .* - [E=noabort:1]
+### marker ASYNC end ###
+
+### marker DROPQS start ###
+CacheKeyModify -qs:fbclid
+CacheKeyModify -qs:gclid
+CacheKeyModify -qs:utm*
+CacheKeyModify -qs:_ga
+### marker DROPQS end ###
+
+</IfModule>
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END LSCACHE
+# BEGIN NON_LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END NON_LSCACHE
+# =================================================================
+# 1. CONFIGURATION CORS DYNAMIQUE (much.ma, www.much.ma ET localhost)
+# =================================================================
+<IfModule mod_headers.c>
+    # Le regex accepte : https://much.ma, https://www.much.ma, http://localhost, http://localhost:3000, http://127.0.0.1:8080, etc.
+    SetEnvIf Origin "^(https?://(?:www\.)?much\.ma|https?://(?:localhost|127\.0\.0\.1)(?::\d+)?)$" ACCESS_CONTROL_ALLOW_ORIGIN=$1
+    
+    Header always set Access-Control-Allow-Origin "%{ACCESS_CONTROL_ALLOW_ORIGIN}e" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-WP-Nonce, Accept, X-Requested-With, woocommerce-session" env=ACCESS_CONTROL_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true" env=ACCESS_CONTROL_ALLOW_ORIGIN
+</IfModule>
+
+# =================================================================
+# 2. GESTION DES REQUÊTES PREFLIGHT (OPTIONS)
+# =================================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ - [R=200,L]
+</IfModule>
+
+# =================================================================
+# 3. RÈGLES STANDARDS WORDPRESS
+# =================================================================
+# BEGIN WordPress
+# Les directives (lignes) entre « BEGIN WordPress » et « END WordPress » sont générées
+# dynamiquement, et doivent être modifiées uniquement via les filtres WordPress.
+# Toute modification des directives situées entre ces marqueurs sera surchargée.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    # Images
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|gif|png|webp|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# END WordPress
+
+
+-----
+
 # =================================================================
 # 1. CONFIGURATION CORS DYNAMIQUE (Gère www et non-www)
 # =================================================================

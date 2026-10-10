@@ -11,6 +11,16 @@ export default defineNuxtConfig({
   image: {
     provider: 'vercel',
     domains: ['api.much.ma'],
+   
+  },
+  nitro: {
+    vercel: {
+      config: {
+        images: {
+          minimumCacheTTL: 9592000, // 30 jours
+        },
+      },
+    },
   },
   compatibilityDate: '2026-07-10',
   experimental: {
