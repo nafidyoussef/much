@@ -8,7 +8,7 @@ const contactInfo = [
   {
     icon: 'ion:logo-whatsapp',
     title: 'WhatsApp',
-    value: '+212 6 64 61 20 98',
+    value: '+212 8 64 61 20 33',
     link: 'https://wa.me/212660612098',
     description: 'Réponse en moins de 2h',
     color: 'bg-[#25D366]/10 text-[#25D366]'
@@ -16,8 +16,8 @@ const contactInfo = [
   {
     icon: 'ion:call',
     title: 'Téléphone',
-    value: '+212 6 64 61 20 98',
-    link: 'tel:+212660612098',
+    value: '+212 8 64 61 20 33',
+    link: 'tel:+212860612033',
     description: 'Lun - Sam, 9h - 18h',
     color: 'bg-blue-50 text-blue-600'
   },
