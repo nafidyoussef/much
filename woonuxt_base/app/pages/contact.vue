@@ -8,16 +8,16 @@ const contactInfo = [
   {
     icon: 'ion:logo-whatsapp',
     title: 'WhatsApp',
-    value: '+212 8 64 61 20 33',
-    link: 'https://wa.me/212660612098',
+    value: '+212 665-620755',
+    link: 'https://wa.me/212665620755',
     description: 'Réponse en moins de 2h',
     color: 'bg-[#25D366]/10 text-[#25D366]'
   },
   {
     icon: 'ion:call',
     title: 'Téléphone',
-    value: '+212 8 64 61 20 33',
-    link: 'tel:+212860612033',
+    value: '+212 665-620755',
+    link: 'tel:+212665620755',
     description: 'Lun - Sam, 9h - 18h',
     color: 'bg-blue-50 text-blue-600'
   },
