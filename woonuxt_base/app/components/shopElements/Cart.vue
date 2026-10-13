@@ -3,7 +3,7 @@ const { cart, toggleCart, isCartMutating } = useCart();
 const config = useRuntimeConfig();
 
 // Récupérer le seuil depuis .env (défaut 500)
-const freeShippingThreshold = Number(config.public.freeShippingThreshold) || 199;
+const freeShippingThreshold = Number(config.public.freeShippingThreshold) || 249;
 
 // Extraire le montant numérique du subtotal (qui est souvent une chaîne HTML comme "450.00 DH")
 const currentSubtotal = computed(() => {
