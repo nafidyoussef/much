@@ -23,8 +23,32 @@ const productLoadError = computed(() =>
     ? getErrorMessage(error.value) || `Unable to load product "${slug}" from WordPress`
     : t('shop.productNotFound')
 );
-
 const quantity = ref<number>(1);
+const MAX_QTY = 5; // ✅ Limite maximale
+
+// ✅ Fonction pour augmenter (bloquée à 5)
+const incrementQuantity = () => {
+  if (quantity.value < MAX_QTY) {
+    quantity.value++;
+  }
+};
+
+// ✅ Fonction pour diminuer (bloquée à 1)
+const decrementQuantity = () => {
+  if (quantity.value > 1) {
+    quantity.value--;
+  }
+};
+
+// ✅ Sécurité : corrige automatiquement si l'utilisateur tape un chiffre > 5 manuellement
+watch(quantity, (newVal) => {
+  if (newVal > MAX_QTY) {
+    quantity.value = MAX_QTY;
+  } else if (newVal < 1 || newVal === null ) {
+    quantity.value = 1;
+  }
+});
+
 const activeVariation = ref<Variation | null>(null);
 const variation = ref<VariationAttribute[]>([]);
 const attrValues = ref<ProductAttributeInput[]>([]);
@@ -528,9 +552,30 @@ onMounted(() => {
 
             <div class="flex flex-row gap-3">
               <div class="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-28 md:w-36 flex-shrink-0 focus-within:border-[#ff4f24] transition-colors bg-white">
-                <button type="button" @click="quantity > 1 ? quantity-- : null" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">-</button>
-                <input v-model.number="quantity" type="number" min="1" class="w-full h-11 text-center border-none focus:ring-0 p-0 font-bold text-gray-900 bg-transparent" />
-                <button type="button" @click="quantity++" class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium">+</button>
+                <!-- Bouton Moins -->
+                <button 
+                  type="button" 
+                  @click="decrementQuantity" 
+                  class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="quantity <= 1"
+                >-</button>
+                
+                <!-- Input -->
+                <input 
+                  v-model.number="quantity" 
+                  type="number" 
+                  min="1" 
+                  :max="MAX_QTY" 
+                  class="w-full h-11 text-center border-none focus:ring-0 p-0 font-bold text-gray-900 bg-transparent" 
+                />
+                
+                <!-- Bouton Plus -->
+                <button 
+                  type="button" 
+                  @click="incrementQuantity" 
+                  class="w-9 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="quantity >= MAX_QTY"
+                >+</button>
               </div>
 
               <button
