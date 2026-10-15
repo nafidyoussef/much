@@ -243,57 +243,6 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
 <template>
   <main class="min-h-screen mb-10">
     <HeroBanner />
-    <section class="container py-6 mb-2">
-      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-        <div class="grid grid-cols-2">
-          <div class="flex items-center gap-3 p-2 md:p-5 border-b border-r border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Payez à la livraison</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Payez à la réception</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3 border-b border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Livraison nationale</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Partout au Maroc</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3 border-r border-gray-200">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Retours simplifiés</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Assistance réactive</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 p-2 md:p-3">
-            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
-              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Support local</h3>
-              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Une équipe à votre écoute</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- SECTION 1 : Explorez nos univers -->
     <section class="container py-2 md:py-4">
       <div class="flex items-center justify-between mb-4 md:mb-6">
@@ -524,6 +473,57 @@ const loading = computed<boolean>(() => initialLoading.value || isLoading.value)
       </div>
     </section>
        <!-- ========================================== -->
+          <section class="container py-6 mb-2">
+      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div class="grid grid-cols-2">
+          <div class="flex items-center gap-3 p-2 md:p-5 border-b border-r border-gray-200">
+            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
+              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Payez à la livraison</h3>
+              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Payez à la réception</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-2 md:p-3 border-b border-gray-200">
+            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
+              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 9-8 9-8-9z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Livraison nationale</h3>
+              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Partout au Maroc</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-2 md:p-3 border-r border-gray-200">
+            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
+              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Retours simplifiés</h3>
+              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Assistance réactive</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-2 md:p-3">
+            <div class="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#ff4f24]/10 flex items-center justify-center">
+              <svg class="w-5 h-5 md:w-6 md:h-6 text-[#ff4f24]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xs md:text-sm font-semibold text-gray-700 leading-tight whitespace-nowrap">Support local</h3>
+              <p class="text-[10px] md:text-xs text-gray-400 mt-0.5 whitespace-nowrap">Une équipe à votre écoute</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- SECTION SEO : Pourquoi acheter sur Much.ma -->
 <section class="container py-4 md:py-6">
   <div class="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
