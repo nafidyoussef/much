@@ -26,7 +26,7 @@ onUnmounted(() => {
 
       <!-- ✅ LCP Optimisé avec NuxtImg -->
       <NuxtImg
-        src="/Hero-1.webp"
+        src="/hero-bf.webp"
         alt="Collection Nouveau Année"
         width="1320"
         height="600"
