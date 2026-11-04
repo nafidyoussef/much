@@ -398,9 +398,8 @@ onMounted(() => {
 // ==========================================
 const whatsappNumber = '212710769169';
 const whatsappMessage = computed(() => {
-  const productName = displayProduct.value?.name || 'Produit';
   const productUrl = typeof window !== 'undefined' ? window.location.href : '';
-  return `Bonjour, je souhaite commander ce produit : ${productName} - ${productUrl}`;
+  return `${productUrl}`;
 });
 const whatsappLink = computed(() => {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage.value)}`;
