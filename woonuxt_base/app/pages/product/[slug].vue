@@ -396,7 +396,7 @@ onMounted(() => {
 // ==========================================
 // LIEN WHATSAPP
 // ==========================================
-const whatsappNumber = '212710769169';
+const whatsappNumber = '212664401984';
 const whatsappMessage = computed(() => {
   const productUrl = typeof window !== 'undefined' ? window.location.href : '';
   return `${productUrl}`;
